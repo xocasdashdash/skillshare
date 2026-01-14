@@ -35,8 +35,12 @@ func DefaultTargets() map[string]TargetConfig {
 	}
 }
 
-// ConfigPath returns the default config file path
+// ConfigPath returns the config file path, respecting SKILLSHARE_CONFIG env var
 func ConfigPath() string {
+	// Allow override for testing
+	if envPath := os.Getenv("SKILLSHARE_CONFIG"); envPath != "" {
+		return envPath
+	}
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".config", "skillshare", "config.yaml")
 }

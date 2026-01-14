@@ -1,0 +1,41 @@
+[tools]
+go = "1.23"
+
+[tasks.build]
+description = "Build the skillshare binary"
+run = "mkdir -p bin && go build -o bin/skillshare ./cmd/skillshare"
+
+[tasks.test]
+description = "Run all tests"
+depends = ["build"]
+run = "SKILLSHARE_TEST_BINARY=$(pwd)/bin/skillshare go test -v ./..."
+
+[tasks."test:unit"]
+description = "Run unit tests only"
+run = "go test -v ./internal/..."
+
+[tasks."test:int"]
+description = "Run integration tests only"
+depends = ["build"]
+run = "SKILLSHARE_TEST_BINARY=$(pwd)/bin/skillshare go test -v ./tests/integration/..."
+
+[tasks."test:cover"]
+description = "Run tests with coverage"
+depends = ["build"]
+run = "SKILLSHARE_TEST_BINARY=$(pwd)/bin/skillshare go test -cover ./..."
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "rm -rf bin/"
+
+[tasks.lint]
+description = "Run linter"
+run = "go vet ./..."
+
+[tasks.fmt]
+description = "Format code"
+run = "go fmt ./..."
+
+[tasks.install]
+description = "Install skillshare to GOPATH/bin"
+run = "go install ./cmd/skillshare"

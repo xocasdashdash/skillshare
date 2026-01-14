@@ -1,0 +1,221 @@
+// Package testutil provides utilities for integration testing
+package testutil
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+// Sandbox represents an isolated test environment
+type Sandbox struct {
+	T          *testing.T
+	Root       string            // Root temp directory
+	Home       string            // Simulated home directory
+	ConfigPath string            // Config file path
+	SourcePath string            // Skills source directory
+	OrigEnv    map[string]string // Original environment
+	BinaryPath string            // Path to skillshare binary
+}
+
+// NewSandbox creates a new isolated test environment
+func NewSandbox(t *testing.T) *Sandbox {
+	t.Helper()
+
+	root := t.TempDir()
+	home := filepath.Join(root, "home")
+
+	sb := &Sandbox{
+		T:          t,
+		Root:       root,
+		Home:       home,
+		ConfigPath: filepath.Join(home, ".config", "skillshare", "config.yaml"),
+		SourcePath: filepath.Join(home, ".config", "skillshare", "skills"),
+		OrigEnv:    make(map[string]string),
+	}
+
+	// Get binary path from environment or use default
+	sb.BinaryPath = os.Getenv("SKILLSHARE_TEST_BINARY")
+	if sb.BinaryPath == "" {
+		// Try to find it relative to the project root
+		// This works when running from the project directory
+		cwd, _ := os.Getwd()
+		sb.BinaryPath = filepath.Join(cwd, "..", "..", "bin", "skillshare")
+		// Also try the project root bin directory
+		if _, err := os.Stat(sb.BinaryPath); os.IsNotExist(err) {
+			sb.BinaryPath = filepath.Join(cwd, "bin", "skillshare")
+		}
+	}
+
+	// Create directory structure
+	dirs := []string{
+		filepath.Join(home, ".config", "skillshare"),
+		filepath.Join(home, ".config", "skillshare", "skills"),
+		filepath.Join(home, ".config", "skillshare", "backups"),
+		filepath.Join(home, ".claude"),
+		filepath.Join(home, ".codex"),
+		filepath.Join(home, ".cursor"),
+	}
+
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			t.Fatalf("failed to create directory %s: %v", dir, err)
+		}
+	}
+
+	// Override environment
+	sb.SetEnv("HOME", home)
+	sb.SetEnv("SKILLSHARE_CONFIG", sb.ConfigPath)
+
+	return sb
+}
+
+// SetEnv sets an environment variable, saving the original
+func (sb *Sandbox) SetEnv(key, value string) {
+	sb.T.Helper()
+	sb.OrigEnv[key] = os.Getenv(key)
+	os.Setenv(key, value)
+}
+
+// Cleanup restores original environment
+func (sb *Sandbox) Cleanup() {
+	for key, value := range sb.OrigEnv {
+		if value == "" {
+			os.Unsetenv(key)
+		} else {
+			os.Setenv(key, value)
+		}
+	}
+}
+
+// CreateSkill creates a test skill in the source directory
+func (sb *Sandbox) CreateSkill(name string, files map[string]string) string {
+	sb.T.Helper()
+
+	skillDir := filepath.Join(sb.SourcePath, name)
+	if err := os.MkdirAll(skillDir, 0755); err != nil {
+		sb.T.Fatalf("failed to create skill directory: %v", err)
+	}
+
+	for filename, content := range files {
+		path := filepath.Join(skillDir, filename)
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			sb.T.Fatalf("failed to write file %s: %v", path, err)
+		}
+	}
+
+	return skillDir
+}
+
+// CreateTarget creates a target directory
+func (sb *Sandbox) CreateTarget(name string) string {
+	sb.T.Helper()
+
+	var path string
+	switch name {
+	case "claude":
+		path = filepath.Join(sb.Home, ".claude", "skills")
+	case "codex":
+		path = filepath.Join(sb.Home, ".codex", "skills")
+	case "cursor":
+		path = filepath.Join(sb.Home, ".cursor", "skills")
+	case "gemini":
+		path = filepath.Join(sb.Home, ".gemini", "antigravity", "skills")
+	case "opencode":
+		path = filepath.Join(sb.Home, ".config", "opencode", "skills")
+	default:
+		path = filepath.Join(sb.Home, "."+name, "skills")
+	}
+
+	if err := os.MkdirAll(path, 0755); err != nil {
+		sb.T.Fatalf("failed to create target: %v", err)
+	}
+
+	return path
+}
+
+// WriteConfig writes a config file
+func (sb *Sandbox) WriteConfig(cfg string) {
+	sb.T.Helper()
+
+	dir := filepath.Dir(sb.ConfigPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		sb.T.Fatalf("failed to create config directory: %v", err)
+	}
+
+	if err := os.WriteFile(sb.ConfigPath, []byte(cfg), 0644); err != nil {
+		sb.T.Fatalf("failed to write config: %v", err)
+	}
+}
+
+// FileExists checks if a file exists
+func (sb *Sandbox) FileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// IsSymlink checks if path is a symlink
+func (sb *Sandbox) IsSymlink(path string) bool {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return false
+	}
+	return info.Mode()&os.ModeSymlink != 0
+}
+
+// SymlinkTarget returns the target of a symlink
+func (sb *Sandbox) SymlinkTarget(path string) string {
+	target, err := os.Readlink(path)
+	if err != nil {
+		return ""
+	}
+	return target
+}
+
+// ReadFile reads and returns file contents
+func (sb *Sandbox) ReadFile(path string) string {
+	sb.T.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		sb.T.Fatalf("failed to read file %s: %v", path, err)
+	}
+	return string(content)
+}
+
+// WriteFile writes content to a file
+func (sb *Sandbox) WriteFile(path, content string) {
+	sb.T.Helper()
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		sb.T.Fatalf("failed to create directory %s: %v", dir, err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		sb.T.Fatalf("failed to write file %s: %v", path, err)
+	}
+}
+
+// CreateSymlink creates a symbolic link
+func (sb *Sandbox) CreateSymlink(target, link string) {
+	sb.T.Helper()
+	dir := filepath.Dir(link)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		sb.T.Fatalf("failed to create directory %s: %v", dir, err)
+	}
+	if err := os.Symlink(target, link); err != nil {
+		sb.T.Fatalf("failed to create symlink %s -> %s: %v", link, target, err)
+	}
+}
+
+// ListDir returns the names of files in a directory
+func (sb *Sandbox) ListDir(path string) []string {
+	sb.T.Helper()
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		sb.T.Fatalf("failed to read directory %s: %v", path, err)
+	}
+	names := make([]string, len(entries))
+	for i, entry := range entries {
+		names[i] = entry.Name()
+	}
+	return names
+}
