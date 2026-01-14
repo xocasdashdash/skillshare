@@ -79,6 +79,22 @@ go install github.com/runkids/skillshare/cmd/skillshare@latest
 skillshare version
 ```
 
+### Uninstall
+
+```bash
+# Homebrew
+brew uninstall skillshare
+
+# Manual (curl install)
+sudo rm /usr/local/bin/skillshare
+
+# Go
+rm $(go env GOPATH)/bin/skillshare
+
+# Config and data (optional)
+rm -rf ~/.config/skillshare
+```
+
 ## Quick Start
 
 ```bash
