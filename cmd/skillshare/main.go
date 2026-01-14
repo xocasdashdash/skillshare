@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/runkids/skillshare/internal/backup"
 	"github.com/runkids/skillshare/internal/config"
 	"github.com/runkids/skillshare/internal/sync"
 	"github.com/runkids/skillshare/internal/ui"
@@ -29,6 +32,12 @@ func main() {
 		err = cmdSync(args)
 	case "status":
 		err = cmdStatus(args)
+	case "diff":
+		err = cmdDiff(args)
+	case "backup":
+		err = cmdBackup(args)
+	case "doctor":
+		err = cmdDoctor(args)
 	case "target":
 		err = cmdTarget(args)
 	case "version", "-v", "--version":
@@ -57,8 +66,12 @@ Commands:
   init [--source PATH]       Initialize skillshare with a source directory
   sync [--dry-run] [--force] Sync skills to all targets
   status                     Show status of all targets
+  diff [--target name]       Show differences between source and targets
+  backup [--target name]     Create backup of target(s)
+  doctor                     Check environment and diagnose issues
   target add <name> <path>   Add a target
-  target remove <name>       Remove a target
+  target remove <name>       Unlink target and restore skills
+  target remove --all        Unlink all targets
   target list                List all targets
   version                    Show version
   help                       Show this help
@@ -72,7 +85,7 @@ Examples:
 
 func cmdInit(args []string) error {
 	home, _ := os.UserHomeDir()
-	sourcePath := filepath.Join(home, ".skills") // Default source
+	sourcePath := "" // Will be determined
 
 	// Parse args
 	for i := 0; i < len(args); i++ {
@@ -96,34 +109,133 @@ func cmdInit(args []string) error {
 		return fmt.Errorf("already initialized. Config at: %s", config.ConfigPath())
 	}
 
-	// Create source directory
+	// Detect existing CLI skills directories
+	ui.Header("Detecting CLI skills directories")
+	defaultTargets := config.DefaultTargets()
+
+	type detectedDir struct {
+		name       string
+		path       string
+		skillCount int
+		hasSkills  bool
+	}
+	var detected []detectedDir
+
+	for name, target := range defaultTargets {
+		if info, err := os.Stat(target.Path); err == nil && info.IsDir() {
+			// Count skills
+			entries, _ := os.ReadDir(target.Path)
+			skillCount := 0
+			for _, e := range entries {
+				if e.IsDir() && e.Name()[0] != '.' {
+					skillCount++
+				}
+			}
+			detected = append(detected, detectedDir{
+				name:       name,
+				path:       target.Path,
+				skillCount: skillCount,
+				hasSkills:  skillCount > 0,
+			})
+			if skillCount > 0 {
+				ui.Success("Found: %s (%d skills)", name, skillCount)
+			} else {
+				ui.Info("Found: %s (empty)", name)
+			}
+		}
+	}
+
+	// Default source path (same location as config)
+	if sourcePath == "" {
+		sourcePath = filepath.Join(home, ".config", "skillshare", "skills")
+	}
+
+	// Find directories with skills to potentially copy from
+	var withSkills []detectedDir
+	for _, d := range detected {
+		if d.hasSkills {
+			withSkills = append(withSkills, d)
+		}
+	}
+
+	// Ask user if they want to initialize from existing skills
+	var copyFrom string
+	if len(withSkills) > 0 {
+		ui.Header("Initialize from existing skills?")
+		fmt.Println("  Copy skills from an existing directory to the shared source?")
+		fmt.Println()
+
+		for i, d := range withSkills {
+			fmt.Printf("  [%d] Copy from %s (%d skills)\n", i+1, d.name, d.skillCount)
+		}
+		fmt.Printf("  [%d] Start fresh (empty source)\n", len(withSkills)+1)
+		fmt.Println()
+
+		fmt.Print("  Enter choice [1]: ")
+		var input string
+		fmt.Scanln(&input)
+
+		choice := 1
+		if input != "" {
+			fmt.Sscanf(input, "%d", &choice)
+		}
+
+		if choice >= 1 && choice <= len(withSkills) {
+			copyFrom = withSkills[choice-1].path
+			ui.Success("Will copy skills from %s", withSkills[choice-1].name)
+		} else {
+			ui.Info("Starting with empty source")
+		}
+	}
+
+	// Create source directory if needed
 	if err := os.MkdirAll(sourcePath, 0755); err != nil {
 		return fmt.Errorf("failed to create source directory: %w", err)
 	}
 
-	// Detect existing targets
-	ui.Header("Detecting CLI skills directories")
-	defaultTargets := config.DefaultTargets()
-	targets := make(map[string]config.TargetConfig)
-
-	for name, target := range defaultTargets {
-		if info, err := os.Stat(target.Path); err == nil {
-			if info.IsDir() {
-				targets[name] = target
-				ui.Success("Found: %s (%s)", name, target.Path)
+	// Copy skills from selected directory
+	if copyFrom != "" {
+		ui.Info("Copying skills to %s...", sourcePath)
+		entries, _ := os.ReadDir(copyFrom)
+		copied := 0
+		for _, entry := range entries {
+			if !entry.IsDir() || entry.Name()[0] == '.' {
+				continue
 			}
+			srcPath := filepath.Join(copyFrom, entry.Name())
+			dstPath := filepath.Join(sourcePath, entry.Name())
+
+			// Skip if already exists
+			if _, err := os.Stat(dstPath); err == nil {
+				continue
+			}
+
+			// Copy directory
+			if err := copyDir(srcPath, dstPath); err != nil {
+				ui.Warning("Failed to copy %s: %v", entry.Name(), err)
+				continue
+			}
+			copied++
+		}
+		ui.Success("Copied %d skills to source", copied)
+	}
+
+	// Build targets list
+	targets := make(map[string]config.TargetConfig)
+	for name, target := range defaultTargets {
+		// Check if CLI is installed
+		if _, err := os.Stat(target.Path); err == nil {
+			targets[name] = target
 		} else {
-			// Check if parent exists (CLI is installed but no skills yet)
 			parent := filepath.Dir(target.Path)
 			if _, err := os.Stat(parent); err == nil {
 				targets[name] = target
-				ui.Info("Available: %s (%s)", name, target.Path)
 			}
 		}
 	}
 
 	if len(targets) == 0 {
-		ui.Warning("No CLI skills directories detected. You can add targets manually.")
+		ui.Warning("No CLI skills directories detected.")
 	}
 
 	// Create config
@@ -170,6 +282,23 @@ func cmdSync(args []string) error {
 	// Ensure source exists
 	if _, err := os.Stat(cfg.Source); os.IsNotExist(err) {
 		return fmt.Errorf("source directory does not exist: %s", cfg.Source)
+	}
+
+	// Backup targets before sync (only if not dry-run)
+	if !dryRun {
+		backedUp := false
+		for name, target := range cfg.Targets {
+			backupPath, err := backup.Create(name, target.Path)
+			if err != nil {
+				ui.Warning("Failed to backup %s: %v", name, err)
+			} else if backupPath != "" {
+				if !backedUp {
+					ui.Header("Backing up")
+					backedUp = true
+				}
+				ui.Success("%s -> %s", name, backupPath)
+			}
+		}
 	}
 
 	ui.Header("Syncing skills")
@@ -367,27 +496,137 @@ func targetAdd(args []string) error {
 }
 
 func targetRemove(args []string) error {
-	if len(args) < 1 {
-		return fmt.Errorf("usage: skillshare target remove <name>")
+	// Check for --all flag
+	removeAll := false
+	var name string
+	for _, arg := range args {
+		if arg == "--all" || arg == "-a" {
+			removeAll = true
+		} else {
+			name = arg
+		}
 	}
 
-	name := args[0]
+	if !removeAll && name == "" {
+		return fmt.Errorf("usage: skillshare target remove <name> or --all")
+	}
 
 	cfg, err := config.Load()
 	if err != nil {
 		return err
 	}
 
-	if _, exists := cfg.Targets[name]; !exists {
-		return fmt.Errorf("target '%s' not found", name)
+	var toRemove []string
+	if removeAll {
+		for n := range cfg.Targets {
+			toRemove = append(toRemove, n)
+		}
+	} else {
+		if _, exists := cfg.Targets[name]; !exists {
+			return fmt.Errorf("target '%s' not found", name)
+		}
+		toRemove = []string{name}
 	}
 
-	delete(cfg.Targets, name)
+	// Backup before removing
+	ui.Header("Backing up before unlink")
+	for _, targetName := range toRemove {
+		target := cfg.Targets[targetName]
+		backupPath, err := backup.Create(targetName, target.Path)
+		if err != nil {
+			ui.Warning("Failed to backup %s: %v", targetName, err)
+		} else if backupPath != "" {
+			ui.Success("%s -> %s", targetName, backupPath)
+		}
+	}
+
+	ui.Header("Unlinking targets")
+	for _, targetName := range toRemove {
+		target := cfg.Targets[targetName]
+
+		// Check if it's a symlink (symlink mode) or has symlinked skills (merge mode)
+		info, err := os.Lstat(target.Path)
+		if err != nil {
+			// Target doesn't exist, just remove from config
+			delete(cfg.Targets, targetName)
+			ui.Success("%s: removed from config", targetName)
+			continue
+		}
+
+		if info.Mode()&os.ModeSymlink != 0 {
+			// Symlink mode: remove symlink and copy source contents
+			if err := unlinkSymlinkMode(target.Path, cfg.Source); err != nil {
+				ui.Error("%s: %v", targetName, err)
+				continue
+			}
+			ui.Success("%s: unlinked and restored", targetName)
+		} else if info.IsDir() {
+			// Merge mode: remove individual skill symlinks
+			if err := unlinkMergeMode(target.Path, cfg.Source); err != nil {
+				ui.Error("%s: %v", targetName, err)
+				continue
+			}
+			ui.Success("%s: skill symlinks removed", targetName)
+		}
+
+		delete(cfg.Targets, targetName)
+	}
+
 	if err := cfg.Save(); err != nil {
 		return err
 	}
 
-	ui.Success("Removed target: %s", name)
+	return nil
+}
+
+// unlinkSymlinkMode removes symlink and copies source contents back
+func unlinkSymlinkMode(targetPath, sourcePath string) error {
+	// Remove the symlink
+	if err := os.Remove(targetPath); err != nil {
+		return fmt.Errorf("failed to remove symlink: %w", err)
+	}
+
+	// Copy source contents to target
+	if err := copyDir(sourcePath, targetPath); err != nil {
+		return fmt.Errorf("failed to copy skills: %w", err)
+	}
+
+	return nil
+}
+
+// unlinkMergeMode removes individual skill symlinks and copies them back
+func unlinkMergeMode(targetPath, sourcePath string) error {
+	entries, err := os.ReadDir(targetPath)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		skillPath := filepath.Join(targetPath, entry.Name())
+		info, err := os.Lstat(skillPath)
+		if err != nil {
+			continue
+		}
+
+		// Check if it's a symlink pointing to source
+		if info.Mode()&os.ModeSymlink != 0 {
+			link, _ := os.Readlink(skillPath)
+			sourceSkillPath := filepath.Join(sourcePath, entry.Name())
+
+			// Check if symlink points to our source
+			absLink, _ := filepath.Abs(link)
+			absSource, _ := filepath.Abs(sourceSkillPath)
+
+			if absLink == absSource {
+				// Remove symlink and copy the skill back
+				os.Remove(skillPath)
+				if err := copyDir(sourceSkillPath, skillPath); err != nil {
+					return fmt.Errorf("failed to copy %s: %w", entry.Name(), err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -401,9 +640,338 @@ func targetList() error {
 	for name, target := range cfg.Targets {
 		mode := target.Mode
 		if mode == "" {
-			mode = "symlink"
+			mode = "merge"
 		}
 		fmt.Printf("  %-12s %s (%s)\n", name, target.Path, mode)
+	}
+
+	return nil
+}
+
+// copyDir copies a directory recursively
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, _ := filepath.Rel(src, path)
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		return copyFile(path, dstPath)
+	})
+}
+
+// copyFile copies a single file
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	srcInfo, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode())
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
+}
+
+// cmdDiff shows differences between source and targets
+func cmdDiff(args []string) error {
+	var targetName string
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--target" || args[i] == "-t" {
+			if i+1 < len(args) {
+				targetName = args[i+1]
+				i++
+			}
+		} else {
+			targetName = args[i]
+		}
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	// Get source skills
+	sourceSkills := make(map[string]bool)
+	entries, _ := os.ReadDir(cfg.Source)
+	for _, e := range entries {
+		if e.IsDir() && e.Name()[0] != '.' {
+			sourceSkills[e.Name()] = true
+		}
+	}
+
+	targets := cfg.Targets
+	if targetName != "" {
+		if t, exists := cfg.Targets[targetName]; exists {
+			targets = map[string]config.TargetConfig{targetName: t}
+		} else {
+			return fmt.Errorf("target '%s' not found", targetName)
+		}
+	}
+
+	for name, target := range targets {
+		ui.Header(fmt.Sprintf("Diff: %s", name))
+
+		// Check if target is a symlink (symlink mode)
+		targetInfo, err := os.Lstat(target.Path)
+		if err != nil {
+			ui.Warning("Cannot access target: %v", err)
+			continue
+		}
+
+		if targetInfo.Mode()&os.ModeSymlink != 0 {
+			// Symlink mode - entire directory is linked
+			link, _ := os.Readlink(target.Path)
+			absLink, _ := filepath.Abs(link)
+			absSource, _ := filepath.Abs(cfg.Source)
+			if absLink == absSource {
+				ui.Success("Fully synced (symlink mode)")
+			} else {
+				ui.Warning("Symlink points to different location: %s", link)
+			}
+			continue
+		}
+
+		// Merge mode - check individual skills
+		targetSkills := make(map[string]bool)
+		targetSymlinks := make(map[string]bool)
+		entries, err := os.ReadDir(target.Path)
+		if err != nil {
+			ui.Warning("Cannot read target: %v", err)
+			continue
+		}
+
+		for _, e := range entries {
+			if e.Name()[0] == '.' {
+				continue
+			}
+			skillPath := filepath.Join(target.Path, e.Name())
+			info, _ := os.Lstat(skillPath)
+			if info != nil && info.Mode()&os.ModeSymlink != 0 {
+				targetSymlinks[e.Name()] = true
+			}
+			targetSkills[e.Name()] = true
+		}
+
+		// Compare
+		hasChanges := false
+
+		// Skills only in source (not synced)
+		for skill := range sourceSkills {
+			if !targetSkills[skill] {
+				fmt.Printf("  %s+ %s%s (in source, not in target)\n", ui.Green, skill, ui.Reset)
+				hasChanges = true
+			} else if !targetSymlinks[skill] {
+				fmt.Printf("  %s~ %s%s (local copy, not linked)\n", ui.Yellow, skill, ui.Reset)
+				hasChanges = true
+			}
+		}
+
+		// Skills only in target (local only)
+		for skill := range targetSkills {
+			if !sourceSkills[skill] && !targetSymlinks[skill] {
+				fmt.Printf("  %s- %s%s (local only, not in source)\n", ui.Cyan, skill, ui.Reset)
+				hasChanges = true
+			}
+		}
+
+		if !hasChanges {
+			ui.Success("Fully synced (merge mode)")
+		}
+	}
+
+	return nil
+}
+
+// cmdBackup creates a manual backup
+func cmdBackup(args []string) error {
+	var targetName string
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--target" || args[i] == "-t" {
+			if i+1 < len(args) {
+				targetName = args[i+1]
+				i++
+			}
+		} else {
+			targetName = args[i]
+		}
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	targets := cfg.Targets
+	if targetName != "" {
+		if t, exists := cfg.Targets[targetName]; exists {
+			targets = map[string]config.TargetConfig{targetName: t}
+		} else {
+			return fmt.Errorf("target '%s' not found", targetName)
+		}
+	}
+
+	ui.Header("Creating backup")
+	created := 0
+	for name, target := range targets {
+		backupPath, err := backup.Create(name, target.Path)
+		if err != nil {
+			ui.Warning("Failed to backup %s: %v", name, err)
+			continue
+		}
+		if backupPath != "" {
+			ui.Success("%s -> %s", name, backupPath)
+			created++
+		} else {
+			ui.Info("%s: nothing to backup (empty or symlink)", name)
+		}
+	}
+
+	if created == 0 {
+		ui.Info("No backups created")
+	}
+
+	// List recent backups
+	backups, _ := backup.List()
+	if len(backups) > 0 {
+		ui.Header("Recent backups")
+		limit := 5
+		if len(backups) < limit {
+			limit = len(backups)
+		}
+		for i := 0; i < limit; i++ {
+			b := backups[i]
+			fmt.Printf("  %s %s (%s)\n", b.Timestamp, ui.Gray+strings.Join(b.Targets, ", ")+ui.Reset, b.Path)
+		}
+	}
+
+	return nil
+}
+
+// cmdDoctor checks the environment and diagnoses issues
+func cmdDoctor(args []string) error {
+	ui.Header("Checking environment")
+	issues := 0
+
+	// Check config exists
+	if _, err := os.Stat(config.ConfigPath()); os.IsNotExist(err) {
+		ui.Error("Config not found: run 'skillshare init' first")
+		return nil
+	}
+	ui.Success("Config: %s", config.ConfigPath())
+
+	cfg, err := config.Load()
+	if err != nil {
+		ui.Error("Config error: %v", err)
+		return nil
+	}
+
+	// Check source exists
+	if info, err := os.Stat(cfg.Source); err != nil {
+		ui.Error("Source not found: %s", cfg.Source)
+		issues++
+	} else if !info.IsDir() {
+		ui.Error("Source is not a directory: %s", cfg.Source)
+		issues++
+	} else {
+		entries, _ := os.ReadDir(cfg.Source)
+		skillCount := 0
+		for _, e := range entries {
+			if e.IsDir() && e.Name()[0] != '.' {
+				skillCount++
+			}
+		}
+		ui.Success("Source: %s (%d skills)", cfg.Source, skillCount)
+	}
+
+	// Check symlink support
+	testSymlink := filepath.Join(os.TempDir(), "skillshare_symlink_test")
+	testTarget := filepath.Join(os.TempDir(), "skillshare_symlink_target")
+	os.Remove(testSymlink)
+	os.Remove(testTarget)
+	os.MkdirAll(testTarget, 0755)
+	defer os.Remove(testSymlink)
+	defer os.RemoveAll(testTarget)
+
+	if err := os.Symlink(testTarget, testSymlink); err != nil {
+		ui.Error("Symlink not supported: %v", err)
+		issues++
+	} else {
+		ui.Success("Symlink support: OK")
+	}
+
+	// Check each target
+	ui.Header("Checking targets")
+	for name, target := range cfg.Targets {
+		targetIssues := []string{}
+
+		// Check path exists
+		info, err := os.Lstat(target.Path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				// Check parent is writable
+				parent := filepath.Dir(target.Path)
+				if _, err := os.Stat(parent); err != nil {
+					targetIssues = append(targetIssues, "parent directory not found")
+				}
+			} else {
+				targetIssues = append(targetIssues, fmt.Sprintf("access error: %v", err))
+			}
+		} else {
+			// Check if it's a symlink
+			if info.Mode()&os.ModeSymlink != 0 {
+				link, _ := os.Readlink(target.Path)
+				absLink, _ := filepath.Abs(link)
+				absSource, _ := filepath.Abs(cfg.Source)
+				if absLink != absSource {
+					targetIssues = append(targetIssues, fmt.Sprintf("symlink points to wrong location: %s", link))
+				}
+			}
+		}
+
+		// Check write permission
+		if info != nil && info.IsDir() {
+			testFile := filepath.Join(target.Path, ".skillshare_write_test")
+			if f, err := os.Create(testFile); err != nil {
+				targetIssues = append(targetIssues, "not writable")
+			} else {
+				f.Close()
+				os.Remove(testFile)
+			}
+		}
+
+		if len(targetIssues) > 0 {
+			ui.Error("%s: %s", name, strings.Join(targetIssues, ", "))
+			issues++
+		} else {
+			status := sync.CheckStatus(target.Path, cfg.Source)
+			ui.Success("%s: %s", name, status.String())
+		}
+	}
+
+	// Summary
+	ui.Header("Summary")
+	if issues == 0 {
+		ui.Success("All checks passed!")
+	} else {
+		ui.Warning("%d issue(s) found", issues)
 	}
 
 	return nil

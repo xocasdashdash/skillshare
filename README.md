@@ -18,17 +18,19 @@ Keeping them in sync manually is tedious.
 
 ## The Solution
 
-`skillshare` maintains a single source directory and symlinks it to all CLI tools:
+`skillshare` maintains a single source directory and symlinks skills to all CLI tools:
 
 ```
-~/.skills/           <- Your skills live here (single source of truth)
-    ├── my-skill/
-    └── another-skill/
+~/.config/skillshare/
+    ├── config.yaml
+    └── skills/           <- Your shared skills live here
+        ├── my-skill/
+        └── another-skill/
 
-~/.claude/skills     -> ~/.skills (symlink)
-~/.codex/skills      -> ~/.skills (symlink)
-~/.cursor/skills     -> ~/.skills (symlink)
-...
+~/.claude/skills/
+    ├── my-skill     -> ~/.config/skillshare/skills/my-skill (symlink)
+    ├── another-skill -> ~/.config/skillshare/skills/another-skill (symlink)
+    └── local-only/   <- Local skills are preserved
 ```
 
 ## Installation
@@ -156,8 +158,11 @@ skillshare target list
 # Add custom target
 skillshare target add myapp ~/.myapp/skills
 
-# Remove target
+# Unlink target (restore skills and remove from config)
 skillshare target remove myapp
+
+# Unlink all targets
+skillshare target remove --all
 ```
 
 ## Configuration
@@ -165,7 +170,7 @@ skillshare target remove myapp
 Config file: `~/.config/skillshare/config.yaml`
 
 ```yaml
-source: ~/.skills
+source: ~/.config/skillshare/skills
 mode: merge   # default mode for all targets
 targets:
   claude:
@@ -195,12 +200,18 @@ Use `symlink` mode when you want all targets to share exactly the same skills.
 
 ## How It Works
 
-1. **init**: Detects CLI tools and creates config
+1. **init**: Detects CLI tools, optionally copy from existing skills
 2. **sync**:
-   - If target has files → migrate to source, then symlink
-   - If target is empty/missing → just create symlink
-   - If already linked → skip
+   - Backup targets with local skills before sync
+   - Create symlinks (merge mode: per-skill, symlink mode: whole directory)
 3. **status**: Check symlink health
+4. **target remove**: Backup, unlink symlinks, restore skills
+
+## Backups
+
+Automatic backups are created before `sync` and `target remove` operations.
+
+Location: `~/.config/skillshare/backups/<timestamp>/<target>/`
 
 ## License
 
