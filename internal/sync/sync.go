@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"skillshare/internal/config"
+	"skillshare/internal/utils"
 )
 
 // TargetStatus represents the state of a target
@@ -280,7 +281,7 @@ func SyncTargetMerge(name string, target config.TargetConfig, sourcePath string,
 
 	for _, entry := range sourceEntries {
 		// Skip hidden files/directories
-		if entry.Name()[0] == '.' {
+		if utils.IsHidden(entry.Name()) {
 			continue
 		}
 
@@ -374,7 +375,7 @@ func CheckStatusMerge(targetPath, sourcePath string) (TargetStatus, int, int) {
 
 	entries, _ := os.ReadDir(targetPath)
 	for _, entry := range entries {
-		if entry.Name()[0] == '.' {
+		if utils.IsHidden(entry.Name()) {
 			continue
 		}
 		if !entry.IsDir() && entry.Type()&os.ModeSymlink == 0 {

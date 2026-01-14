@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
+	"skillshare/internal/utils"
 )
 
 // TargetConfig holds configuration for a single target
@@ -90,8 +91,12 @@ func (c *Config) Save() error {
 
 // expandPath expands ~ to home directory
 func expandPath(path string) string {
-	if len(path) > 0 && path[0] == '~' {
-		home, _ := os.UserHomeDir()
+	if utils.HasTildePrefix(path) {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			// Cannot expand ~, return original path
+			return path
+		}
 		return filepath.Join(home, path[1:])
 	}
 	return path

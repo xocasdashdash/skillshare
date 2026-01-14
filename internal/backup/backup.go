@@ -9,15 +9,24 @@ import (
 	"time"
 )
 
-// BackupDir returns the backup directory path
+// BackupDir returns the backup directory path.
+// Returns empty string if home directory cannot be determined.
 func BackupDir() string {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
 	return filepath.Join(home, ".config", "skillshare", "backups")
 }
 
 // Create creates a backup of the target directory
 // Returns the backup path
 func Create(targetName, targetPath string) (string, error) {
+	backupDir := BackupDir()
+	if backupDir == "" {
+		return "", fmt.Errorf("cannot determine backup directory: home directory not found")
+	}
+
 	// Check if target exists and has content
 	info, err := os.Lstat(targetPath)
 	if err != nil {
@@ -40,7 +49,7 @@ func Create(targetName, targetPath string) (string, error) {
 
 	// Create backup directory with timestamp
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	backupPath := filepath.Join(BackupDir(), timestamp, targetName)
+	backupPath := filepath.Join(backupDir, timestamp, targetName)
 
 	if err := os.MkdirAll(backupPath, 0755); err != nil {
 		return "", fmt.Errorf("failed to create backup directory: %w", err)
@@ -57,6 +66,9 @@ func Create(targetName, targetPath string) (string, error) {
 // List returns all backups sorted by date (newest first)
 func List() ([]BackupInfo, error) {
 	backupDir := BackupDir()
+	if backupDir == "" {
+		return nil, fmt.Errorf("cannot determine backup directory: home directory not found")
+	}
 
 	entries, err := os.ReadDir(backupDir)
 	if err != nil {

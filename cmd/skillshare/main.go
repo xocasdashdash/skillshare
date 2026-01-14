@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -11,6 +12,8 @@ import (
 	"skillshare/internal/config"
 	"skillshare/internal/sync"
 	"skillshare/internal/ui"
+	"skillshare/internal/utils"
+	"skillshare/internal/validate"
 )
 
 var version = "dev"
@@ -36,6 +39,10 @@ func main() {
 		err = cmdDiff(args)
 	case "backup":
 		err = cmdBackup(args)
+	case "restore":
+		err = cmdRestore(args)
+	case "pull":
+		err = cmdPull(args)
 	case "doctor":
 		err = cmdDoctor(args)
 	case "target":
@@ -68,6 +75,12 @@ Commands:
   status                     Show status of all targets
   diff [--target name]       Show differences between source and targets
   backup [--target name]     Create backup of target(s)
+  backup --list              List all backups
+  backup --cleanup           Clean up old backups
+  restore <target>           Restore target from latest backup
+  restore <target> --from TS Restore target from specific backup
+  pull [target]              Pull local skills from target(s) to source
+  pull --all                 Pull from all targets
   doctor                     Check environment and diagnose issues
   target <name>              Show target info
   target <name> --mode MODE  Set target sync mode (merge|symlink)
@@ -82,11 +95,16 @@ Examples:
   skillshare init --source ~/.skills
   skillshare target add claude ~/.claude/skills
   skillshare sync
-  skillshare status`)
+  skillshare status
+  skillshare backup --list
+  skillshare restore claude`)
 }
 
 func cmdInit(args []string) error {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot determine home directory: %w", err)
+	}
 	sourcePath := "" // Will be determined
 
 	// Parse args
@@ -102,7 +120,7 @@ func cmdInit(args []string) error {
 	}
 
 	// Expand ~ in path
-	if len(sourcePath) > 0 && sourcePath[0] == '~' {
+	if utils.HasTildePrefix(sourcePath) {
 		sourcePath = filepath.Join(home, sourcePath[1:])
 	}
 
@@ -130,7 +148,7 @@ func cmdInit(args []string) error {
 			entries, _ := os.ReadDir(target.Path)
 			skillCount := 0
 			for _, e := range entries {
-				if e.IsDir() && e.Name()[0] != '.' {
+				if e.IsDir() && !utils.IsHidden(e.Name()) {
 					skillCount++
 				}
 			}
@@ -218,7 +236,7 @@ func cmdInit(args []string) error {
 		entries, _ := os.ReadDir(copyFrom)
 		copied := 0
 		for _, entry := range entries {
-			if !entry.IsDir() || entry.Name()[0] == '.' {
+			if !entry.IsDir() || utils.IsHidden(entry.Name()) {
 				continue
 			}
 			srcPath := filepath.Join(copyFrom, entry.Name())
@@ -294,6 +312,138 @@ func cmdInit(args []string) error {
 
 	if err := cfg.Save(); err != nil {
 		return err
+	}
+
+	// Initialize git in source directory for safety
+	gitDir := filepath.Join(sourcePath, ".git")
+	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		ui.Header("Git version control")
+		fmt.Println("  Git helps protect your skills from accidental deletion.")
+		fmt.Println()
+		fmt.Print("  Initialize git in source directory? [Y/n]: ")
+		var input string
+		fmt.Scanln(&input)
+		input = strings.ToLower(strings.TrimSpace(input))
+
+		if input == "" || input == "y" || input == "yes" {
+			// Run git init
+			cmd := exec.Command("git", "init")
+			cmd.Dir = sourcePath
+			if err := cmd.Run(); err != nil {
+				ui.Warning("Failed to initialize git: %v", err)
+			} else {
+				// Create .gitignore
+				gitignore := filepath.Join(sourcePath, ".gitignore")
+				if _, err := os.Stat(gitignore); os.IsNotExist(err) {
+					os.WriteFile(gitignore, []byte(".DS_Store\n"), 0644)
+				}
+
+				// Initial commit if there are files
+				entries, _ := os.ReadDir(sourcePath)
+				hasFiles := false
+				for _, e := range entries {
+					if e.Name() != ".git" && e.Name() != ".gitignore" {
+						hasFiles = true
+						break
+					}
+				}
+
+				if hasFiles {
+					addCmd := exec.Command("git", "add", ".")
+					addCmd.Dir = sourcePath
+					addCmd.Run()
+
+					commitCmd := exec.Command("git", "commit", "-m", "Initial skills")
+					commitCmd.Dir = sourcePath
+					commitCmd.Run()
+					ui.Success("Git initialized with initial commit")
+				} else {
+					ui.Success("Git initialized (empty repository)")
+				}
+				ui.Info("💡 Push to a remote repo for backup: git remote add origin <url>")
+			}
+		} else {
+			ui.Info("Skipped git initialization")
+			ui.Warning("⚠️  Without git, deleted skills cannot be recovered!")
+		}
+	} else {
+		ui.Info("Git already initialized in source directory")
+	}
+
+	// Create default skillshare skill
+	skillshareSkillDir := filepath.Join(sourcePath, "skillshare")
+	skillshareSkillFile := filepath.Join(skillshareSkillDir, "SKILL.md")
+
+	if _, err := os.Stat(skillshareSkillFile); os.IsNotExist(err) {
+		if err := os.MkdirAll(skillshareSkillDir, 0755); err == nil {
+			skillContent := `---
+name: skillshare
+description: Manage and sync skills across AI CLI tools
+---
+
+# Skillshare CLI
+
+Use skillshare to manage skills shared across multiple AI CLI tools.
+
+## Commands
+
+### Check Status
+` + "```bash" + `
+skillshare status
+` + "```" + `
+Shows source directory, skill count, and sync state for all targets.
+
+### Sync Skills
+` + "```bash" + `
+skillshare sync           # Sync all targets
+skillshare sync --dry-run # Preview changes
+` + "```" + `
+Pushes skills from source to all configured targets.
+
+### Pull Local Skills
+` + "```bash" + `
+skillshare pull claude    # Pull from specific target
+skillshare pull --all     # Pull from all targets
+` + "```" + `
+Copies skills created in target directories back to source.
+
+### View Differences
+` + "```bash" + `
+skillshare diff           # All targets
+skillshare diff claude    # Specific target
+` + "```" + `
+
+### Manage Targets
+` + "```bash" + `
+skillshare target list              # List all targets
+skillshare target add myapp ~/path  # Add custom target
+skillshare target remove myapp      # Remove target
+` + "```" + `
+
+### Backup & Restore
+` + "```bash" + `
+skillshare backup --list    # List backups
+skillshare backup --cleanup # Clean old backups
+skillshare restore claude   # Restore from backup
+` + "```" + `
+
+## Typical Workflow
+
+1. Create/edit skills in any target directory (e.g., ~/.claude/skills/)
+2. Run ` + "`skillshare pull`" + ` to bring changes to source
+3. Run ` + "`skillshare sync`" + ` to distribute to all targets
+4. Commit changes: ` + "`cd ~/.config/skillshare/skills && git add . && git commit`" + `
+
+## Tips
+
+- Source directory: ~/.config/skillshare/skills
+- Config file: ~/.config/skillshare/config.yaml
+- Use ` + "`skillshare doctor`" + ` to diagnose issues
+`
+			if err := os.WriteFile(skillshareSkillFile, []byte(skillContent), 0644); err == nil {
+				ui.Success("Created default skill: skillshare")
+			}
+		}
 	}
 
 	ui.Header("Initialized successfully")
@@ -380,7 +530,7 @@ func cmdSync(args []string) error {
 			continue
 		}
 
-		// Symlink mode (default)
+		// Symlink mode
 		status := sync.CheckStatus(target.Path, cfg.Source)
 
 		// Handle conflicts
@@ -408,8 +558,12 @@ func cmdSync(args []string) error {
 			ui.Success("%s: already linked", name)
 		case sync.StatusNotExist:
 			ui.Success("%s: symlink created", name)
+			ui.Warning("  ⚠️  Symlink mode: deleting files in %s will delete from source!", target.Path)
+			ui.Info("  💡 Use 'skillshare target remove %s' to safely unlink", name)
 		case sync.StatusHasFiles:
 			ui.Success("%s: files migrated and linked", name)
+			ui.Warning("  ⚠️  Symlink mode: deleting files in %s will delete from source!", target.Path)
+			ui.Info("  💡 Use 'skillshare target remove %s' to safely unlink", name)
 		case sync.StatusBroken:
 			ui.Success("%s: broken link fixed", name)
 		case sync.StatusConflict:
@@ -435,7 +589,7 @@ func cmdStatus(args []string) error {
 		entries, _ := os.ReadDir(cfg.Source)
 		skillCount := 0
 		for _, e := range entries {
-			if e.IsDir() && e.Name()[0] != '.' {
+			if e.IsDir() && !utils.IsHidden(e.Name()) {
 				skillCount++
 			}
 		}
@@ -519,10 +673,42 @@ func targetAdd(args []string) error {
 	name := args[0]
 	path := args[1]
 
+	// Validate target name
+	if err := validate.TargetName(name); err != nil {
+		return fmt.Errorf("invalid target name: %w", err)
+	}
+
 	// Expand ~
-	if len(path) > 0 && path[0] == '~' {
-		home, _ := os.UserHomeDir()
+	if utils.HasTildePrefix(path) {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("cannot expand path: %w", err)
+		}
 		path = filepath.Join(home, path[1:])
+	}
+
+	// Validate target path and get warnings
+	warnings, err := validate.TargetPath(path)
+	if err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
+
+	// Show warnings to user
+	for _, w := range warnings {
+		ui.Warning("%s", w)
+	}
+
+	// If path doesn't look like a skills directory, ask for confirmation
+	if !validate.IsLikelySkillsPath(path) {
+		ui.Warning("Path doesn't appear to be a skills directory")
+		fmt.Print("  Continue anyway? [y/N]: ")
+		var input string
+		fmt.Scanln(&input)
+		input = strings.ToLower(strings.TrimSpace(input))
+		if input != "y" && input != "yes" {
+			ui.Info("Cancelled")
+			return nil
+		}
 	}
 
 	cfg, err := config.Load()
@@ -829,7 +1015,7 @@ func cmdDiff(args []string) error {
 	sourceSkills := make(map[string]bool)
 	entries, _ := os.ReadDir(cfg.Source)
 	for _, e := range entries {
-		if e.IsDir() && e.Name()[0] != '.' {
+		if e.IsDir() && !utils.IsHidden(e.Name()) {
 			sourceSkills[e.Name()] = true
 		}
 	}
@@ -876,7 +1062,7 @@ func cmdDiff(args []string) error {
 		}
 
 		for _, e := range entries {
-			if e.Name()[0] == '.' {
+			if utils.IsHidden(e.Name()) {
 				continue
 			}
 			skillPath := filepath.Join(target.Path, e.Name())
@@ -917,20 +1103,39 @@ func cmdDiff(args []string) error {
 	return nil
 }
 
-// cmdBackup creates a manual backup
+// cmdBackup creates a manual backup or manages backups
 func cmdBackup(args []string) error {
 	var targetName string
+	doList := false
+	doCleanup := false
+
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--target" || args[i] == "-t" {
+		switch args[i] {
+		case "--list", "-l":
+			doList = true
+		case "--cleanup", "-c":
+			doCleanup = true
+		case "--target", "-t":
 			if i+1 < len(args) {
 				targetName = args[i+1]
 				i++
 			}
-		} else {
+		default:
 			targetName = args[i]
 		}
 	}
 
+	// Handle --list
+	if doList {
+		return backupList()
+	}
+
+	// Handle --cleanup
+	if doCleanup {
+		return backupCleanup()
+	}
+
+	// Default: create backup
 	cfg, err := config.Load()
 	if err != nil {
 		return err
@@ -982,6 +1187,256 @@ func cmdBackup(args []string) error {
 	return nil
 }
 
+// backupList lists all backups with details
+func backupList() error {
+	backups, err := backup.List()
+	if err != nil {
+		return err
+	}
+
+	if len(backups) == 0 {
+		ui.Info("No backups found")
+		return nil
+	}
+
+	totalSize, _ := backup.TotalSize()
+	ui.Header(fmt.Sprintf("All backups (%.1f MB total)", float64(totalSize)/(1024*1024)))
+
+	for _, b := range backups {
+		size := backup.Size(b.Path)
+		fmt.Printf("  %s  %-20s  %6.1f MB  %s\n",
+			b.Timestamp,
+			strings.Join(b.Targets, ", "),
+			float64(size)/(1024*1024),
+			b.Path)
+	}
+
+	return nil
+}
+
+// backupCleanup cleans up old backups
+func backupCleanup() error {
+	ui.Header("Cleaning up old backups")
+
+	// Show current state
+	backups, err := backup.List()
+	if err != nil {
+		return err
+	}
+
+	if len(backups) == 0 {
+		ui.Info("No backups to clean up")
+		return nil
+	}
+
+	totalSize, _ := backup.TotalSize()
+	ui.Info("Current: %d backups, %.1f MB total", len(backups), float64(totalSize)/(1024*1024))
+
+	// Use default cleanup config
+	cfg := backup.DefaultCleanupConfig()
+	removed, err := backup.Cleanup(cfg)
+	if err != nil {
+		return err
+	}
+
+	if removed > 0 {
+		newSize, _ := backup.TotalSize()
+		ui.Success("Removed %d old backups (freed %.1f MB)",
+			removed,
+			float64(totalSize-newSize)/(1024*1024))
+	} else {
+		ui.Info("No backups needed to be removed")
+	}
+
+	return nil
+}
+
+// cmdRestore restores a target from backup
+func cmdRestore(args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("usage: skillshare restore <target> [--from <timestamp>] [--force]")
+	}
+
+	var targetName string
+	var fromTimestamp string
+	force := false
+
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--from", "-f":
+			if i+1 < len(args) {
+				fromTimestamp = args[i+1]
+				i++
+			}
+		case "--force":
+			force = true
+		default:
+			if targetName == "" {
+				targetName = args[i]
+			}
+		}
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	target, exists := cfg.Targets[targetName]
+	if !exists {
+		return fmt.Errorf("target '%s' not found in config", targetName)
+	}
+
+	ui.Header(fmt.Sprintf("Restoring %s", targetName))
+
+	opts := backup.RestoreOptions{Force: force}
+
+	if fromTimestamp != "" {
+		// Restore from specific backup
+		backupInfo, err := backup.GetBackupByTimestamp(fromTimestamp)
+		if err != nil {
+			return err
+		}
+
+		if err := backup.RestoreToPath(backupInfo.Path, targetName, target.Path, opts); err != nil {
+			return err
+		}
+		ui.Success("Restored %s from backup %s", targetName, fromTimestamp)
+	} else {
+		// Restore from latest backup
+		timestamp, err := backup.RestoreLatest(targetName, target.Path, opts)
+		if err != nil {
+			return err
+		}
+		ui.Success("Restored %s from latest backup (%s)", targetName, timestamp)
+	}
+
+	return nil
+}
+
+// cmdPull pulls local skills from target(s) to source
+func cmdPull(args []string) error {
+	dryRun := false
+	force := false
+	pullAll := false
+	var targetName string
+
+	for _, arg := range args {
+		switch arg {
+		case "--dry-run", "-n":
+			dryRun = true
+		case "--force", "-f":
+			force = true
+		case "--all", "-a":
+			pullAll = true
+		default:
+			if targetName == "" && !strings.HasPrefix(arg, "-") {
+				targetName = arg
+			}
+		}
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	// Select targets to pull from
+	targets := cfg.Targets
+	if targetName != "" {
+		if t, exists := cfg.Targets[targetName]; exists {
+			targets = map[string]config.TargetConfig{targetName: t}
+		} else {
+			return fmt.Errorf("target '%s' not found", targetName)
+		}
+	} else if !pullAll && len(cfg.Targets) > 1 {
+		// If no target specified and multiple targets exist, ask or require --all
+		ui.Warning("Multiple targets found. Specify a target name or use --all")
+		fmt.Println("  Available targets:")
+		for name := range cfg.Targets {
+			fmt.Printf("    - %s\n", name)
+		}
+		return nil
+	}
+
+	// Collect all local skills
+	var allLocalSkills []sync.LocalSkillInfo
+	for name, target := range targets {
+		skills, err := sync.FindLocalSkills(target.Path, cfg.Source)
+		if err != nil {
+			ui.Warning("%s: %v", name, err)
+			continue
+		}
+		for i := range skills {
+			skills[i].TargetName = name
+		}
+		allLocalSkills = append(allLocalSkills, skills...)
+	}
+
+	if len(allLocalSkills) == 0 {
+		ui.Info("No local skills to pull")
+		return nil
+	}
+
+	// Display found skills
+	ui.Header("Local skills found")
+	for _, skill := range allLocalSkills {
+		fmt.Printf("  %-20s [%s] %s\n", skill.Name, skill.TargetName, skill.Path)
+	}
+
+	if dryRun {
+		ui.Info("Dry run - no changes made")
+		return nil
+	}
+
+	// Confirm unless --force
+	if !force {
+		fmt.Println()
+		fmt.Print("Pull these skills to source? [y/N]: ")
+		var input string
+		fmt.Scanln(&input)
+		input = strings.ToLower(strings.TrimSpace(input))
+		if input != "y" && input != "yes" {
+			ui.Info("Cancelled")
+			return nil
+		}
+	}
+
+	// Execute pull
+	ui.Header("Pulling skills")
+	result, err := sync.PullSkills(allLocalSkills, cfg.Source, sync.PullOptions{
+		DryRun: dryRun,
+		Force:  force,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Display results
+	for _, name := range result.Pulled {
+		ui.Success("%s: copied to source", name)
+	}
+	for _, name := range result.Skipped {
+		ui.Warning("%s: skipped (already exists in source, use --force to overwrite)", name)
+	}
+	for name, err := range result.Failed {
+		ui.Error("%s: %v", name, err)
+	}
+
+	if len(result.Pulled) > 0 {
+		fmt.Println()
+		ui.Info("💡 Run 'skillshare sync' to distribute to all targets")
+
+		// Check if source has git
+		gitDir := filepath.Join(cfg.Source, ".git")
+		if _, err := os.Stat(gitDir); err == nil {
+			ui.Info("💡 Commit changes: cd %s && git add . && git commit", cfg.Source)
+		}
+	}
+
+	return nil
+}
+
 // cmdDoctor checks the environment and diagnoses issues
 func cmdDoctor(args []string) error {
 	ui.Header("Checking environment")
@@ -1011,7 +1466,7 @@ func cmdDoctor(args []string) error {
 		entries, _ := os.ReadDir(cfg.Source)
 		skillCount := 0
 		for _, e := range entries {
-			if e.IsDir() && e.Name()[0] != '.' {
+			if e.IsDir() && !utils.IsHidden(e.Name()) {
 				skillCount++
 			}
 		}
