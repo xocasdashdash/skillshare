@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"skillshare/internal/config"
 	"skillshare/internal/sync"
@@ -102,9 +104,9 @@ func getSymlinkStatusDetail(target config.TargetConfig, source, mode string) (st
 
 func checkSkillVersion(cfg *config.Config) {
 	skillFile := filepath.Join(cfg.Source, "skillshare", "SKILL.md")
-	skillVersion := readSkillVersion(skillFile)
+	localVersion := readSkillVersion(skillFile)
 
-	if skillVersion == "" {
+	if localVersion == "" {
 		// No skill or no version - suggest update
 		ui.Header("Skill Update")
 		ui.Warning("skillshare skill not found or missing version")
@@ -112,12 +114,55 @@ func checkSkillVersion(cfg *config.Config) {
 		return
 	}
 
-	// Compare versions (simple string comparison works for semver)
-	if version != "dev" && skillVersion != version {
+	// Fetch remote version (with short timeout)
+	remoteVersion := fetchRemoteSkillVersion()
+	if remoteVersion == "" {
+		return // Network error, skip check silently
+	}
+
+	// Compare local vs remote
+	if localVersion != remoteVersion {
 		ui.Header("Skill Update")
-		ui.Warning("skillshare skill is outdated (skill: %s, CLI: %s)", skillVersion, version)
+		ui.Warning("skillshare skill update available (%s → %s)", localVersion, remoteVersion)
 		ui.Info("Run: skillshare update && skillshare sync")
 	}
+}
+
+func fetchRemoteSkillVersion() string {
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get(skillshareSkillURL)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	inFrontmatter := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if line == "---" {
+			if !inFrontmatter {
+				inFrontmatter = true
+				continue
+			}
+			break
+		}
+
+		if inFrontmatter && strings.HasPrefix(line, "version:") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				return strings.TrimSpace(parts[1])
+			}
+		}
+	}
+
+	return ""
 }
 
 func readSkillVersion(skillFile string) string {
