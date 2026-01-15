@@ -13,7 +13,7 @@
 
 <p align="center">
   <strong>Sync skills to all your AI CLI tools with one command</strong><br>
-  Supports Claude Code, Codex CLI, Crush, Cursor, GitHub Copilot, Goose, Antigravity, OpenCode
+  Supports Amp, Claude Code, Codex CLI, Crush, Cursor, Gemini CLI, GitHub Copilot, Goose, Letta, Antigravity, OpenCode
 </p>
 
 <p align="center">
