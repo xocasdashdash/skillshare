@@ -46,6 +46,14 @@
 
 ## Installation
 
+### Quick Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/runkids/skillshare/main/install.sh | sh
+```
+
+Works on macOS and Linux. Automatically detects your system and installs the latest version.
+
 ### Homebrew (macOS)
 
 ```bash
