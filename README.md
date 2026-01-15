@@ -263,6 +263,8 @@ Installed skills
 
 ## Update Built-in Skill
 
+> **Note:** Available since v0.3.1
+
 Update the built-in `skillshare` skill to the latest version from GitHub. This skill enables AI-driven management of your skills.
 
 ```bash
