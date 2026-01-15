@@ -31,41 +31,23 @@
 
 ## Why skillshare?
 
-Other tools install skills. **skillshare manages the entire lifecycle.**
-
-| Feature | skillshare | Others |
-|---------|:----------:|:------:|
-| Install from GitHub | ✅ | ✅ |
-| **Bidirectional sync** (pull + push) | ✅ | ❌ |
-| **Backup & restore** | ✅ | ❌ |
-| **Diff between source & targets** | ✅ | ❌ |
-| **Comprehensive diagnostics** | ✅ | ❌ |
-| Single binary (no Node.js) | ✅ | ❌ |
-| Interactive multi-select | ✅ | ❌ |
-| AI-driven management | ✅ | ❌ |
-
 **The problem:** You create a skill in Claude, but need it in Cursor, Codex, and Gemini too. Manually copying? Tedious. What if you update it? Copy again.
 
-**The solution:** skillshare maintains a single source of truth. Create once, sync everywhere. Edit anywhere, pull back, sync again.
+**The solution:** One source of truth. Create once, sync everywhere.
 
 ```bash
-# Create skill in Claude → pull to source → sync to all
-skillshare pull claude && skillshare sync
+skillshare pull claude && skillshare sync  # Pull from Claude → sync to all
 ```
 
+| What makes it different | |
+|-------------------------|---|
+| 🔄 Bidirectional sync | `pull` from any target, `sync` to all |
+| 💾 Backup & restore | Automatic before sync, restore anytime |
+| 🔍 Diagnostics | `doctor` checks git, broken links, duplicates |
+| 🤖 AI-native | Built-in skill lets your AI manage everything |
+
 > [!TIP]
-> **Let your AI manage skills for you.** After syncing, tell your AI:
->
-> *"I just created a new skill in Claude Code. Pull it to source and sync to all targets."*
->
-> No manual copying needed — the built-in `skillshare` skill handles everything.
-
-### Key Features
-
-- 🔄 **Bidirectional sync** — `pull` from any target, `sync` to all
-- 💾 **Automatic backups** — restore anytime with `skillshare restore`
-- 🔍 **Smart diagnostics** — `doctor` checks git status, broken links, duplicates
-- 🤖 **AI-native** — built-in skill lets your AI manage everything
+> **Let your AI manage skills.** Just say: *"Pull my new skill from Claude and sync to all targets."*
 
 ## Installation
 
@@ -163,8 +145,17 @@ Done! Your skills are now synced across all AI CLI tools.
 | `backup` | Manually backup targets |
 | `restore` | Restore from backup |
 | `doctor` | Diagnose configuration issues |
-| `target` | Manage targets (add/remove/list/mode) |
 | `update` | Update built-in skillshare skill from GitHub |
+
+### Target Management
+
+| Command | Description |
+|---------|-------------|
+| `target list` | List all configured targets |
+| `target <name>` | Show target info (path, mode, status) |
+| `target <name> --mode <mode>` | Change sync mode (merge/symlink) |
+| `target add <name> <path>` | Add custom target |
+| `target remove <name>` | Safely unlink target (backs up first) |
 
 ---
 
@@ -172,6 +163,7 @@ Done! Your skills are now synced across all AI CLI tools.
 
 Jump to a section:
 
+- [Target Management](#target-management-1)
 - [Install Skills](#install-skills)
 - [Uninstall Skills](#uninstall-skills)
 - [List Skills](#list-skills)
@@ -182,6 +174,40 @@ Jump to a section:
 - [Configuration](#configuration)
 - [FAQ](#faq)
 - [Common Issues](#common-issues)
+
+## Target Management
+
+Add, remove, or configure targets for any AI CLI tool.
+
+```bash
+skillshare target list                        # List all targets
+skillshare target claude                      # Show target info
+skillshare target claude --mode merge         # Change sync mode
+skillshare target add myapp ~/.myapp/skills   # Add custom target
+skillshare target remove myapp                # Safely unlink (backs up first)
+```
+
+### Adding Custom Targets
+
+Support any tool with a skills directory:
+
+```bash
+skillshare target add windsurf ~/.windsurf/skills
+skillshare target add aider ~/.aider/skills
+skillshare sync
+```
+
+### Removing Targets Safely
+
+`target remove` is safe — it backs up first, then replaces symlinks with copies:
+
+```bash
+skillshare target remove claude        # Backup → unlink → copy back
+skillshare target remove --all         # Remove all targets
+```
+
+> [!WARNING]
+> Never use `rm -rf` on a symlinked target — it deletes your source files!
 
 ## Install Skills
 
@@ -399,18 +425,6 @@ targets:
 ignore:
   - "**/.DS_Store"
   - "**/.git/**"
-```
-
-### Managing Targets
-
-Add any CLI or tool by pointing to its skills directory:
-
-```bash
-skillshare target list                        # List all targets
-skillshare target claude                      # Show target info
-skillshare target claude --mode merge         # Change mode
-skillshare target add myapp ~/.myapp/skills   # Add custom target
-skillshare target remove myapp                # Remove target
 ```
 
 ## FAQ
