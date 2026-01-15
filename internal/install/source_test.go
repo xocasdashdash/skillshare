@@ -339,3 +339,135 @@ func TestParseSource_GeminiCLIMonorepo(t *testing.T) {
 		t.Errorf("Name = %v, want skill-creator", source.Name)
 	}
 }
+
+func TestExpandGitHubShorthand(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		want   string
+	}{
+		{
+			name:  "owner/repo shorthand",
+			input: "anthropics/skills",
+			want:  "github.com/anthropics/skills",
+		},
+		{
+			name:  "owner/repo/path shorthand",
+			input: "anthropics/skills/skills/pdf",
+			want:  "github.com/anthropics/skills/skills/pdf",
+		},
+		{
+			name:  "already has github.com prefix",
+			input: "github.com/user/repo",
+			want:  "github.com/user/repo",
+		},
+		{
+			name:  "https URL unchanged",
+			input: "https://github.com/user/repo",
+			want:  "https://github.com/user/repo",
+		},
+		{
+			name:  "http URL unchanged",
+			input: "http://example.com/user/repo",
+			want:  "http://example.com/user/repo",
+		},
+		{
+			name:  "git SSH unchanged",
+			input: "git@github.com:user/repo.git",
+			want:  "git@github.com:user/repo.git",
+		},
+		{
+			name:  "file URL unchanged",
+			input: "file:///path/to/repo",
+			want:  "file:///path/to/repo",
+		},
+		{
+			name:  "absolute path unchanged",
+			input: "/path/to/skill",
+			want:  "/path/to/skill",
+		},
+		{
+			name:  "tilde path unchanged",
+			input: "~/skills/my-skill",
+			want:  "~/skills/my-skill",
+		},
+		{
+			name:  "relative path unchanged",
+			input: "./local-skill",
+			want:  "./local-skill",
+		},
+		{
+			name:  "parent path unchanged",
+			input: "../other-skill",
+			want:  "../other-skill",
+		},
+		{
+			name:  "single word unchanged (no slash)",
+			input: "somename",
+			want:  "somename",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := expandGitHubShorthand(tt.input)
+			if got != tt.want {
+				t.Errorf("expandGitHubShorthand(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseSource_GitHubShorthandExpansion(t *testing.T) {
+	// Test that shorthand is properly expanded and parsed
+	tests := []struct {
+		name         string
+		input        string
+		wantCloneURL string
+		wantSubdir   string
+		wantName     string
+	}{
+		{
+			name:         "owner/repo shorthand",
+			input:        "anthropics/skills",
+			wantCloneURL: "https://github.com/anthropics/skills.git",
+			wantSubdir:   "",
+			wantName:     "skills",
+		},
+		{
+			name:         "owner/repo/subdir shorthand",
+			input:        "anthropics/skills/skills/pdf",
+			wantCloneURL: "https://github.com/anthropics/skills.git",
+			wantSubdir:   "skills/pdf",
+			wantName:     "pdf",
+		},
+		{
+			name:         "ComposioHQ example",
+			input:        "ComposioHQ/awesome-claude-skills",
+			wantCloneURL: "https://github.com/ComposioHQ/awesome-claude-skills.git",
+			wantSubdir:   "",
+			wantName:     "awesome-claude-skills",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			source, err := ParseSource(tt.input)
+			if err != nil {
+				t.Fatalf("ParseSource(%q) error = %v", tt.input, err)
+			}
+			if source.Type != SourceTypeGitHub {
+				t.Errorf("Type = %v, want %v", source.Type, SourceTypeGitHub)
+			}
+			if source.CloneURL != tt.wantCloneURL {
+				t.Errorf("CloneURL = %q, want %q", source.CloneURL, tt.wantCloneURL)
+			}
+			if source.Subdir != tt.wantSubdir {
+				t.Errorf("Subdir = %q, want %q", source.Subdir, tt.wantSubdir)
+			}
+			if source.Name != tt.wantName {
+				t.Errorf("Name = %q, want %q", source.Name, tt.wantName)
+			}
+		})
+	}
+}

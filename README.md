@@ -164,12 +164,22 @@ Jump to a section:
 
 Install skills from local paths or git repositories directly into your source directory.
 
+### GitHub Shorthand
+
+Use `owner/repo` shorthand for quick installs (automatically expands to `github.com/owner/repo`):
+
+```bash
+skillshare install anthropics/skills                    # Discovery mode
+skillshare install anthropics/skills/skills/pdf         # Direct install
+skillshare install ComposioHQ/awesome-claude-skills     # Another repo
+```
+
 ### From Git Repository (Discovery Mode)
 
 When installing from a git repo without a specific path, skillshare discovers all skills and lets you choose:
 
 ```bash
-$ skillshare install github.com/ComposioHQ/awesome-claude-skills
+$ skillshare install ComposioHQ/awesome-claude-skills
 
 Discovering skills
 ---------------------------------------------
@@ -194,8 +204,8 @@ Enter numbers to install (e.g., 1,2,3 or 'all' or 'q' to quit): 1,3
 Install a specific skill directly by providing the full path:
 
 ```bash
-# From GitHub subdirectory (monorepo)
-skillshare install github.com/google-gemini/gemini-cli/packages/core/src/skills/builtin/skill-creator
+# GitHub shorthand with subdirectory
+skillshare install google-gemini/gemini-cli/packages/core/src/skills/builtin/skill-creator
 
 # From local path
 skillshare install ~/Downloads/my-skill

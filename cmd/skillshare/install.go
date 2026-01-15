@@ -257,11 +257,13 @@ func printInstallHelp() {
 Install a skill from a local path or git repository.
 
 Sources:
-  ~/path/to/skill            Local directory
-  github.com/user/repo       GitHub repository (discovers skills)
+  user/repo                  GitHub shorthand (expands to github.com/user/repo)
+  user/repo/path/to/skill    GitHub shorthand with subdirectory
+  github.com/user/repo       Full GitHub URL (discovers skills)
   github.com/user/repo/path  Subdirectory in GitHub repo (direct install)
   https://github.com/...     HTTPS git URL
   git@github.com:...         SSH git URL
+  ~/path/to/skill            Local directory
 
 Options:
   --name <name>       Override the skill name (only for direct install)
@@ -271,9 +273,9 @@ Options:
   --help, -h          Show this help
 
 Examples:
+  skillshare install anthropics/skills
+  skillshare install anthropics/skills/skills/pdf
+  skillshare install ComposioHQ/awesome-claude-skills
   skillshare install ~/my-skill
-  skillshare install github.com/ComposioHQ/awesome-claude-skills
-  skillshare install github.com/google-gemini/gemini-cli/packages/core/src/skills/builtin/skill-creator
-  skillshare install github.com/user/repo/skill --name my-custom-name
   skillshare install github.com/user/repo --force`)
 }

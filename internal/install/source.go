@@ -63,6 +63,9 @@ func ParseSource(input string) (*Source, error) {
 		return nil, fmt.Errorf("source cannot be empty")
 	}
 
+	// Expand GitHub shorthand: owner/repo -> github.com/owner/repo
+	input = expandGitHubShorthand(input)
+
 	source := &Source{Raw: input}
 
 	// Check for file:// URL (for testing with local git repos)
@@ -98,6 +101,29 @@ func isLocalPath(input string) bool {
 		strings.HasPrefix(input, "~") ||
 		strings.HasPrefix(input, "./") ||
 		strings.HasPrefix(input, "../")
+}
+
+// expandGitHubShorthand expands owner/repo to github.com/owner/repo
+// Examples:
+//   - anthropics/skills -> github.com/anthropics/skills
+//   - anthropics/skills/skills/pdf -> github.com/anthropics/skills/skills/pdf
+func expandGitHubShorthand(input string) string {
+	// Skip if already has a known prefix
+	if strings.HasPrefix(input, "github.com/") ||
+		strings.HasPrefix(input, "http://") ||
+		strings.HasPrefix(input, "https://") ||
+		strings.HasPrefix(input, "git@") ||
+		strings.HasPrefix(input, "file://") ||
+		isLocalPath(input) {
+		return input
+	}
+
+	// Check if it looks like owner/repo (at least one slash)
+	if strings.Contains(input, "/") {
+		return "github.com/" + input
+	}
+
+	return input
 }
 
 func parseLocalPath(input string, source *Source) (*Source, error) {
