@@ -375,7 +375,7 @@ func checkDuplicateSkills(cfg *config.Config, result *doctorResult) {
 		sort.Strings(duplicates)
 		ui.Warning("Duplicate skills: %s", strings.Join(duplicates, "; "))
 		ui.Info("  These exist in both source and target as separate copies.")
-		ui.Info("  Fix: run 'skillshare sync' to replace with symlinks.")
+		ui.Info("  Fix: manually delete target copies, then run 'skillshare sync'")
 		result.addWarning()
 	}
 }
