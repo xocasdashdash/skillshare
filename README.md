@@ -24,18 +24,71 @@
   <a href="#installation">Install</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#commands">Commands</a> •
-  <a href="#detailed-documentation">Detailed Docs</a> •
+  <a href="#reference">Reference</a> •
   <a href="#faq">FAQ</a> •
   <a href="#common-issues">Common Issues</a>
 </p>
 
+## Highlights
+
+- One source of truth for skills across CLI tools.
+- Auto-detects installed targets and bootstraps git.
+- Choose `merge` or `symlink` sync modes.
+- Automatic backups + restores protect local skills.
+- Built-in `skillshare` skill enables AI-driven sync.
+
+> [!TIP]
+> **Let your AI manage skills for you.** After syncing, tell your AI:
+>
+> *"I just created a new skill in Claude Code. Pull it to source and sync to all targets."*
+>
+> No manual copying needed — the `skillshare` skill handles everything.
+
 ## Installation
+
+### Homebrew (macOS)
 
 ```bash
 brew install runkids/tap/skillshare
 ```
 
-> Other methods: [Detailed Installation](#detailed-installation)
+### Manual install
+
+#### macOS
+
+```bash
+# Apple Silicon (M1/M2/M3/M4)
+curl -sL https://github.com/runkids/skillshare/releases/latest/download/skillshare_darwin_arm64.tar.gz | tar xz
+sudo mv skillshare /usr/local/bin/
+
+# Intel
+curl -sL https://github.com/runkids/skillshare/releases/latest/download/skillshare_darwin_amd64.tar.gz | tar xz
+sudo mv skillshare /usr/local/bin/
+```
+
+#### Linux
+
+```bash
+# x86_64
+curl -sL https://github.com/runkids/skillshare/releases/latest/download/skillshare_linux_amd64.tar.gz | tar xz
+sudo mv skillshare /usr/local/bin/
+
+# ARM64
+curl -sL https://github.com/runkids/skillshare/releases/latest/download/skillshare_linux_arm64.tar.gz | tar xz
+sudo mv skillshare /usr/local/bin/
+```
+
+#### Windows
+
+Download from [Releases](https://github.com/runkids/skillshare/releases) and add to PATH.
+
+### Uninstall
+
+```bash
+brew uninstall skillshare              # Homebrew
+sudo rm /usr/local/bin/skillshare      # Manual install
+rm -rf ~/.config/skillshare            # Config & data (optional)
+```
 
 ## Quick Start
 
@@ -46,15 +99,6 @@ skillshare sync            # Syncs skills to all targets
 ```
 
 Done! Your skills are now synced across all AI CLI tools.
-
-## ✨ Built-in Skill
-
-> [!TIP]
-> **Your AI can manage skills for you!** After syncing, just tell your AI:
->
-> *"I just created a new skill in Claude Code. Pull it to source and sync to all targets."*
->
-> No manual copying needed — the `skillshare` skill handles everything.
 
 ## How It Works
 
@@ -79,6 +123,8 @@ Done! Your skills are now synced across all AI CLI tools.
 |---------|-------------|
 | `init` | Initialize skillshare, detect CLIs, setup git |
 | `install` | Install a skill from local path or git repo |
+| `uninstall` | Remove a skill from source directory |
+| `list` | List all installed skills |
 | `sync` | Sync skills to all targets |
 | `status` | Show source, targets, and sync state |
 | `diff` | Show differences between source and targets |
@@ -88,61 +134,21 @@ Done! Your skills are now synced across all AI CLI tools.
 | `doctor` | Diagnose configuration issues |
 | `target` | Manage targets (add/remove/list/mode) |
 
-### Dry Run
-
-Preview changes without modifying files. See [Dry Run](#dry-run) for all supported commands.
-
 ---
 
-# Detailed Documentation
+## Reference
 
 Jump to a section:
 
-- [Detailed Installation](#detailed-installation)
 - [Install Skills](#install-skills)
+- [Uninstall Skills](#uninstall-skills)
+- [List Skills](#list-skills)
 - [Dry Run](#dry-run)
 - [Sync Modes](#sync-modes)
 - [Backup & Restore](#backup--restore)
 - [Configuration](#configuration)
 - [FAQ](#faq)
-
-## Detailed Installation
-
-### macOS
-
-```bash
-# Apple Silicon (M1/M2/M3/M4)
-curl -sL https://github.com/runkids/skillshare/releases/latest/download/skillshare_darwin_arm64.tar.gz | tar xz
-sudo mv skillshare /usr/local/bin/
-
-# Intel
-curl -sL https://github.com/runkids/skillshare/releases/latest/download/skillshare_darwin_amd64.tar.gz | tar xz
-sudo mv skillshare /usr/local/bin/
-```
-
-### Linux
-
-```bash
-# x86_64
-curl -sL https://github.com/runkids/skillshare/releases/latest/download/skillshare_linux_amd64.tar.gz | tar xz
-sudo mv skillshare /usr/local/bin/
-
-# ARM64
-curl -sL https://github.com/runkids/skillshare/releases/latest/download/skillshare_linux_arm64.tar.gz | tar xz
-sudo mv skillshare /usr/local/bin/
-```
-
-### Windows
-
-Download from [Releases](https://github.com/runkids/skillshare/releases) and add to PATH.
-
-### Uninstall
-
-```bash
-brew uninstall skillshare              # Homebrew
-sudo rm /usr/local/bin/skillshare      # Manual install
-rm -rf ~/.config/skillshare            # Config & data (optional)
-```
+- [Common Issues](#common-issues)
 
 ## Install Skills
 
@@ -215,6 +221,36 @@ skillshare install github.com/user/skill-repo --update
 
 After installing, run `skillshare sync` to distribute the skill to all targets.
 
+## Uninstall Skills
+
+Remove a skill from the source directory.
+
+```bash
+skillshare uninstall my-skill           # Prompts for confirmation
+skillshare uninstall my-skill --force   # Skip confirmation
+skillshare uninstall my-skill --dry-run # Preview without removing
+```
+
+After uninstalling, run `skillshare sync` to update all targets.
+
+## List Skills
+
+View all installed skills and their sources.
+
+```bash
+skillshare list            # List all skills
+skillshare list --verbose  # Show detailed info (source, type, install date)
+```
+
+Example output:
+```
+Installed skills
+--------------------------------------------------
+  my-skill                   (local)
+  skill-creator              github.com/google-gemini/gemini-cli/...
+  composio-skills            github.com/ComposioHQ/awesome-claude-skills
+```
+
 ## Dry Run
 
 Preview changes without modifying files. Supported commands:
@@ -222,6 +258,7 @@ Preview changes without modifying files. Supported commands:
 ```bash
 skillshare init --dry-run              # Preview init setup
 skillshare install <source> --dry-run  # Preview install
+skillshare uninstall <name> --dry-run  # Preview uninstall
 
 skillshare sync --dry-run              # Preview sync changes
 skillshare sync -n                     # Short flag for sync
@@ -355,6 +392,14 @@ cd ~/.config/skillshare/skills
 git checkout -- deleted-skill/
 ```
 
+## Common Issues
+
+- Seeing `config not found: run 'skillshare init' first`: run `skillshare init` (add `--source` if you want a custom path).
+- Integration tests cannot find the binary: run `go build -o bin/skillshare ./cmd/skillshare` or set `SKILLSHARE_TEST_BINARY`.
+- Deleting a symlinked target removed source files: use `skillshare target remove <name>` to unlink, then recover via git if needed.
+- Target directory already exists with files: run `skillshare backup` before `skillshare sync` to migrate safely.
+- Target path does not end with `skills`: verify the path and prefer `.../skills` as the suffix.
+
 ## Contributing
 
 ```bash
@@ -365,14 +410,6 @@ go test ./...
 ```
 
 [Open an issue](https://github.com/runkids/skillshare/issues) for bugs or feature requests.
-
-## Common Issues
-
-- Seeing `config not found: run 'skillshare init' first`: run `skillshare init` (add `--source` if you want a custom path).
-- Integration tests cannot find the binary: run `go build -o bin/skillshare ./cmd/skillshare` or set `SKILLSHARE_TEST_BINARY`.
-- Deleting a symlinked target removed source files: use `skillshare target remove <name>` to unlink, then recover via git if needed.
-- Target directory already exists with files: run `skillshare backup` before `skillshare sync` to migrate safely.
-- Target path does not end with `skills`: verify the path and prefer `.../skills` as the suffix.
 
 ## License
 

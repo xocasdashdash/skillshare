@@ -26,6 +26,8 @@ func main() {
 		err = cmdInstall(args)
 	case "uninstall":
 		err = cmdUninstall(args)
+	case "list":
+		err = cmdList(args)
 	case "sync":
 		err = cmdSync(args)
 	case "status":
@@ -68,6 +70,7 @@ Commands:
   init [--source PATH] [--dry-run] Initialize skillshare with a source directory
   install <source> [--dry-run]      Install a skill from local path or git repo
   uninstall <name> [--force]        Remove a skill from source directory
+  list [--verbose]                  List all installed skills
   sync [--dry-run] [--force]        Sync skills to all targets
   status                            Show status of all targets
   diff [--target name]              Show differences between source and targets
