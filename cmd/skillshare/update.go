@@ -40,6 +40,8 @@ func cmdUpdate(args []string) error {
 	}
 
 	if dryRun {
+		ui.Warning("Dry run mode - no changes will be made")
+		fmt.Println()
 		if exists {
 			ui.Info("Would update: %s", skillshareSkillFile)
 		} else {
