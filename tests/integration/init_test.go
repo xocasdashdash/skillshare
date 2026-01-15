@@ -2,7 +2,9 @@ package integration
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"skillshare/internal/testutil"
@@ -159,5 +161,68 @@ func TestInit_WithSkills_CopiesOnConfirm(t *testing.T) {
 	copiedSkillPath := filepath.Join(sb.SourcePath, "my-test-skill", "SKILL.md")
 	if !sb.FileExists(copiedSkillPath) {
 		t.Error("skill should be copied to source")
+	}
+}
+
+func TestInit_AlreadyInitialized_RemoteFlag_AddsRemote(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	// Create config to simulate already initialized
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	// Initialize git in source directory
+	cmd := exec.Command("git", "init")
+	cmd.Dir = sb.SourcePath
+	if err := cmd.Run(); err != nil {
+		t.Skip("git not available")
+	}
+
+	// Run init with --remote on already initialized setup
+	result := sb.RunCLI("init", "--remote", "git@github.com:test/skills.git")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "Git remote configured")
+
+	// Verify remote was added
+	cmd = exec.Command("git", "remote", "-v")
+	cmd.Dir = sb.SourcePath
+	output, err := cmd.Output()
+	if err != nil {
+		t.Errorf("failed to check git remote: %v", err)
+	}
+	if !strings.Contains(string(output), "git@github.com:test/skills.git") {
+		t.Errorf("remote should be configured, got: %s", output)
+	}
+}
+
+func TestInit_AlreadyInitialized_RemoteFlag_DryRun(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	// Initialize git in source directory
+	cmd := exec.Command("git", "init")
+	cmd.Dir = sb.SourcePath
+	if err := cmd.Run(); err != nil {
+		t.Skip("git not available")
+	}
+
+	result := sb.RunCLI("init", "--remote", "git@github.com:test/skills.git", "--dry-run")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "Would add git remote")
+
+	// Verify remote was NOT added
+	cmd = exec.Command("git", "remote", "-v")
+	cmd.Dir = sb.SourcePath
+	output, _ := cmd.Output()
+	if strings.Contains(string(output), "github.com") {
+		t.Error("dry-run should not add remote")
 	}
 }
