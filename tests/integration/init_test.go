@@ -279,3 +279,272 @@ targets: {}
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "already configured")
 }
+
+// ============================================
+// Non-interactive flag tests
+// ============================================
+
+func TestInit_NoCopy_StartsEmpty(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Create existing skills directory
+	claudeSkillsPath := filepath.Join(sb.Home, ".claude", "skills")
+	os.MkdirAll(claudeSkillsPath, 0755)
+	testSkillPath := filepath.Join(claudeSkillsPath, "my-skill")
+	os.MkdirAll(testSkillPath, 0755)
+	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Test"), 0644)
+
+	// Run init with --no-copy and --no-targets to skip prompts
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "--no-copy")
+
+	// Verify skill was NOT copied (only skillshare skill should exist)
+	copiedSkillPath := filepath.Join(sb.SourcePath, "my-skill")
+	if sb.FileExists(copiedSkillPath) {
+		t.Error("skill should NOT be copied when using --no-copy")
+	}
+}
+
+func TestInit_CopyFromByName(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Create existing claude skills directory with a skill
+	claudeSkillsPath := filepath.Join(sb.Home, ".claude", "skills")
+	os.MkdirAll(claudeSkillsPath, 0755)
+	testSkillPath := filepath.Join(claudeSkillsPath, "copy-test-skill")
+	os.MkdirAll(testSkillPath, 0755)
+	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Copy Test"), 0644)
+
+	// Run init with --copy-from claude
+	result := sb.RunCLI("init", "--copy-from", "claude", "--no-targets", "--no-git")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "matched by name")
+
+	// Verify skill was copied
+	copiedSkillPath := filepath.Join(sb.SourcePath, "copy-test-skill", "SKILL.md")
+	if !sb.FileExists(copiedSkillPath) {
+		t.Error("skill should be copied when using --copy-from claude")
+	}
+}
+
+func TestInit_CopyFromByPath(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Create custom skills directory
+	customPath := filepath.Join(sb.Home, "custom-skills")
+	os.MkdirAll(customPath, 0755)
+	testSkillPath := filepath.Join(customPath, "path-test-skill")
+	os.MkdirAll(testSkillPath, 0755)
+	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Path Test"), 0644)
+
+	// Run init with --copy-from as a path
+	result := sb.RunCLI("init", "--copy-from", customPath, "--no-targets", "--no-git")
+
+	result.AssertSuccess(t)
+
+	// Verify skill was copied
+	copiedSkillPath := filepath.Join(sb.SourcePath, "path-test-skill", "SKILL.md")
+	if !sb.FileExists(copiedSkillPath) {
+		t.Error("skill should be copied when using --copy-from with path")
+	}
+}
+
+func TestInit_TargetsCSV(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Create both claude and cursor directories
+	claudeSkillsPath := filepath.Join(sb.Home, ".claude", "skills")
+	os.MkdirAll(claudeSkillsPath, 0755)
+	cursorSkillsPath := filepath.Join(sb.Home, ".cursor", "skills")
+	os.MkdirAll(cursorSkillsPath, 0755)
+
+	// Run init with --targets specifying both
+	result := sb.RunCLI("init", "--no-copy", "--targets", "claude,cursor", "--no-git")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "Added 2 targets")
+
+	// Verify config has both targets
+	configContent := sb.ReadFile(sb.ConfigPath)
+	if !strings.Contains(configContent, "claude:") {
+		t.Error("config should contain claude target")
+	}
+	if !strings.Contains(configContent, "cursor:") {
+		t.Error("config should contain cursor target")
+	}
+}
+
+func TestInit_AllTargets(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Create multiple CLI directories
+	claudeSkillsPath := filepath.Join(sb.Home, ".claude", "skills")
+	os.MkdirAll(claudeSkillsPath, 0755)
+	cursorSkillsPath := filepath.Join(sb.Home, ".cursor", "skills")
+	os.MkdirAll(cursorSkillsPath, 0755)
+
+	// Run init with --all-targets
+	result := sb.RunCLI("init", "--no-copy", "--all-targets", "--no-git")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "--all-targets")
+
+	// Verify config has targets
+	configContent := sb.ReadFile(sb.ConfigPath)
+	if !strings.Contains(configContent, "claude:") || !strings.Contains(configContent, "cursor:") {
+		t.Errorf("config should contain all detected targets, got: %s", configContent)
+	}
+}
+
+func TestInit_NoTargets(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Create a CLI directory
+	claudeSkillsPath := filepath.Join(sb.Home, ".claude", "skills")
+	os.MkdirAll(claudeSkillsPath, 0755)
+
+	// Run init with --no-targets
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "--no-targets")
+
+	// Verify config has empty targets
+	configContent := sb.ReadFile(sb.ConfigPath)
+	if strings.Contains(configContent, "claude:") {
+		t.Error("config should NOT contain any targets when using --no-targets")
+	}
+}
+
+func TestInit_NoGit_SkipsGitInit(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Run init with --no-git
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "--no-git")
+
+	// Verify .git was NOT created
+	gitDir := filepath.Join(sb.SourcePath, ".git")
+	if sb.FileExists(gitDir) {
+		t.Error(".git directory should NOT exist when using --no-git")
+	}
+}
+
+func TestInit_GitFlag_InitializesGit(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Run init with --git
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--git")
+
+	result.AssertSuccess(t)
+
+	// Verify .git was created
+	gitDir := filepath.Join(sb.SourcePath, ".git")
+	if !sb.FileExists(gitDir) {
+		t.Error(".git directory should exist when using --git")
+	}
+}
+
+func TestInit_MutualExclusion_CopyFromAndNoCopy(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Run init with both --copy-from and --no-copy
+	result := sb.RunCLI("init", "--copy-from", "claude", "--no-copy")
+
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "mutually exclusive")
+}
+
+func TestInit_MutualExclusion_TargetsFlags(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Run init with both --targets and --all-targets
+	result := sb.RunCLI("init", "--no-copy", "--targets", "claude", "--all-targets", "--no-git")
+
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "mutually exclusive")
+}
+
+func TestInit_MutualExclusion_GitFlags(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Run init with both --git and --no-git
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--git", "--no-git")
+
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "mutually exclusive")
+}
+
+func TestInit_FullNonInteractive(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	// Create existing skills
+	claudeSkillsPath := filepath.Join(sb.Home, ".claude", "skills")
+	os.MkdirAll(claudeSkillsPath, 0755)
+	testSkillPath := filepath.Join(claudeSkillsPath, "full-test")
+	os.MkdirAll(testSkillPath, 0755)
+	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Full Test"), 0644)
+
+	// Full non-interactive: copy from claude, all targets, with git
+	result := sb.RunCLI("init", "--copy-from", "claude", "--all-targets", "--git")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "Initialized successfully")
+
+	// Verify skill was copied
+	if !sb.FileExists(filepath.Join(sb.SourcePath, "full-test", "SKILL.md")) {
+		t.Error("skill should be copied")
+	}
+
+	// Verify git was initialized
+	if !sb.FileExists(filepath.Join(sb.SourcePath, ".git")) {
+		t.Error(".git should exist")
+	}
+
+	// Verify config has target
+	configContent := sb.ReadFile(sb.ConfigPath)
+	if !strings.Contains(configContent, "claude:") {
+		t.Error("config should contain claude target")
+	}
+}

@@ -40,10 +40,15 @@ func NewSandbox(t *testing.T) *Sandbox {
 		// Try to find it relative to the project root
 		// This works when running from the project directory
 		cwd, _ := os.Getwd()
-		sb.BinaryPath = filepath.Join(cwd, "..", "..", "bin", "skillshare")
-		// Also try the project root bin directory
-		if _, err := os.Stat(sb.BinaryPath); os.IsNotExist(err) {
-			sb.BinaryPath = filepath.Join(cwd, "bin", "skillshare")
+		candidates := []string{
+			filepath.Join(cwd, "bin", "skillshare"),
+			filepath.Join(cwd, "..", "..", "bin", "skillshare"),
+		}
+		for _, path := range candidates {
+			if _, err := os.Stat(path); err == nil {
+				sb.BinaryPath = path
+				break
+			}
 		}
 	}
 

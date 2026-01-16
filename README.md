@@ -49,7 +49,7 @@ skillshare pull claude && skillshare sync  # Pull from Claude → sync to all
 
 ## AI-Native Execution
 
-The built-in [`skillshare` skill](https://github.com/runkids/skillshare/tree/main/skills/skillshare) enables your AI CLI to manage skills directly — **no manual installation required**.
+The built-in [`skillshare` skill](https://github.com/runkids/skillshare/tree/main/skills/skillshare) enables your AI CLI to manage skills directly. Just download the skill folder into your AI CLI's skills directory — the binary is auto-downloaded on first use.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -69,7 +69,7 @@ The built-in [`skillshare` skill](https://github.com/runkids/skillshare/tree/mai
 ```
 
 > [!TIP]
-> The skill automatically downloads the binary on first use — just say:
+> Once installed, just say:
 > - *"Show my skillshare status"*
 > - *"Sync my skills to all targets"*
 > - *"Pull skills from Claude and sync everywhere"*
@@ -173,7 +173,7 @@ Done! Your skills are now synced across all AI CLI tools.
 | `backup` | Manually backup targets |
 | `restore` | Restore from backup |
 | `doctor` | Diagnose configuration issues |
-| `update` | Update built-in skillshare skill from GitHub |
+| `upgrade` | Upgrade CLI and built-in skillshare skill |
 
 ### Target Management
 
@@ -195,7 +195,7 @@ Jump to a section:
 - [Install Skills](#install-skills)
 - [Uninstall Skills](#uninstall-skills)
 - [List Skills](#list-skills)
-- [Update Built-in Skill](#update-built-in-skill)
+- [Upgrade](#upgrade)
 - [Dry Run](#dry-run)
 - [Sync Modes](#sync-modes)
 - [Backup & Restore](#backup--restore)
@@ -299,7 +299,7 @@ skillshare install git@github.com:user/repo.git
 |--------|-------------|
 | `--name <name>` | Override the skill name (direct install only) |
 | `--force, -f` | Overwrite if skill already exists |
-| `--update, -u` | Update existing installation (git pull) |
+| `--update, -u` | Update existing (git pull if possible, else reinstall) |
 | `--dry-run, -n` | Preview discovered skills without installing |
 
 ### Examples
@@ -350,21 +350,19 @@ Installed skills
   composio-skills            github.com/ComposioHQ/awesome-claude-skills
 ```
 
-## Update Built-in Skill
+## Upgrade
 
-> **Note:** Available since v0.3.1
-
-Update the built-in `skillshare` skill to the latest version from GitHub. This skill enables AI-driven management of your skills.
+Upgrade the CLI binary and built-in `skillshare` skill to the latest version.
 
 ```bash
-skillshare update              # Update skillshare skill
-skillshare update --force      # Skip confirmation
-skillshare update --dry-run    # Preview without updating
+skillshare upgrade              # Upgrade CLI + skill
+skillshare upgrade --skill      # Upgrade skill only
+skillshare upgrade --cli        # Upgrade CLI only
+skillshare upgrade --force      # Skip confirmation
+skillshare upgrade --dry-run    # Preview without upgrading
 ```
 
-The skill is downloaded from the [skillshare repository](https://github.com/runkids/skillshare/tree/main/skills/skillshare) and includes AI behavior guides, command references, and troubleshooting tips.
-
-After updating, run `skillshare sync` to distribute to all targets.
+After upgrading the skill, run `skillshare sync` to distribute to all targets.
 
 ## Dry Run
 
@@ -394,7 +392,7 @@ skillshare restore claude --from 2026-01-14_21-22-18 -n  # Preview restore from 
 skillshare target remove claude -n     # Preview unlink
 skillshare target remove --all -n      # Preview unlink all
 
-skillshare update -n                   # Preview skill update
+skillshare upgrade -n                  # Preview upgrade
 ```
 
 ## Sync Modes

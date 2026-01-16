@@ -13,6 +13,26 @@ import (
 	"skillshare/internal/validate"
 )
 
+func resolveSkillFromName(skillName string, cfg *config.Config) (*install.Source, error) {
+	skillPath := filepath.Join(cfg.Source, skillName)
+
+	meta, err := install.ReadMeta(skillPath)
+	if err != nil {
+		return nil, fmt.Errorf("skill '%s' not found or has no metadata", skillName)
+	}
+	if meta == nil {
+		return nil, fmt.Errorf("skill '%s' has no metadata, cannot update", skillName)
+	}
+
+	source, err := install.ParseSource(meta.Source)
+	if err != nil {
+		return nil, fmt.Errorf("invalid source in metadata: %w", err)
+	}
+
+	source.Name = skillName
+	return source, nil
+}
+
 func cmdInstall(args []string) error {
 	opts := install.InstallOptions{}
 	var sourceArg string
@@ -62,7 +82,20 @@ func cmdInstall(args []string) error {
 	// Parse the source
 	source, err := install.ParseSource(sourceArg)
 	if err != nil {
-		return fmt.Errorf("invalid source: %w", err)
+		if opts.Update || opts.Force {
+			resolvedSource, resolveErr := resolveSkillFromName(sourceArg, cfg)
+			if resolveErr != nil {
+				return fmt.Errorf("invalid source: %w", err)
+			}
+			source = resolvedSource
+			ui.Info("Resolved '%s' from installed skill metadata", sourceArg)
+		} else {
+			return fmt.Errorf("invalid source: %w", err)
+		}
+	}
+
+	if (opts.Update || opts.Force) && source.Raw != sourceArg {
+		return handleDirectInstall(source, cfg, opts)
 	}
 
 	// If git source without subdir, discover skills and let user choose
@@ -233,9 +266,10 @@ func handleDirectInstall(source *install.Source, cfg *config.Config, opts instal
 }
 
 func printInstallHelp() {
-	fmt.Println(`Usage: skillshare install <source> [options]
+	fmt.Println(`Usage: skillshare install <source|skill-name> [options]
 
 Install a skill from a local path or git repository.
+When using --update or --force with a skill name, skillshare uses stored metadata to resolve the source.
 
 Sources:
   user/repo                  GitHub shorthand (expands to github.com/user/repo)
@@ -249,7 +283,7 @@ Sources:
 Options:
   --name <name>       Override the skill name (only for direct install)
   --force, -f         Overwrite if skill already exists
-  --update, -u        Update existing installation (git pull for git sources)
+  --update, -u        Update existing (git pull if possible, else reinstall)
   --dry-run, -n       Preview the installation without making changes
   --help, -h          Show this help
 
@@ -258,5 +292,10 @@ Examples:
   skillshare install anthropics/skills/skills/pdf
   skillshare install ComposioHQ/awesome-claude-skills
   skillshare install ~/my-skill
-  skillshare install github.com/user/repo --force`)
+  skillshare install github.com/user/repo --force
+
+Update existing skills:
+  skillshare install my-skill --update       # Update using stored source
+  skillshare install my-skill --force        # Reinstall using stored source
+  skillshare install my-skill --update -n    # Preview update`)
 }

@@ -356,10 +356,8 @@ func handleUpdate(source *Source, destPath string, result *InstallResult, opts I
 		return result, nil
 	}
 
-	// For other cases, need to reinstall
-	if !opts.Force {
-		return nil, fmt.Errorf("cannot update '%s': use --force to reinstall", source.Name)
-	}
+	// For other cases (e.g., git with subdir), reinstall automatically
+	// --update implies willingness to reinstall when git pull is not possible
 
 	// Remove and reinstall
 	if !opts.DryRun {
@@ -370,7 +368,7 @@ func handleUpdate(source *Source, destPath string, result *InstallResult, opts I
 
 	return Install(source, destPath, InstallOptions{
 		Name:   opts.Name,
-		Force:  false, // Already handled
+		Force:  true, // Force=true to handle dry-run case where destPath still exists
 		DryRun: opts.DryRun,
 		Update: false,
 	})

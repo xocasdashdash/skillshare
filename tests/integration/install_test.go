@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"skillshare/internal/install"
 	"skillshare/internal/testutil"
 )
 
@@ -99,14 +100,12 @@ func TestInstall_Force_Overwrites(t *testing.T) {
 	sb := testutil.NewSandbox(t)
 	defer sb.Cleanup()
 
-	// Create existing skill in source
 	sb.CreateSkill("existing-skill", map[string]string{"SKILL.md": "# Old Version"})
 
 	sb.WriteConfig(`source: ` + sb.SourcePath + `
 targets: {}
 `)
 
-	// Create local skill to install
 	localSkillPath := filepath.Join(sb.Root, "existing-skill")
 	os.MkdirAll(localSkillPath, 0755)
 	os.WriteFile(filepath.Join(localSkillPath, "SKILL.md"), []byte("# New Version"), 0644)
@@ -116,11 +115,162 @@ targets: {}
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "Installed")
 
-	// Verify new content
 	content := sb.ReadFile(filepath.Join(sb.SourcePath, "existing-skill", "SKILL.md"))
 	if !strings.Contains(content, "New Version") {
 		t.Error("skill content should be updated")
 	}
+}
+
+func TestInstall_Force_ByName_UsesMetadata(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	localSkillPath := filepath.Join(sb.Root, "local-source")
+	os.MkdirAll(localSkillPath, 0755)
+	os.WriteFile(filepath.Join(localSkillPath, "SKILL.md"), []byte("# Version 1"), 0644)
+
+	result := sb.RunCLI("install", localSkillPath, "--name", "reinstall-skill")
+	result.AssertSuccess(t)
+
+	os.WriteFile(filepath.Join(localSkillPath, "SKILL.md"), []byte("# Version 2"), 0644)
+
+	result = sb.RunCLI("install", "reinstall-skill", "--force")
+	result.AssertSuccess(t)
+
+	content := sb.ReadFile(filepath.Join(sb.SourcePath, "reinstall-skill", "SKILL.md"))
+	if !strings.Contains(content, "Version 2") {
+		t.Error("skill should be reinstalled from stored source")
+	}
+}
+
+func TestInstall_Update_ByName_ReinstallsNonGit(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	localSkillPath := filepath.Join(sb.Root, "update-source")
+	os.MkdirAll(localSkillPath, 0755)
+	os.WriteFile(filepath.Join(localSkillPath, "SKILL.md"), []byte("# Version 1"), 0644)
+
+	result := sb.RunCLI("install", localSkillPath, "--name", "update-skill")
+	result.AssertSuccess(t)
+
+	// Update source content
+	os.WriteFile(filepath.Join(localSkillPath, "SKILL.md"), []byte("# Version 2"), 0644)
+
+	// --update should reinstall for non-git sources
+	result = sb.RunCLI("install", "update-skill", "--update")
+	result.AssertSuccess(t)
+
+	// Verify updated content
+	content := sb.ReadFile(filepath.Join(sb.SourcePath, "update-skill", "SKILL.md"))
+	if !strings.Contains(content, "Version 2") {
+		t.Error("skill should be reinstalled with updated content")
+	}
+}
+
+func TestInstall_Update_ByName_GitPull(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	gitRepoPath := filepath.Join(sb.Root, "git-skill")
+	os.MkdirAll(gitRepoPath, 0755)
+	sb.WriteFile(filepath.Join(gitRepoPath, "SKILL.md"), "# Version 1")
+
+	cmd := exec.Command("git", "init")
+	cmd.Dir = gitRepoPath
+	if err := cmd.Run(); err != nil {
+		t.Skip("git not available, skipping git test")
+	}
+
+	cmd = exec.Command("git", "config", "user.email", "test@test.com")
+	cmd.Dir = gitRepoPath
+	cmd.Run()
+
+	cmd = exec.Command("git", "config", "user.name", "Test")
+	cmd.Dir = gitRepoPath
+	cmd.Run()
+
+	cmd = exec.Command("git", "add", ".")
+	cmd.Dir = gitRepoPath
+	cmd.Run()
+
+	cmd = exec.Command("git", "commit", "-m", "Initial commit")
+	cmd.Dir = gitRepoPath
+	cmd.Run()
+
+	source, err := install.ParseSource("file://" + gitRepoPath)
+	if err != nil {
+		t.Fatalf("failed to parse source: %v", err)
+	}
+
+	result, err := install.Install(source, filepath.Join(sb.SourcePath, "git-skill"), install.InstallOptions{Force: true})
+	if err != nil {
+		t.Fatalf("failed to install from git source: %v", err)
+	}
+	if result.Action != "cloned" {
+		t.Fatalf("expected install action cloned, got %s", result.Action)
+	}
+
+	metaPath := filepath.Join(sb.SourcePath, "git-skill", ".skillshare-meta.json")
+	metaContent := sb.ReadFile(metaPath)
+	if !strings.Contains(metaContent, "\"source\": \"file://") {
+		t.Fatalf("expected metadata source to use file:// clone URL")
+	}
+
+	content := sb.ReadFile(filepath.Join(sb.SourcePath, "git-skill", "SKILL.md"))
+	if !strings.Contains(content, "Version 1") {
+		t.Fatalf("expected installed skill to contain Version 1")
+	}
+
+	sb.WriteFile(filepath.Join(gitRepoPath, "SKILL.md"), "# Version 2")
+
+	cmd = exec.Command("git", "add", ".")
+	cmd.Dir = gitRepoPath
+	cmd.Run()
+
+	cmd = exec.Command("git", "commit", "-m", "Update skill")
+	cmd.Dir = gitRepoPath
+	cmd.Run()
+
+	updateResult := sb.RunCLI("install", "git-skill", "--update")
+	updateResult.AssertSuccess(t)
+	updateResult.AssertAnyOutputContains(t, "Installed")
+
+	metaContent = sb.ReadFile(metaPath)
+	if !strings.Contains(metaContent, "\"source\": \"file://") {
+		t.Fatalf("expected metadata source to use file:// clone URL")
+	}
+
+	content = sb.ReadFile(filepath.Join(sb.SourcePath, "git-skill", "SKILL.md"))
+	if !strings.Contains(content, "Version 2") {
+		t.Fatalf("skill should be updated via git pull")
+	}
+}
+
+func TestInstall_Update_ByName_NotInstalled_Errors(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	result := sb.RunCLI("install", "missing-skill", "--update")
+
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "invalid source")
 }
 
 func TestInstall_DryRun_NoChanges(t *testing.T) {

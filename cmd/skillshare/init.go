@@ -25,6 +25,16 @@ func cmdInit(args []string) error {
 	remoteURL := ""
 	dryRun := false
 
+	// Non-interactive flags
+	copyFrom := ""      // --copy-from: copy from specified name or path
+	noCopy := false     // --no-copy: start fresh
+	targetsArg := ""    // --targets: comma-separated list
+	allTargets := false // --all-targets: add all detected
+	noTargets := false  // --no-targets: skip targets
+	initGit := false    // --git: initialize git (set by flag)
+	noGit := false      // --no-git: skip git
+	gitFlagSet := false // track if --git was explicitly set
+
 	// Parse args
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -42,7 +52,56 @@ func cmdInit(args []string) error {
 			i++
 		case "--dry-run", "-n":
 			dryRun = true
+		case "--copy-from", "-c":
+			if i+1 >= len(args) {
+				return fmt.Errorf("--copy-from requires a name or path argument")
+			}
+			copyFrom = args[i+1]
+			i++
+		case "--no-copy":
+			noCopy = true
+		case "--targets", "-t":
+			if i+1 >= len(args) {
+				return fmt.Errorf("--targets requires a comma-separated list")
+			}
+			targetsArg = args[i+1]
+			i++
+		case "--all-targets":
+			allTargets = true
+		case "--no-targets":
+			noTargets = true
+		case "--git":
+			initGit = true
+			gitFlagSet = true
+		case "--no-git":
+			noGit = true
 		}
+	}
+
+	// Validate mutual exclusions
+	if copyFrom != "" && noCopy {
+		return fmt.Errorf("--copy-from and --no-copy are mutually exclusive")
+	}
+	exclusiveCount := 0
+	if targetsArg != "" {
+		exclusiveCount++
+	}
+	if allTargets {
+		exclusiveCount++
+	}
+	if noTargets {
+		exclusiveCount++
+	}
+	if exclusiveCount > 1 {
+		return fmt.Errorf("--targets, --all-targets, and --no-targets are mutually exclusive")
+	}
+	if gitFlagSet && noGit {
+		return fmt.Errorf("--git and --no-git are mutually exclusive")
+	}
+
+	// --remote implies --git
+	if remoteURL != "" && !noGit {
+		initGit = true
 	}
 
 	// Expand ~ in path
@@ -80,8 +139,8 @@ func cmdInit(args []string) error {
 		}
 	}
 
-	// Ask user if they want to initialize from existing skills
-	copyFrom, copyFromName := promptCopyFrom(withSkills)
+	// Determine copy source (non-interactive or prompt)
+	copyFromPath, copyFromName := promptCopyFrom(withSkills, copyFrom, noCopy, home)
 
 	if dryRun {
 		ui.Warning("Dry run mode - no changes will be made")
@@ -99,12 +158,12 @@ func cmdInit(args []string) error {
 	}
 
 	// Copy skills from selected directory
-	if copyFrom != "" {
-		copySkillsToSource(copyFrom, sourcePath, dryRun)
+	if copyFromPath != "" {
+		copySkillsToSource(copyFromPath, sourcePath, dryRun)
 	}
 
 	// Build targets list
-	targets := buildTargetsList(detected, copyFrom, copyFromName)
+	targets := buildTargetsList(detected, copyFromPath, copyFromName, targetsArg, allTargets, noTargets)
 
 	// Create config
 	cfg := &config.Config{
@@ -124,7 +183,7 @@ func cmdInit(args []string) error {
 	}
 
 	// Initialize git in source directory for safety
-	initGitIfNeeded(sourcePath, dryRun)
+	initGitIfNeeded(sourcePath, dryRun, initGit, noGit)
 
 	// Set up git remote for cross-machine sync
 	setupGitRemote(sourcePath, remoteURL, dryRun)
@@ -207,7 +266,40 @@ func detectCLIDirectories(home string) []detectedDir {
 	return detected
 }
 
-func promptCopyFrom(withSkills []detectedDir) (copyFrom, copyFromName string) {
+func promptCopyFrom(withSkills []detectedDir, copyFromArg string, noCopy bool, home string) (copyFrom, copyFromName string) {
+	// Non-interactive: --no-copy
+	if noCopy {
+		ui.Info("Starting with empty source (--no-copy)")
+		return "", ""
+	}
+
+	// Non-interactive: --copy-from
+	if copyFromArg != "" {
+		// First, try to match by name (e.g., "claude", "cursor")
+		for _, d := range withSkills {
+			if strings.EqualFold(d.name, copyFromArg) {
+				ui.Success("Will copy skills from %s (matched by name)", d.name)
+				return d.path, d.name
+			}
+		}
+
+		// Treat as path
+		path := copyFromArg
+		if utils.HasTildePrefix(path) {
+			path = filepath.Join(home, path[1:])
+		}
+
+		// Verify path exists
+		if info, err := os.Stat(path); err == nil && info.IsDir() {
+			ui.Success("Will copy skills from %s", path)
+			return path, ""
+		}
+
+		ui.Warning("Copy source not found: %s", copyFromArg)
+		return "", ""
+	}
+
+	// Interactive mode
 	if len(withSkills) == 0 {
 		return "", ""
 	}
@@ -284,11 +376,54 @@ func copySkillsToSource(copyFrom, sourcePath string, dryRun bool) {
 	ui.Success("Copied %d skills to source", copied)
 }
 
-func buildTargetsList(detected []detectedDir, copyFrom, copyFromName string) map[string]config.TargetConfig {
+func buildTargetsList(detected []detectedDir, copyFrom, copyFromName, targetsArg string, allTargets, noTargets bool) map[string]config.TargetConfig {
 	defaultTargets := config.DefaultTargets()
 	targets := make(map[string]config.TargetConfig)
 
-	// Add the directory user chose to copy from
+	// Non-interactive: --no-targets
+	if noTargets {
+		ui.Info("Skipping targets (--no-targets)")
+		return targets
+	}
+
+	// Non-interactive: --all-targets
+	if allTargets {
+		for _, d := range detected {
+			targets[d.name] = defaultTargets[d.name]
+		}
+		if len(targets) > 0 {
+			ui.Success("Added all %d detected targets (--all-targets)", len(targets))
+		} else {
+			ui.Warning("No CLI skills directories detected")
+		}
+		return targets
+	}
+
+	// Non-interactive: --targets (comma-separated list)
+	if targetsArg != "" {
+		names := strings.Split(targetsArg, ",")
+		added := 0
+		for _, name := range names {
+			name = strings.TrimSpace(name)
+			if name == "" {
+				continue
+			}
+
+			// Check if it's a known target name
+			if target, ok := defaultTargets[name]; ok {
+				targets[name] = target
+				added++
+			} else {
+				ui.Warning("Unknown target: %s (skipped)", name)
+			}
+		}
+		if added > 0 {
+			ui.Success("Added %d targets from --targets", added)
+		}
+		return targets
+	}
+
+	// Interactive mode: Add the directory user chose to copy from
 	if copyFromName != "" {
 		targets[copyFromName] = config.TargetConfig{Path: copyFrom}
 	}
@@ -354,13 +489,31 @@ func summarizeInitConfig(cfg *config.Config) {
 	}
 }
 
-func initGitIfNeeded(sourcePath string, dryRun bool) {
+func initGitIfNeeded(sourcePath string, dryRun, initGit, noGit bool) {
+	// Non-interactive: --no-git
+	if noGit {
+		ui.Info("Skipped git initialization (--no-git)")
+		ui.Warning("Without git, deleted skills cannot be recovered!")
+		return
+	}
+
 	gitDir := filepath.Join(sourcePath, ".git")
 	if _, err := os.Stat(gitDir); err == nil {
 		ui.Info("Git already initialized in source directory")
 		return
 	}
 
+	// Non-interactive: --git flag was set, proceed without prompting
+	if initGit {
+		if dryRun {
+			ui.Info("Dry run - would initialize git in %s (--git)", sourcePath)
+			return
+		}
+		doGitInit(sourcePath)
+		return
+	}
+
+	// Interactive mode
 	ui.Header("Git version control")
 	fmt.Println("  Git helps protect your skills from accidental deletion.")
 	fmt.Println()
@@ -384,6 +537,10 @@ func initGitIfNeeded(sourcePath string, dryRun bool) {
 		return
 	}
 
+	doGitInit(sourcePath)
+}
+
+func doGitInit(sourcePath string) {
 	// Run git init
 	cmd := exec.Command("git", "init")
 	cmd.Dir = sourcePath

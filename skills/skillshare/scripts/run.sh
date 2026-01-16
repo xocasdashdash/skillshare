@@ -1,6 +1,6 @@
 #!/bin/sh
 # skillshare runner - npx-style execution without installation
-# Usage: curl -fsSL https://raw.githubusercontent.com/runkids/skillshare/main/run.sh | sh -s -- [command] [args]
+# Usage: curl -fsSL https://raw.githubusercontent.com/runkids/skillshare/main/skills/skillshare/scripts/run.sh | sh -s -- [command] [args]
 # Or:    sh run.sh [command] [args]
 set -e
 
