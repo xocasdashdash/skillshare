@@ -96,6 +96,7 @@ func targetAdd(args []string) error {
 	}
 
 	ui.Success("Added target: %s -> %s", name, path)
+	ui.Info("Run 'skillshare sync' to sync skills to this target")
 	return nil
 }
 

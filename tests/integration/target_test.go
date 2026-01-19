@@ -24,6 +24,7 @@ targets: {}
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "Added target")
+	result.AssertOutputContains(t, "Run 'skillshare sync'")
 
 	// Verify config was updated
 	configContent := sb.ReadFile(sb.ConfigPath)
@@ -64,6 +65,23 @@ targets:
 
 	result.AssertFailure(t)
 	result.AssertAnyOutputContains(t, "already exists")
+}
+
+func TestTargetAdd_PathNotExists_ReturnsError(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	// Path that doesn't exist
+	nonExistentPath := filepath.Join(sb.Home, ".nonexistent", "skills")
+
+	result := sb.RunCLI("target", "add", "myapp", nonExistentPath)
+
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "does not exist")
 }
 
 func TestTargetRemove_ExistingTarget_Removes(t *testing.T) {

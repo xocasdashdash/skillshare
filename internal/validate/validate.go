@@ -89,10 +89,11 @@ func Path(path string) error {
 
 // TargetPath validates a target path for adding as a skill sync target.
 // Returns warnings (non-fatal) and errors (fatal).
+// Errors are returned when:
+//   - The path does not exist
+//   - The path is not a directory
 // Warnings are returned when:
-//   - The path doesn't end with "skills"
-//   - The path doesn't exist yet
-//   - The parent directory doesn't exist
+//   - The path doesn't end with "skills" or "skill"
 func TargetPath(path string) (warnings []string, err error) {
 	// Basic path validation
 	if err := Path(path); err != nil {
@@ -109,16 +110,9 @@ func TargetPath(path string) (warnings []string, err error) {
 	info, statErr := os.Stat(path)
 	if statErr != nil {
 		if os.IsNotExist(statErr) {
-			// Path doesn't exist - check parent
-			parent := filepath.Dir(path)
-			if _, parentErr := os.Stat(parent); os.IsNotExist(parentErr) {
-				warnings = append(warnings, fmt.Sprintf("parent directory doesn't exist: %s", parent))
-			} else {
-				warnings = append(warnings, "target directory doesn't exist yet (will be created on sync)")
-			}
-		} else {
-			return nil, fmt.Errorf("cannot access path: %w", statErr)
+			return nil, fmt.Errorf("path does not exist: %s", path)
 		}
+		return nil, fmt.Errorf("cannot access path: %w", statErr)
 	} else if !info.IsDir() {
 		return nil, fmt.Errorf("path exists but is not a directory")
 	}

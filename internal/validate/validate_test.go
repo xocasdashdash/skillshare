@@ -1,6 +1,8 @@
 package validate
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -87,6 +89,66 @@ func TestIsLikelySkillsPath(t *testing.T) {
 			got := IsLikelySkillsPath(tt.input)
 			if got != tt.expected {
 				t.Errorf("IsLikelySkillsPath(%q) = %v, want %v", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestTargetPath(t *testing.T) {
+	// Create temp directory for testing
+	tempDir := t.TempDir()
+	existingDir := filepath.Join(tempDir, "skills")
+	if err := os.MkdirAll(existingDir, 0755); err != nil {
+		t.Fatalf("failed to create test dir: %v", err)
+	}
+
+	// Create a file (not a directory)
+	existingFile := filepath.Join(tempDir, "file.txt")
+	if err := os.WriteFile(existingFile, []byte("test"), 0644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+
+	tests := []struct {
+		name        string
+		path        string
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name:    "existing directory",
+			path:    existingDir,
+			wantErr: false,
+		},
+		{
+			name:        "path does not exist",
+			path:        filepath.Join(tempDir, "nonexistent"),
+			wantErr:     true,
+			errContains: "does not exist",
+		},
+		{
+			name:        "path is file not directory",
+			path:        existingFile,
+			wantErr:     true,
+			errContains: "not a directory",
+		},
+		{
+			name:        "empty path",
+			path:        "",
+			wantErr:     true,
+			errContains: "cannot be empty",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := TargetPath(tt.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TargetPath(%q) error = %v, wantErr %v", tt.path, err, tt.wantErr)
+			}
+			if tt.wantErr && tt.errContains != "" && err != nil {
+				if !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("TargetPath(%q) error = %v, want error containing %q", tt.path, err, tt.errContains)
+				}
 			}
 		})
 	}
