@@ -118,3 +118,4 @@ targets: {}
 	// Source is github.com/runkids/skillshare/skills/skillshare
 	result.AssertOutputContains(t, "github.com/runkids/skillshare")
 }
+

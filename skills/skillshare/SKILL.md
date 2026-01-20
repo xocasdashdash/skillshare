@@ -1,13 +1,11 @@
 ---
 name: skillshare
-version: 0.6.3
+version: 0.6.4
 description: Syncs skills across AI CLI tools from a single source of truth. Use when asked to "sync skills", "pull skills", "show status", "list skills", "install skill", "initialize skillshare", or manage skill targets.
 argument-hint: "[command] [target] [--dry-run]"
 ---
 
 # Skillshare CLI
-
-> **Shorthand:** `ss` = `skillshare` (e.g., `ss status`, `ss sync`)
 
 ```
 Source: ~/.config/skillshare/skills  ← Edit here (single source of truth)
