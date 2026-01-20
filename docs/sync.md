@@ -1,0 +1,368 @@
+# Sync, Pull, Push & Backup
+
+## Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      SYNC OPERATIONS                            │
+│                                                                 │
+│                        ┌──────────┐                             │
+│                        │  Remote  │                             │
+│                        │  (git)   │                             │
+│                        └────┬─────┘                             │
+│                    push ↑   │   ↓ pull --remote                 │
+│                             │                                   │
+│    ┌────────────────────────┼────────────────────────┐          │
+│    │                  SOURCE                         │          │
+│    │        ~/.config/skillshare/skills/             │          │
+│    └────────────────────────┬────────────────────────┘          │
+│                 sync ↓      │      ↑ pull <target>              │
+│         ┌───────────────────┼───────────────────┐               │
+│         ▼                   ▼                   ▼               │
+│   ┌──────────┐        ┌──────────┐        ┌──────────┐          │
+│   │  Claude  │        │  Cursor  │        │  Codex   │          │
+│   └──────────┘        └──────────┘        └──────────┘          │
+│                         TARGETS                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+| Command | Direction | Description |
+|---------|-----------|-------------|
+| `sync` | Source → Targets | Push skills to all targets |
+| `pull <target>` | Target → Source | Pull skills from one target |
+| `push` | Source → Remote | Commit and push to git |
+| `pull --remote` | Remote → Source → Targets | Pull from git, then sync |
+
+---
+
+## Sync
+
+Push skills from source to all targets.
+
+```bash
+skillshare sync              # Sync to all targets
+skillshare sync --dry-run    # Preview changes
+skillshare sync -n           # Short form
+```
+
+### What Happens
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ skillshare sync                                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Backup targets (automatic)                                   │
+│    → ~/.config/skillshare/backups/2026-01-20_15-30-00/          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. For each target:                                             │
+│    ┌─────────────────────────────────────────────────────────┐  │
+│    │ merge mode:                                             │  │
+│    │   • Create symlink for each skill                       │  │
+│    │   • Preserve local-only skills                          │  │
+│    │   • Prune orphaned symlinks                             │  │
+│    ├─────────────────────────────────────────────────────────┤  │
+│    │ symlink mode:                                           │  │
+│    │   • Replace entire directory with symlink               │  │
+│    └─────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. Report results                                               │
+│    ✓ claude: merged (5 linked, 2 local, 0 updated, 1 pruned)    │
+│    ✓ cursor: merged (5 linked, 0 local, 0 updated, 0 pruned)    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Example Output
+
+```
+$ skillshare sync
+
+Syncing skills
+─────────────────────────────────────────
+→ Source: ~/.config/skillshare/skills (5 skills)
+
+✓ claude: merged (5 linked, 2 local, 0 updated, 1 pruned)
+✓ cursor: merged (5 linked, 0 local, 0 updated, 0 pruned)
+✓ codex: symlink
+
+Sync complete
+```
+
+---
+
+## Status
+
+Show current sync state.
+
+```bash
+skillshare status
+```
+
+### Example Output
+
+```
+Skillshare Status
+─────────────────────────────────────────
+Source: ~/.config/skillshare/skills
+  Skills: 5
+  Git: clean (remote: origin)
+
+Targets:
+  claude    merge     5/5 synced    ~/.claude/skills
+  cursor    merge     5/5 synced    ~/.cursor/skills
+  codex     symlink   ✓ linked      ~/.codex/skills
+
+Tracked Repositories:
+  _team-repo    5 skills    up-to-date
+```
+
+---
+
+## Diff
+
+Show differences between source and targets.
+
+```bash
+skillshare diff              # All targets
+skillshare diff claude       # Specific target
+```
+
+### Example Output
+
+```
+Diff: source ↔ claude
+─────────────────────────────────────────
+  + my-new-skill      (in source, not in target)
+  - old-skill         (in target, not in source)
+  ~ modified-skill    (different content)
+```
+
+---
+
+## Pull
+
+Pull skills from a target back to source.
+
+### Pull from Target
+
+```bash
+skillshare pull claude           # Pull from Claude
+skillshare pull claude --dry-run # Preview
+skillshare pull --all            # Pull from all targets
+```
+
+**When to use**: You created/edited a skill directly in a target (e.g., `~/.claude/skills/`) and want to bring it to source.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ skillshare pull claude                                          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Find skills in target that aren't symlinks                   │
+│    → ~/.claude/skills/new-skill/ (local)                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. Copy to source                                               │
+│    → ~/.config/skillshare/skills/new-skill/                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. Replace original with symlink                                │
+│    ~/.claude/skills/new-skill → source/new-skill                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**After pulling:**
+```bash
+skillshare pull claude
+skillshare sync  # ← Distribute to other targets
+```
+
+### Pull from Remote
+
+```bash
+skillshare pull --remote     # Pull from git remote
+```
+
+**When to use**: You pushed changes from another machine and want to sync them here.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ skillshare pull --remote                                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. cd ~/.config/skillshare/skills                               │
+│    git pull                                                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. skillshare sync (automatic)                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Push
+
+Commit and push source to git remote.
+
+```bash
+skillshare push                  # Auto-generated message
+skillshare push -m "Add pdf"     # Custom message
+```
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ skillshare push -m "Add pdf skill"                              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ cd ~/.config/skillshare/skills                                  │
+│ git add .                                                       │
+│ git commit -m "Add pdf skill"                                   │
+│ git push                                                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Conflict handling:**
+- If remote is ahead, `push` fails → run `pull --remote` first
+
+---
+
+## Sync Modes
+
+| Mode | Behavior | Use case |
+|------|----------|----------|
+| `merge` | Each skill symlinked individually | **Default.** Preserves local skills. |
+| `symlink` | Entire directory is one symlink | Exact copies everywhere. |
+
+### Merge Mode (Default)
+
+```
+Source                          Target (claude)
+─────────────────────────────────────────────────────────────
+skills/                         ~/.claude/skills/
+├── my-skill/        ────────►  ├── my-skill/ → (symlink)
+├── another/         ────────►  ├── another/  → (symlink)
+└── ...                         ├── local-only/  (preserved)
+                                └── ...
+```
+
+### Symlink Mode
+
+```
+Source                          Target (claude)
+─────────────────────────────────────────────────────────────
+skills/              ────────►  ~/.claude/skills → (symlink to source)
+├── my-skill/
+├── another/
+└── ...
+```
+
+### Change Mode
+
+```bash
+skillshare target claude --mode merge
+skillshare target claude --mode symlink
+skillshare sync  # Apply change
+```
+
+### Safety Warning
+
+> **In symlink mode, deleting through target deletes source!**
+> ```bash
+> rm -rf ~/.claude/skills/my-skill  # ❌ Deletes from SOURCE
+> skillshare target remove claude   # ✅ Safe way to unlink
+> ```
+
+---
+
+## Backup
+
+Backups are created **automatically** before `sync` and `target remove`.
+
+Location: `~/.config/skillshare/backups/<timestamp>/`
+
+### Manual Backup
+
+```bash
+skillshare backup              # Backup all targets
+skillshare backup claude       # Backup specific target
+skillshare backup --list       # List all backups
+skillshare backup --cleanup    # Remove old backups
+skillshare backup --dry-run    # Preview
+```
+
+### Example Output
+
+```
+$ skillshare backup --list
+
+Backups
+─────────────────────────────────────────
+  2026-01-20_15-30-00/
+    claude/    5 skills, 2.1 MB
+    cursor/    5 skills, 2.1 MB
+  2026-01-19_10-00-00/
+    claude/    4 skills, 1.8 MB
+```
+
+---
+
+## Restore
+
+Restore targets from backup.
+
+```bash
+skillshare restore claude                              # Latest backup
+skillshare restore claude --from 2026-01-19_10-00-00   # Specific backup
+skillshare restore claude --dry-run                    # Preview
+```
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ skillshare restore claude                                       │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Find latest backup for claude                                │
+│    → backups/2026-01-20_15-30-00/claude/                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. Remove current target directory                              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. Copy backup to target                                        │
+│    → ~/.claude/skills/                                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Related
+
+- [targets.md](targets.md) — Manage targets
+- [cross-machine.md](cross-machine.md) — Sync across computers
+- [install.md](install.md) — Install skills
