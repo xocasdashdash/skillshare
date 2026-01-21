@@ -83,11 +83,18 @@ func updateAllTrackedRepos(cfg *config.Config, dryRun, force bool) error {
 		// Check for uncommitted changes
 		if isDirty, _ := isRepoDirty(repoPath); isDirty {
 			if !force {
-				ui.Warning("  %s: has uncommitted changes (use --force to override)", repo)
+				ui.Warning("  %s: has uncommitted changes (use --force to discard)", repo)
 				skipped++
 				continue
 			}
-			ui.Warning("  %s: has uncommitted changes, updating anyway (--force)", repo)
+			ui.Warning("  %s: discarding local changes (--force)", repo)
+			if !dryRun {
+				if err := gitRestoreRepo(repoPath); err != nil {
+					ui.Error("  %s: failed to discard changes: %v", repo, err)
+					hasError = true
+					continue
+				}
+			}
 		}
 
 		if dryRun {
@@ -164,14 +171,20 @@ func updateTrackedRepo(cfg *config.Config, repoName string, dryRun, force bool) 
 			ui.Warning("Repository has uncommitted changes:")
 			showDirtyFiles(repoPath)
 			fmt.Println()
-			ui.Error("Use --force to update anyway (may cause merge conflicts)")
+			ui.Error("Use --force to discard changes and update")
 			return fmt.Errorf("uncommitted changes in repository")
 		}
-		ui.Warning("Repository has uncommitted changes, updating anyway (--force)")
+		ui.Warning("Discarding local changes (--force):")
+		showDirtyFiles(repoPath)
+		if !dryRun {
+			if err := gitRestoreRepo(repoPath); err != nil {
+				return fmt.Errorf("failed to discard changes: %w", err)
+			}
+		}
 	}
 
 	if dryRun {
-		ui.Warning("[dry-run] Would run: git pull")
+		ui.Warning("[dry-run] Would run: git restore . && git pull")
 		return nil
 	}
 
@@ -249,6 +262,16 @@ func gitPullRepo(repoPath string) error {
 	return nil
 }
 
+func gitRestoreRepo(repoPath string) error {
+	cmd := exec.Command("git", "restore", ".")
+	cmd.Dir = repoPath
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
+	}
+	return nil
+}
+
 func showDirtyFiles(repoPath string) {
 	cmd := exec.Command("git", "status", "--short")
 	cmd.Dir = repoPath
@@ -271,14 +294,14 @@ For tracked repos (_repo-name): runs git pull
 For regular skills: reinstalls from stored source metadata
 
 Safety: Tracked repos with uncommitted changes are skipped by default.
-Use --force to override (may cause merge conflicts).
+Use --force to discard local changes and update.
 
 Arguments:
   name                Skill name or tracked repo name
 
 Options:
   --all, -a           Update all tracked repositories
-  --force, -f         Force update even with uncommitted changes
+  --force, -f         Discard local changes and force update
   --dry-run, -n       Preview without making changes
   --help, -h          Show this help
 
@@ -288,5 +311,5 @@ Examples:
   skillshare update team-skills           # _ prefix is optional for repos
   skillshare update --all                 # Update all tracked repos
   skillshare update --all --dry-run       # Preview updates
-  skillshare update _team --force         # Update even with local changes`)
+  skillshare update _team --force         # Discard changes and update`)
 }

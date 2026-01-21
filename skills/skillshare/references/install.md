@@ -41,7 +41,11 @@ Updates skills or tracked repos.
 skillshare update my-skill       # Update from stored source
 skillshare update _team-repo     # Git pull tracked repo
 skillshare update --all          # Update all tracked repos
+skillshare update _repo --force  # Discard local changes and update
 ```
+
+Safety: Repos with uncommitted changes are blocked by default.
+Use `--force` to discard local changes and pull latest.
 
 After update: `skillshare sync`
 

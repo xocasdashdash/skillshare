@@ -294,10 +294,11 @@ skillshare update --all            # Update ALL tracked repos
 skillshare update _team-repo
 # → "Repository has uncommitted changes"
 # → Shows modified files
-# → Requires --force to override
+# → Requires --force to discard and update
 
-skillshare update _team-repo --force  # Update anyway (may cause conflicts)
+skillshare update _team-repo --force  # Discards local changes, then pulls
 skillshare update --all               # Skips dirty repos, updates others
+skillshare update --all --force       # Discards all local changes, updates all
 ```
 
 ### After Updating
