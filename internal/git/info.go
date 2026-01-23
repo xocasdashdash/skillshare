@@ -1,0 +1,200 @@
+package git
+
+import (
+	"os/exec"
+	"strconv"
+	"strings"
+)
+
+// DiffStats holds git diff statistics
+type DiffStats struct {
+	FilesChanged int
+	Insertions   int
+	Deletions    int
+}
+
+// CommitInfo holds a single commit info
+type CommitInfo struct {
+	Hash    string
+	Message string
+}
+
+// UpdateInfo holds info about changes from an update
+type UpdateInfo struct {
+	Commits    []CommitInfo
+	Stats      DiffStats
+	UpToDate   bool
+	BeforeHash string
+	AfterHash  string
+}
+
+// GetCurrentHash returns the current HEAD hash (short)
+func GetCurrentHash(repoPath string) (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--short", "HEAD")
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// Fetch runs git fetch
+func Fetch(repoPath string) error {
+	cmd := exec.Command("git", "fetch")
+	cmd.Dir = repoPath
+	return cmd.Run()
+}
+
+// GetCommitsBetween returns commits between two refs
+func GetCommitsBetween(repoPath, from, to string) ([]CommitInfo, error) {
+	cmd := exec.Command("git", "log", "--oneline", from+".."+to)
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	var commits []CommitInfo
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) == 2 {
+			commits = append(commits, CommitInfo{
+				Hash:    parts[0],
+				Message: parts[1],
+			})
+		}
+	}
+	return commits, nil
+}
+
+// GetDiffStats returns diff statistics between two refs
+func GetDiffStats(repoPath, from, to string) (DiffStats, error) {
+	cmd := exec.Command("git", "diff", "--shortstat", from+".."+to)
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return DiffStats{}, err
+	}
+
+	return parseDiffStats(string(out)), nil
+}
+
+// parseDiffStats parses git diff --shortstat output
+// Example: " 5 files changed, 120 insertions(+), 30 deletions(-)"
+func parseDiffStats(output string) DiffStats {
+	stats := DiffStats{}
+	output = strings.TrimSpace(output)
+	if output == "" {
+		return stats
+	}
+
+	parts := strings.Split(output, ", ")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if strings.Contains(part, "file") {
+			stats.FilesChanged = extractNumber(part)
+		} else if strings.Contains(part, "insertion") {
+			stats.Insertions = extractNumber(part)
+		} else if strings.Contains(part, "deletion") {
+			stats.Deletions = extractNumber(part)
+		}
+	}
+	return stats
+}
+
+func extractNumber(s string) int {
+	var numStr string
+	for _, c := range s {
+		if c >= '0' && c <= '9' {
+			numStr += string(c)
+		} else if numStr != "" {
+			break
+		}
+	}
+	n, _ := strconv.Atoi(numStr)
+	return n
+}
+
+// Pull runs git pull and returns update info (quiet mode)
+func Pull(repoPath string) (*UpdateInfo, error) {
+	info := &UpdateInfo{}
+
+	// Get hash before pull
+	beforeHash, err := GetCurrentHash(repoPath)
+	if err != nil {
+		return nil, err
+	}
+	info.BeforeHash = beforeHash
+
+	// Run git pull (quiet mode)
+	cmd := exec.Command("git", "pull", "--quiet")
+	cmd.Dir = repoPath
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	// Get hash after pull
+	afterHash, err := GetCurrentHash(repoPath)
+	if err != nil {
+		return nil, err
+	}
+	info.AfterHash = afterHash
+
+	// Check if already up to date by comparing hashes
+	if beforeHash == afterHash {
+		info.UpToDate = true
+		return info, nil
+	}
+
+	// Get commits between
+	commits, _ := GetCommitsBetween(repoPath, beforeHash, afterHash)
+	info.Commits = commits
+
+	// Get diff stats
+	stats, _ := GetDiffStats(repoPath, beforeHash, afterHash)
+	info.Stats = stats
+
+	return info, nil
+}
+
+// IsDirty checks if repo has uncommitted changes
+func IsDirty(repoPath string) (bool, error) {
+	cmd := exec.Command("git", "status", "--porcelain")
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+	return strings.TrimSpace(string(out)) != "", nil
+}
+
+// GetDirtyFiles returns list of modified files
+func GetDirtyFiles(repoPath string) ([]string, error) {
+	cmd := exec.Command("git", "status", "--short")
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	var files []string
+	for _, line := range lines {
+		if line != "" {
+			files = append(files, line)
+		}
+	}
+	return files, nil
+}
+
+// Restore discards all local changes
+func Restore(repoPath string) error {
+	cmd := exec.Command("git", "restore", ".")
+	cmd.Dir = repoPath
+	return cmd.Run()
+}

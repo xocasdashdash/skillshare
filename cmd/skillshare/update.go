@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"skillshare/internal/config"
+	"skillshare/internal/git"
 	"skillshare/internal/install"
 	"skillshare/internal/ui"
 )
@@ -70,60 +70,79 @@ func updateAllTrackedRepos(cfg *config.Config, dryRun, force bool) error {
 		return nil
 	}
 
-	ui.Header("Updating tracked repositories")
-	fmt.Println(strings.Repeat("-", 45))
+	// Header
+	ui.HeaderBox("skillshare update --all",
+		fmt.Sprintf("Updating %d tracked repositories", len(repos)))
+	fmt.Println()
 
-	hasError := false
-	updated := 0
-	skipped := 0
+	var updated, skipped, failed int
+	var failedRepos []string
 
 	for _, repo := range repos {
 		repoPath := filepath.Join(cfg.Source, repo)
 
 		// Check for uncommitted changes
-		if isDirty, _ := isRepoDirty(repoPath); isDirty {
+		if isDirty, _ := git.IsDirty(repoPath); isDirty {
 			if !force {
-				ui.Warning("  %s: has uncommitted changes (use --force to discard)", repo)
+				ui.ListItem("warning", repo, "has uncommitted changes (use --force)")
 				skipped++
 				continue
 			}
-			ui.Warning("  %s: discarding local changes (--force)", repo)
 			if !dryRun {
-				if err := gitRestoreRepo(repoPath); err != nil {
-					ui.Error("  %s: failed to discard changes: %v", repo, err)
-					hasError = true
+				if err := git.Restore(repoPath); err != nil {
+					ui.ListItem("error", repo, fmt.Sprintf("failed to discard changes: %v", err))
+					failed++
+					failedRepos = append(failedRepos, repo)
 					continue
 				}
 			}
 		}
 
 		if dryRun {
-			ui.Info("[dry-run] Would update %s", repo)
+			ui.ListItem("info", repo, "[dry-run] would update")
 			continue
 		}
 
-		ui.Info("Updating %s...", repo)
-		if err := gitPullRepo(repoPath); err != nil {
-			ui.Error("  %s: %v", repo, err)
-			hasError = true
+		// Pull
+		info, err := git.Pull(repoPath)
+		if err != nil {
+			ui.ListItem("error", repo, fmt.Sprintf("failed: %v", err))
+			failed++
+			failedRepos = append(failedRepos, repo)
 			continue
 		}
 
-		ui.Success("  %s: updated", repo)
+		if info.UpToDate {
+			ui.ListItem("success", repo, "Already up to date")
+		} else {
+			detail := fmt.Sprintf("%d commits, %d files", len(info.Commits), info.Stats.FilesChanged)
+			ui.ListItem("success", repo, detail)
+		}
 		updated++
 	}
 
-	if !dryRun && updated > 0 {
+	// Summary
+	if !dryRun {
 		fmt.Println()
-		ui.Info("Run 'skillshare sync' to distribute updated skills to targets")
+		ui.Box("Summary",
+			"",
+			fmt.Sprintf("  Updated:  %d", updated),
+			fmt.Sprintf("  Skipped:  %d", skipped),
+			fmt.Sprintf("  Failed:   %d", failed),
+			"",
+		)
 	}
 
-	if skipped > 0 {
+	if updated > 0 {
 		fmt.Println()
-		ui.Info("Skipped %d repo(s) with uncommitted changes", skipped)
+		ui.Info("Run 'skillshare sync' to distribute changes")
 	}
 
-	if hasError {
+	for _, repo := range failedRepos {
+		ui.Warning("%s failed to update", repo)
+	}
+
+	if failed > 0 {
 		return fmt.Errorf("some repositories failed to update")
 	}
 
@@ -159,43 +178,90 @@ func updateSkillOrRepo(cfg *config.Config, name string, dryRun, force bool) erro
 func updateTrackedRepo(cfg *config.Config, repoName string, dryRun, force bool) error {
 	repoPath := filepath.Join(cfg.Source, repoName)
 
-	ui.Header("Updating tracked repository")
-	fmt.Println(strings.Repeat("-", 45))
-	ui.Info("Repository: %s", repoName)
-	ui.Info("Path: %s", repoPath)
+	// Header box
+	ui.HeaderBox("skillshare update", fmt.Sprintf("Updating: %s", repoName))
 	fmt.Println()
 
 	// Check for uncommitted changes
-	if isDirty, _ := isRepoDirty(repoPath); isDirty {
+	spinner := ui.StartSpinner("Checking repository status...")
+
+	isDirty, _ := git.IsDirty(repoPath)
+	if isDirty {
+		spinner.Stop()
+		files, _ := git.GetDirtyFiles(repoPath)
+
 		if !force {
-			ui.Warning("Repository has uncommitted changes:")
-			showDirtyFiles(repoPath)
+			lines := []string{
+				"",
+				"Repository has uncommitted changes:",
+				"",
+			}
+			lines = append(lines, files...)
+			lines = append(lines, "", "Use --force to discard changes and update", "")
+
+			ui.WarningBox("Warning", lines...)
 			fmt.Println()
-			ui.Error("Use --force to discard changes and update")
+			ui.ErrorMsg("Update aborted")
 			return fmt.Errorf("uncommitted changes in repository")
 		}
-		ui.Warning("Discarding local changes (--force):")
-		showDirtyFiles(repoPath)
+
+		ui.Warning("Discarding local changes (--force)")
 		if !dryRun {
-			if err := gitRestoreRepo(repoPath); err != nil {
+			if err := git.Restore(repoPath); err != nil {
 				return fmt.Errorf("failed to discard changes: %w", err)
 			}
 		}
+		spinner = ui.StartSpinner("Fetching from origin...")
 	}
 
 	if dryRun {
-		ui.Warning("[dry-run] Would run: git restore . && git pull")
+		spinner.Stop()
+		ui.Warning("[dry-run] Would run: git pull")
 		return nil
 	}
 
-	ui.Info("Running git pull...")
-	if err := gitPullRepo(repoPath); err != nil {
+	spinner.Update("Fetching from origin...")
+
+	info, err := git.Pull(repoPath)
+	if err != nil {
+		spinner.Fail("Failed to update")
 		return fmt.Errorf("git pull failed: %w", err)
 	}
 
-	ui.Success("Updated successfully")
+	if info.UpToDate {
+		spinner.Success("Already up to date")
+		return nil
+	}
+
+	spinner.Stop()
 	fmt.Println()
-	ui.Info("Run 'skillshare sync' to distribute updated skills to targets")
+
+	// Show changes box
+	lines := []string{
+		"",
+		fmt.Sprintf("  Commits:  %d new", len(info.Commits)),
+		fmt.Sprintf("  Files:    %d changed (+%d / -%d)",
+			info.Stats.FilesChanged, info.Stats.Insertions, info.Stats.Deletions),
+		"",
+	}
+
+	// Show up to 5 commits
+	maxCommits := 5
+	for i, c := range info.Commits {
+		if i >= maxCommits {
+			lines = append(lines, fmt.Sprintf("  ... and %d more", len(info.Commits)-maxCommits))
+			break
+		}
+		lines = append(lines, fmt.Sprintf("  %s  %s", c.Hash, truncateString(c.Message, 40)))
+	}
+	lines = append(lines, "")
+
+	ui.Box("Changes", lines...)
+	fmt.Println()
+
+	ui.SuccessMsg("Updated %s", repoName)
+	fmt.Println()
+	ui.Info("Run 'skillshare sync' to distribute changes")
 
 	return nil
 }
@@ -212,11 +278,9 @@ func updateRegularSkill(cfg *config.Config, skillName string, dryRun, force bool
 		return fmt.Errorf("skill '%s' has no source metadata, cannot update", skillName)
 	}
 
-	ui.Header("Updating skill")
-	fmt.Println(strings.Repeat("-", 45))
-	ui.Info("Skill: %s", skillName)
-	ui.Info("Source: %s", meta.Source)
-	ui.Info("Path: %s", skillPath)
+	// Header box
+	ui.HeaderBox("skillshare update",
+		fmt.Sprintf("Updating: %s\nSource: %s", skillName, meta.Source))
 	fmt.Println()
 
 	if dryRun {
@@ -230,58 +294,36 @@ func updateRegularSkill(cfg *config.Config, skillName string, dryRun, force bool
 		return fmt.Errorf("invalid source in metadata: %w", err)
 	}
 
+	spinner := ui.StartSpinner("Cloning source repository...")
+
 	opts := install.InstallOptions{
-		Force:  true, // Always overwrite when updating
+		Force:  true,
 		Update: true,
 	}
 
-	ui.Info("Reinstalling from source...")
 	result, err := install.Install(source, skillPath, opts)
 	if err != nil {
+		spinner.Fail("Failed to update")
 		return fmt.Errorf("update failed: %w", err)
 	}
 
-	ui.Success("Updated: %s", result.SkillPath)
+	spinner.Success(fmt.Sprintf("Updated %s", skillName))
+
 	for _, warning := range result.Warnings {
 		ui.Warning("%s", warning)
 	}
 
 	fmt.Println()
-	ui.Info("Run 'skillshare sync' to distribute updated skill to targets")
+	ui.Info("Run 'skillshare sync' to distribute changes")
 
 	return nil
 }
 
-func gitPullRepo(repoPath string) error {
-	cmd := exec.Command("git", "pull")
-	cmd.Dir = repoPath
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
 	}
-	return nil
-}
-
-func gitRestoreRepo(repoPath string) error {
-	cmd := exec.Command("git", "restore", ".")
-	cmd.Dir = repoPath
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
-	}
-	return nil
-}
-
-func showDirtyFiles(repoPath string) {
-	cmd := exec.Command("git", "status", "--short")
-	cmd.Dir = repoPath
-	output, _ := cmd.Output()
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	for _, line := range lines {
-		if line != "" {
-			fmt.Printf("  %s\n", line)
-		}
-	}
+	return s[:maxLen-3] + "..."
 }
 
 func printUpdateHelp() {

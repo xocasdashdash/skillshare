@@ -56,7 +56,7 @@ func Install(source *Source, destPath string, opts InstallOptions) (*InstallResu
 			return handleUpdate(source, destPath, result, opts)
 		}
 		if !opts.Force {
-			return nil, fmt.Errorf("skill '%s' already exists. Use --force to overwrite or --update to update", source.Name)
+			return nil, fmt.Errorf("skill '%s' already exists. To overwrite:\n       skillshare install %s --force", source.Name, source.Raw)
 		}
 		// Force mode: remove existing
 		if !opts.DryRun {
@@ -228,15 +228,16 @@ func CleanupDiscovery(result *DiscoveryResult) {
 
 // InstallFromDiscovery installs a skill from a discovered repository
 func InstallFromDiscovery(discovery *DiscoveryResult, skill SkillInfo, destPath string, opts InstallOptions) (*InstallResult, error) {
+	fullSource := discovery.Source.Raw + "/" + skill.Path
 	result := &InstallResult{
 		SkillName: skill.Name,
-		Source:    discovery.Source.Raw + "/" + skill.Path,
+		Source:    fullSource,
 	}
 
 	// Check if destination exists
 	if _, err := os.Stat(destPath); err == nil {
 		if !opts.Force {
-			return nil, fmt.Errorf("skill '%s' already exists. Use --force to overwrite", skill.Name)
+			return nil, fmt.Errorf("already exists. To overwrite:\n       skillshare install %s --force", fullSource)
 		}
 		if !opts.DryRun {
 			if err := os.RemoveAll(destPath); err != nil {
@@ -402,26 +403,22 @@ func isGitRepo(path string) bool {
 	return IsGitRepo(path)
 }
 
-// cloneRepo performs a git clone
+// cloneRepo performs a git clone (quiet mode)
 func cloneRepo(url, destPath string, shallow bool) error {
-	args := []string{"clone"}
+	args := []string{"clone", "--quiet"}
 	if shallow {
 		args = append(args, "--depth", "1")
 	}
 	args = append(args, url, destPath)
 
 	cmd := exec.Command("git", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-// gitPull performs a git pull
+// gitPull performs a git pull (quiet mode)
 func gitPull(repoPath string) error {
-	cmd := exec.Command("git", "pull")
+	cmd := exec.Command("git", "pull", "--quiet")
 	cmd.Dir = repoPath
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
@@ -530,7 +527,7 @@ func InstallTrackedRepo(source *Source, sourceDir string, opts InstallOptions) (
 			return updateTrackedRepo(destPath, result, opts)
 		}
 		if !opts.Force {
-			return nil, fmt.Errorf("tracked repo '%s' already exists. Use --force to overwrite or --update to update", trackedName)
+			return nil, fmt.Errorf("tracked repo '%s' already exists. To overwrite:\n       skillshare install %s --track --force", trackedName, source.Raw)
 		}
 		// Force mode - remove existing
 		if !opts.DryRun {
@@ -597,10 +594,9 @@ func updateTrackedRepo(repoPath string, result *TrackedRepoResult, opts InstallO
 }
 
 // cloneRepoFull performs a full git clone (not shallow)
+// cloneRepoFull performs a full git clone (quiet mode)
 func cloneRepoFull(url, destPath string) error {
-	cmd := exec.Command("git", "clone", url, destPath)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := exec.Command("git", "clone", "--quiet", url, destPath)
 	return cmd.Run()
 }
 

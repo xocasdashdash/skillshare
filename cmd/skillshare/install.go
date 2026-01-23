@@ -115,31 +115,44 @@ func cmdInstall(args []string) error {
 }
 
 func handleTrackedRepoInstall(source *install.Source, cfg *config.Config, opts install.InstallOptions) error {
-	ui.Header("Installing tracked repository")
-	fmt.Println(strings.Repeat("-", 45))
-	ui.Info("Source: %s", source.Raw)
+	// Header box
+	subtitle := fmt.Sprintf("Source: %s", source.Raw)
 	if opts.Name != "" {
-		ui.Info("Name override: _%s", opts.Name)
+		subtitle += fmt.Sprintf("\nName override: _%s", opts.Name)
 	}
+	ui.HeaderBox("skillshare install --track", subtitle)
 	fmt.Println()
+
+	spinner := ui.StartSpinner("Cloning repository...")
 
 	result, err := install.InstallTrackedRepo(source, cfg.Source, opts)
 	if err != nil {
+		spinner.Fail("Failed to install")
 		return err
 	}
 
 	// Display result
 	if opts.DryRun {
+		spinner.Stop()
 		ui.Warning("[dry-run] %s", result.Action)
 	} else {
-		ui.Success("Installed tracked repo: %s", result.RepoName)
-		ui.Info("Path: %s", result.RepoPath)
-		ui.Info("Skills found: %d", result.SkillCount)
+		spinner.Success(fmt.Sprintf("Installed tracked repo: %s", result.RepoName))
+		fmt.Println()
+
+		// Show info box
+		lines := []string{
+			"",
+			fmt.Sprintf("  Path:    %s", result.RepoPath),
+			fmt.Sprintf("  Skills:  %d found", result.SkillCount),
+			"",
+		}
 		if len(result.Skills) > 0 && len(result.Skills) <= 10 {
 			for _, skill := range result.Skills {
-				ui.Info("  - %s", skill)
+				lines = append(lines, fmt.Sprintf("    - %s", skill))
 			}
+			lines = append(lines, "")
 		}
+		ui.Box("Installed", lines...)
 	}
 
 	// Display warnings
@@ -158,31 +171,33 @@ func handleTrackedRepoInstall(source *install.Source, cfg *config.Config, opts i
 }
 
 func handleGitDiscovery(source *install.Source, cfg *config.Config, opts install.InstallOptions) error {
-	ui.Header("Discovering skills")
-	fmt.Println(strings.Repeat("-", 45))
-	ui.Info("Source: %s", source.Raw)
-	ui.Info("Cloning repository...")
+	// Header box
+	ui.HeaderBox("skillshare install", fmt.Sprintf("Source: %s", source.Raw))
 	fmt.Println()
+
+	spinner := ui.StartSpinner("Cloning repository...")
 
 	// Discover skills
 	discovery, err := install.DiscoverFromGit(source)
 	if err != nil {
+		spinner.Fail("Failed to clone")
 		return err
 	}
 	defer install.CleanupDiscovery(discovery)
 
 	if len(discovery.Skills) == 0 {
+		spinner.Fail("No skills found")
 		ui.Warning("No skills found in repository (no SKILL.md files)")
 		return nil
 	}
 
-	ui.Success("Found %d skill(s)", len(discovery.Skills))
+	spinner.Success(fmt.Sprintf("Found %d skill(s)", len(discovery.Skills)))
 	fmt.Println()
 
 	if opts.DryRun {
 		// Show skill list in dry-run mode
 		for _, skill := range discovery.Skills {
-			ui.Info("  %s  (%s)", skill.Name, skill.Path)
+			ui.ListItem("info", skill.Name, skill.Path)
 		}
 		fmt.Println()
 		ui.Warning("[dry-run] Would prompt for selection")
@@ -202,28 +217,59 @@ func handleGitDiscovery(source *install.Source, cfg *config.Config, opts install
 
 	// Install selected skills
 	fmt.Println()
-	ui.Header("Installing selected skills")
-	fmt.Println(strings.Repeat("-", 45))
 
-	var installed int
-	for _, skill := range selected {
+	type installResult struct {
+		skill   install.SkillInfo
+		success bool
+		message string
+	}
+	results := make([]installResult, 0, len(selected))
+
+	spinner = ui.StartSpinner(fmt.Sprintf("Installing %d skill(s)...", len(selected)))
+
+	for i, skill := range selected {
+		spinner.Update(fmt.Sprintf("Installing %s... (%d/%d)", skill.Name, i+1, len(selected)))
 		destPath := filepath.Join(cfg.Source, skill.Name)
 
-		result, err := install.InstallFromDiscovery(discovery, skill, destPath, opts)
+		_, err := install.InstallFromDiscovery(discovery, skill, destPath, opts)
 		if err != nil {
-			ui.Error("%s: %v", skill.Name, err)
+			results = append(results, installResult{skill: skill, success: false, message: err.Error()})
 			continue
 		}
 
-		ui.Success("Installed: %s", result.SkillPath)
-		for _, warning := range result.Warnings {
-			ui.Warning("  %s", warning)
-		}
-		installed++
+		results = append(results, installResult{skill: skill, success: true, message: "installed"})
 	}
 
+	// Count results
+	var installed, failed int
+	for _, r := range results {
+		if r.success {
+			installed++
+		} else {
+			failed++
+		}
+	}
+
+	if failed > 0 && installed == 0 {
+		spinner.Fail(fmt.Sprintf("Failed to install %d skill(s)", failed))
+	} else if failed > 0 {
+		spinner.Success(fmt.Sprintf("Installed %d skill(s), %d failed", installed, failed))
+	} else {
+		spinner.Success(fmt.Sprintf("Installed %d skill(s)", installed))
+	}
+
+	// Show results
 	fmt.Println()
+	for _, r := range results {
+		if r.success {
+			ui.ListItem("success", r.skill.Name, r.message)
+		} else {
+			ui.ListItem("error", r.skill.Name, r.message)
+		}
+	}
+
 	if installed > 0 {
+		fmt.Println()
 		ui.Info("Run 'skillshare sync' to distribute to all targets")
 	}
 
@@ -277,28 +323,34 @@ func handleDirectInstall(source *install.Source, cfg *config.Config, opts instal
 	// Determine destination path
 	destPath := filepath.Join(cfg.Source, skillName)
 
-	// Display installation info
-	ui.Header("Installing skill")
-	fmt.Println(strings.Repeat("-", 45))
-	ui.Info("Source: %s", source.Raw)
-	ui.Info("Name: %s", skillName)
+	// Header box
+	subtitle := fmt.Sprintf("Source: %s\nName: %s", source.Raw, skillName)
 	if source.HasSubdir() {
-		ui.Info("Subdirectory: %s", source.Subdir)
+		subtitle += fmt.Sprintf("\nSubdirectory: %s", source.Subdir)
 	}
-	ui.Info("Destination: %s", destPath)
+	ui.HeaderBox("skillshare install", subtitle)
 	fmt.Println()
+
+	var spinner *ui.Spinner
+	if source.IsGit() {
+		spinner = ui.StartSpinner("Cloning repository...")
+	} else {
+		spinner = ui.StartSpinner("Copying files...")
+	}
 
 	// Execute installation
 	result, err := install.Install(source, destPath, opts)
 	if err != nil {
+		spinner.Fail("Failed to install")
 		return err
 	}
 
 	// Display result
 	if opts.DryRun {
+		spinner.Stop()
 		ui.Warning("[dry-run] %s", result.Action)
 	} else {
-		ui.Success("Installed: %s", result.SkillPath)
+		spinner.Success(fmt.Sprintf("Installed: %s", skillName))
 	}
 
 	// Display warnings
