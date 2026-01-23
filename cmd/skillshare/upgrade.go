@@ -16,6 +16,7 @@ import (
 	"skillshare/internal/config"
 	"skillshare/internal/install"
 	"skillshare/internal/ui"
+	versioncheck "skillshare/internal/version"
 )
 
 const githubRepo = "runkids/skillshare"
@@ -136,6 +137,9 @@ func upgradeCLIBinary(dryRun, force bool) error {
 	if err := downloadAndReplace(downloadURL, execPath); err != nil {
 		return fmt.Errorf("failed to upgrade: %w", err)
 	}
+
+	// Clear version cache so next check fetches fresh data
+	versioncheck.ClearCache()
 
 	ui.Success("Upgraded to %s", latestVersion)
 	return nil
@@ -338,7 +342,12 @@ func runBrewUpgrade() error {
 	cmd := exec.Command("brew", "upgrade", "runkids/tap/skillshare")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	err := cmd.Run()
+	if err == nil {
+		// Clear version cache so next check fetches fresh data
+		versioncheck.ClearCache()
+	}
+	return err
 }
 
 func printUpgradeHelp() {

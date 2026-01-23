@@ -39,6 +39,15 @@ func getCachePath() (string, error) {
 	return filepath.Join(homeDir, ".skillshare", cacheFileName), nil
 }
 
+// ClearCache removes the version check cache file
+func ClearCache() {
+	cachePath, err := getCachePath()
+	if err != nil {
+		return
+	}
+	os.Remove(cachePath)
+}
+
 // loadCache loads the version check cache from disk
 func loadCache() (*Cache, error) {
 	cachePath, err := getCachePath()
