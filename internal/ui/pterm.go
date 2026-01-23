@@ -218,6 +218,28 @@ func (p *ProgressBar) Stop() {
 	}
 }
 
+// UpdateNotification prints a colorful update notification
+func UpdateNotification(currentVersion, latestVersion string) {
+	if !IsTTY() {
+		fmt.Printf("\n! Update available: %s -> %s\n", currentVersion, latestVersion)
+		fmt.Println("  Run 'skillshare upgrade' to update")
+		return
+	}
+
+	fmt.Println()
+	box := pterm.DefaultBox.
+		WithTitle(pterm.Yellow("Update Available")).
+		WithBoxStyle(pterm.NewStyle(pterm.FgYellow))
+	content := fmt.Sprintf(
+		"\n  %s %s → %s\n\n  Run: %s\n",
+		pterm.Gray("Version:"),
+		pterm.Red(currentVersion),
+		pterm.Green(latestVersion),
+		pterm.Cyan("skillshare upgrade"),
+	)
+	box.Println(content)
+}
+
 // ListItem prints a list item with status
 func ListItem(status, name, detail string) {
 	var statusIcon string

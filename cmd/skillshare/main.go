@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"skillshare/internal/ui"
+	versioncheck "skillshare/internal/version"
 )
 
 var version = "dev"
@@ -63,6 +64,11 @@ func main() {
 	if err != nil {
 		ui.Error("%v", err)
 		os.Exit(1)
+	}
+
+	// Check for updates (non-blocking, silent on errors)
+	if result := versioncheck.Check(version); result != nil && result.UpdateAvailable {
+		ui.UpdateNotification(result.CurrentVersion, result.LatestVersion)
 	}
 }
 
