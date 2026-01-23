@@ -175,7 +175,7 @@ func IsDirty(repoPath string) (bool, error) {
 
 // GetDirtyFiles returns list of modified files
 func GetDirtyFiles(repoPath string) ([]string, error) {
-	cmd := exec.Command("git", "status", "--short")
+	cmd := exec.Command("git", "-c", "color.status=false", "status", "--short")
 	cmd.Dir = repoPath
 	out, err := cmd.Output()
 	if err != nil {
