@@ -7,15 +7,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 )
 
 // ansiRegex matches ANSI escape sequences
 var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
-// displayWidth returns the visible width of a string (excluding ANSI codes)
+// displayWidth returns the visible width of a string (excluding ANSI codes, handling wide chars)
 func displayWidth(s string) int {
-	return len(ansiRegex.ReplaceAllString(s, ""))
+	// Remove ANSI codes first, then calculate Unicode-aware width
+	clean := ansiRegex.ReplaceAllString(s, "")
+	return runewidth.StringWidth(clean)
 }
 
 // IsTTY returns true if stdout is a terminal
