@@ -12,7 +12,7 @@
 
 <p align="center">
   <strong>One source of truth for all your AI CLI skills.</strong><br>
-  Edit once, sync everywhere — Claude, Cursor, Codex, Gemini, and 10+ more.
+  Edit once, sync everywhere — Claude, Moltbot, Codex, Antigravity and 30+ more.
 </p>
 
 <p align="center">

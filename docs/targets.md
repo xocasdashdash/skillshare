@@ -4,30 +4,46 @@
 
 Targets are AI CLI skill directories that skillshare syncs to.
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     SUPPORTED TARGETS                            │
-│                                                                  │
-│   Built-in (auto-detected):                                      │
-│   ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐    │
-│   │ Agents  │ │  Amp    │ │Clawdbot │ │ Claude  │ │ Codex   │    │
-│   └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘    │
-│   ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐    │
-│   │ Copilot │ │  Crush  │ │ Cursor  │ │  Droid  │ │ Gemini  │    │
-│   └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘    │
-│   ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐    │
-│   │  Goose  │ │Kilocode │ │  Letta  │ │OpenCode │ │   Roo   │    │
-│   └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘    │
-│   ┌───────────┐ ┌─────────┐                                      │
-│   │Antigravity│ │Windsurf │                                      │
-│   └───────────┘ └─────────┘                                      │
-│                                                                  │
-│   Custom (add your own):                                         │
-│   ┌─────────┐ ┌─────────┐ ┌─────────┐                            │
-│   │  Aider  │ │   ...   │ │         │                            │
-│   └─────────┘ └─────────┘ └─────────┘                            │
-└──────────────────────────────────────────────────────────────────┘
-```
+## Supported Agents (35)
+
+| Agent | Key | Global Path |
+|-------|-----|-------------|
+| Agents | `agents` | `~/.config/agents/skills/` |
+| Amp | `amp` | `~/.config/agents/skills/` |
+| Antigravity | `antigravity` | `~/.gemini/antigravity/global_skills/` |
+| Claude Code | `claude` | `~/.claude/skills/` |
+| Cline | `cline` | `~/.cline/skills/` |
+| CodeBuddy | `codebuddy` | `~/.codebuddy/skills/` |
+| Codex | `codex` | `~/.codex/skills/` |
+| Command Code | `commandcode` | `~/.commandcode/skills/` |
+| Continue | `continue` | `~/.continue/skills/` |
+| GitHub Copilot | `copilot` | `~/.copilot/skills/` |
+| Crush | `crush` | `~/.config/crush/skills/` |
+| Cursor | `cursor` | `~/.cursor/skills/` |
+| Droid | `droid` | `~/.factory/skills/` |
+| Gemini CLI | `gemini` | `~/.gemini/skills/` |
+| Goose | `goose` | `~/.config/goose/skills/` |
+| Junie | `junie` | `~/.junie/skills/` |
+| Kilo Code | `kilocode` | `~/.kilocode/skills/` |
+| Kiro CLI | `kiro` | `~/.kiro/skills/` |
+| Kode | `kode` | `~/.kode/skills/` |
+| Letta | `letta` | `~/.letta/skills/` |
+| MCPJam | `mcpjam` | `~/.mcpjam/skills/` |
+| Moltbot | `moltbot` | `~/.moltbot/skills/` |
+| Mux | `mux` | `~/.mux/skills/` |
+| Neovate | `neovate` | `~/.neovate/skills/` |
+| OpenCode | `opencode` | `~/.config/opencode/skills/` |
+| OpenHands | `openhands` | `~/.openhands/skills/` |
+| Pi | `pi` | `~/.pi/agent/skills/` |
+| Pochi | `pochi` | `~/.pochi/skills/` |
+| Qoder | `qoder` | `~/.qoder/skills/` |
+| Qwen Code | `qwen` | `~/.qwen/skills/` |
+| Roo Code | `roo` | `~/.roo/skills/` |
+| Trae | `trae` | `~/.trae/skills/` |
+| Windsurf | `windsurf` | `~/.codeium/windsurf/skills/` |
+| Zencoder | `zencoder` | `~/.zencoder/skills/` |
+
+**Custom targets:** Add any tool with `skillshare target add <name> <path>`
 
 ---
 
