@@ -7,6 +7,7 @@ Welcome to the skillshare documentation. Choose a topic below.
 | I want to... | Go to |
 |--------------|-------|
 | Get started | [README](../README.md#quick-start) |
+| Create a new skill | [new.md](new.md) |
 | Install a skill | [install.md](install.md) |
 | Sync skills to targets | [sync.md](sync.md) |
 | Manage targets | [targets.md](targets.md) |
@@ -20,6 +21,7 @@ Welcome to the skillshare documentation. Choose a topic below.
 ```
 docs/
 ├── README.md          ← You are here
+├── new.md             ← Create new skills from template
 ├── install.md         ← Install, update, upgrade, uninstall skills
 ├── sync.md            ← Sync, pull, push, backup, restore
 ├── targets.md         ← Add, remove, configure targets
@@ -34,6 +36,7 @@ docs/
 | Command | What it does | Docs |
 |---------|--------------|------|
 | `init` | First-time setup | [install.md](install.md#init) |
+| `new` | Create a skill | [new.md](new.md) |
 | `install` | Add a skill | [install.md](install.md#install) |
 | `uninstall` | Remove a skill | [install.md](install.md#uninstall) |
 | `update` | Update a skill | [install.md](install.md#update) |
