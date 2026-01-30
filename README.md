@@ -8,6 +8,9 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/runkids/skillshare" alt="Go Version"></a>
   <a href="https://github.com/runkids/skillshare/releases"><img src="https://img.shields.io/github/v/release/runkids/skillshare" alt="Release"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue" alt="Platform">
+  <a href="https://goreportcard.com/report/github.com/runkids/skillshare"><img src="https://goreportcard.com/badge/github.com/runkids/skillshare" alt="Go Report Card"></a>
+  <a href="https://github.com/runkids/skillshare/releases"><img src="https://img.shields.io/github/downloads/runkids/skillshare/total" alt="Downloads"></a>
 </p>
 
 <p align="center">
@@ -28,7 +31,7 @@
 </p>
 
 > [!NOTE]
-> **[What's New in 0.6.0 — Team Edition](https://github.com/runkids/skillshare/releases/tag/v0.6.0)**: Tracked repos, nested skills, auto-pruning, collision detection. [Learn more →](docs/team-edition.md)
+> **[What's New in 0.6.0 — Team Edition](https://github.com/runkids/skillshare/releases/tag/v0.6.0)**: Tracked repos, nested skills, auto-pruning, collision detection. [Learn more → docs/team-edition.md](docs/team-edition.md)
 
 ## Why skillshare?
 
@@ -87,8 +90,9 @@ brew uninstall skillshare               # Homebrew
 sudo rm /usr/local/bin/skillshare       # Manual install
 rm -rf ~/.config/skillshare             # Config & data (optional)
 
-# Windows
+# Windows (PowerShell)
 Remove-Item "$env:LOCALAPPDATA\Programs\skillshare" -Recurse -Force
+Remove-Item "$env:USERPROFILE\.config\skillshare" -Recurse -Force  # optional
 ```
 
 ### Shorthand (Optional)
