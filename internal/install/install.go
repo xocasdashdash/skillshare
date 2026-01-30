@@ -517,15 +517,16 @@ func isGitRepo(path string) bool {
 	return IsGitRepo(path)
 }
 
-// cloneRepo performs a git clone (quiet mode)
+// cloneRepo performs a git clone with progress output
 func cloneRepo(url, destPath string, shallow bool) error {
-	args := []string{"clone", "--quiet"}
+	args := []string{"clone", "--progress"}
 	if shallow {
 		args = append(args, "--depth", "1")
 	}
 	args = append(args, url, destPath)
 
 	cmd := exec.Command("git", args...)
+	cmd.Stderr = os.Stderr // Show git progress
 	return cmd.Run()
 }
 
@@ -707,10 +708,10 @@ func updateTrackedRepo(repoPath string, result *TrackedRepoResult, opts InstallO
 	return result, nil
 }
 
-// cloneRepoFull performs a full git clone (not shallow)
-// cloneRepoFull performs a full git clone (quiet mode)
+// cloneRepoFull performs a full git clone with progress output
 func cloneRepoFull(url, destPath string) error {
-	cmd := exec.Command("git", "clone", "--quiet", url, destPath)
+	cmd := exec.Command("git", "clone", "--progress", url, destPath)
+	cmd.Stderr = os.Stderr // Show git progress
 	return cmd.Run()
 }
 

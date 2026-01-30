@@ -188,16 +188,16 @@ func MigrateToSource(targetPath, sourcePath string) error {
 	return nil
 }
 
-// CreateSymlink creates a symlink from target to source
+// CreateSymlink creates a symlink (or junction on Windows) from target to source
 func CreateSymlink(targetPath, sourcePath string) error {
 	// Ensure target parent exists
 	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
 		return fmt.Errorf("failed to create target parent: %w", err)
 	}
 
-	// Create symlink
-	if err := os.Symlink(sourcePath, targetPath); err != nil {
-		return fmt.Errorf("failed to create symlink: %w", err)
+	// Create link (uses junction on Windows, symlink on Unix)
+	if err := createLink(targetPath, sourcePath); err != nil {
+		return fmt.Errorf("failed to create link: %w", err)
 	}
 
 	return nil
@@ -375,8 +375,8 @@ func SyncTargetMerge(name string, target config.TargetConfig, sourcePath string,
 					fmt.Printf("[dry-run] Would fix symlink: %s\n", skill.FlatName)
 				} else {
 					os.Remove(targetSkillPath)
-					if err := os.Symlink(skill.SourcePath, targetSkillPath); err != nil {
-						return nil, fmt.Errorf("failed to create symlink for %s: %w", skill.FlatName, err)
+					if err := createLink(targetSkillPath, skill.SourcePath); err != nil {
+						return nil, fmt.Errorf("failed to create link for %s: %w", skill.FlatName, err)
 					}
 				}
 				result.Updated = append(result.Updated, skill.FlatName)
@@ -385,12 +385,12 @@ func SyncTargetMerge(name string, target config.TargetConfig, sourcePath string,
 				result.Skipped = append(result.Skipped, skill.FlatName)
 			}
 		} else if os.IsNotExist(err) {
-			// Doesn't exist - create symlink
+			// Doesn't exist - create link
 			if dryRun {
-				fmt.Printf("[dry-run] Would create symlink: %s -> %s\n", targetSkillPath, skill.SourcePath)
+				fmt.Printf("[dry-run] Would create link: %s -> %s\n", targetSkillPath, skill.SourcePath)
 			} else {
-				if err := os.Symlink(skill.SourcePath, targetSkillPath); err != nil {
-					return nil, fmt.Errorf("failed to create symlink for %s: %w", skill.FlatName, err)
+				if err := createLink(targetSkillPath, skill.SourcePath); err != nil {
+					return nil, fmt.Errorf("failed to create link for %s: %w", skill.FlatName, err)
 				}
 			}
 			result.Linked = append(result.Linked, skill.FlatName)

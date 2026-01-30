@@ -117,21 +117,22 @@ func checkSource(cfg *config.Config, result *doctorResult) {
 }
 
 func checkSymlinkSupport(result *doctorResult) {
-	testSymlink := filepath.Join(os.TempDir(), "skillshare_symlink_test")
+	testLink := filepath.Join(os.TempDir(), "skillshare_symlink_test")
 	testTarget := filepath.Join(os.TempDir(), "skillshare_symlink_target")
-	os.Remove(testSymlink)
-	os.Remove(testTarget)
+	os.Remove(testLink)
+	os.RemoveAll(testTarget)
 	os.MkdirAll(testTarget, 0755)
-	defer os.Remove(testSymlink)
+	defer os.Remove(testLink)
 	defer os.RemoveAll(testTarget)
 
-	if err := os.Symlink(testTarget, testSymlink); err != nil {
-		ui.Error("Symlink not supported: %v", err)
+	// Use sync.CreateSymlink which handles Windows junctions
+	if err := sync.CreateSymlink(testLink, testTarget); err != nil {
+		ui.Error("Link not supported: %v", err)
 		result.addError()
 		return
 	}
 
-	ui.Success("Symlink support: OK")
+	ui.Success("Link support: OK")
 }
 
 func checkTargets(cfg *config.Config, result *doctorResult) {
