@@ -18,6 +18,8 @@ import (
 )
 
 func cmdStatus(args []string) error {
+	ui.Logo(version)
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err

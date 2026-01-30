@@ -33,6 +33,8 @@ func (r *doctorResult) addWarning() {
 }
 
 func cmdDoctor(args []string) error {
+	ui.Logo(version)
+
 	ui.Header("Checking environment")
 	result := &doctorResult{}
 

@@ -117,9 +117,9 @@ Done. Your skills are now synced across all AI CLI tools.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Source Directory                        │
-│   macOS/Linux: ~/.config/skillshare/skills/                  │
-│   Windows:     %USERPROFILE%\.config\skillshare\skills\      │
+│                      Source Directory                       │
+│   macOS/Linux: ~/.config/skillshare/skills/                 │
+│   Windows:     %USERPROFILE%\.config\skillshare\skills\     │
 └─────────────────────────────────────────────────────────────┘
                               │ sync
               ┌───────────────┼───────────────┐

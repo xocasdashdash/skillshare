@@ -468,3 +468,253 @@ func ListItem(status, name, detail string) {
 		fmt.Printf("  %s %-20s %s\n", statusIcon, name, detail)
 	}
 }
+
+// Step-based UI components for install flow
+
+const (
+	StepArrow  = "▸"
+	StepCheck  = "✓"
+	StepCross  = "✗"
+	StepBullet = "●"
+	StepLine   = "│"
+	StepBranch = "├"
+	StepCorner = "└"
+)
+
+// StepStart prints the first step (with arrow)
+func StepStart(label, value string) {
+	if IsTTY() {
+		fmt.Printf("%s  %s  %s\n", pterm.Yellow(StepArrow), pterm.White(label), value)
+	} else {
+		fmt.Printf("%s  %s  %s\n", StepArrow, label, value)
+	}
+}
+
+// StepContinue prints a middle step (with branch)
+func StepContinue(label, value string) {
+	if IsTTY() {
+		fmt.Printf("%s\n", pterm.Gray(StepLine))
+		fmt.Printf("%s %s  %s\n", pterm.Gray(StepBranch+"─"), pterm.White(label), value)
+	} else {
+		fmt.Printf("%s\n", StepLine)
+		fmt.Printf("%s─ %s  %s\n", StepBranch, label, value)
+	}
+}
+
+// StepEnd prints the last step (with corner)
+func StepEnd(label, value string) {
+	if IsTTY() {
+		fmt.Printf("%s\n", pterm.Gray(StepLine))
+		fmt.Printf("%s %s  %s\n", pterm.Gray(StepCorner+"─"), pterm.White(label), value)
+	} else {
+		fmt.Printf("%s\n", StepLine)
+		fmt.Printf("%s─ %s  %s\n", StepCorner, label, value)
+	}
+}
+
+// TreeSpinner is a spinner that fits into tree structure
+type TreeSpinner struct {
+	spinner *pterm.SpinnerPrinter
+	start   time.Time
+	isLast  bool
+}
+
+// StartTreeSpinner starts a spinner in tree context
+func StartTreeSpinner(message string, isLast bool) *TreeSpinner {
+	prefix := StepBranch + "─"
+	if isLast {
+		prefix = StepCorner + "─"
+	}
+
+	if !IsTTY() {
+		fmt.Printf("%s\n", StepLine)
+		fmt.Printf("%s %s\n", prefix, message)
+		return &TreeSpinner{start: time.Now(), isLast: isLast}
+	}
+
+	fmt.Printf("%s\n", pterm.Gray(StepLine))
+
+	// Custom spinner with tree prefix
+	s, _ := pterm.DefaultSpinner.
+		WithRemoveWhenDone(true).
+		Start(message)
+
+	return &TreeSpinner{spinner: s, start: time.Now(), isLast: isLast}
+}
+
+// Success completes the tree spinner with success
+func (ts *TreeSpinner) Success(message string) {
+	elapsed := time.Since(ts.start)
+
+	prefix := StepBranch + "─"
+	if ts.isLast {
+		prefix = StepCorner + "─"
+	}
+
+	if ts.spinner != nil {
+		ts.spinner.Stop()
+	}
+
+	if IsTTY() {
+		fmt.Printf("%s %s  %s\n", pterm.Gray(prefix), pterm.Green(message), pterm.Gray(fmt.Sprintf("(%.1fs)", elapsed.Seconds())))
+	} else {
+		fmt.Printf("%s %s (%.1fs)\n", prefix, message, elapsed.Seconds())
+	}
+}
+
+// Fail completes the tree spinner with failure
+func (ts *TreeSpinner) Fail(message string) {
+	prefix := StepBranch + "─"
+	if ts.isLast {
+		prefix = StepCorner + "─"
+	}
+
+	if ts.spinner != nil {
+		ts.spinner.Stop()
+	}
+
+	if IsTTY() {
+		fmt.Printf("%s %s\n", pterm.Gray(prefix), pterm.Red(message))
+	} else {
+		fmt.Printf("%s %s\n", prefix, message)
+	}
+}
+
+// StepItem prints a step with label and value (legacy, use StepStart/Continue/End)
+func StepItem(label, value string) {
+	if IsTTY() {
+		fmt.Printf("%s %-10s %s\n", pterm.Yellow(StepArrow), pterm.White(label), value)
+	} else {
+		fmt.Printf("%s %-10s %s\n", StepArrow, label, value)
+	}
+}
+
+// StepDone prints a completed step
+func StepDone(label, value string) {
+	if IsTTY() {
+		fmt.Printf("%s %-10s %s\n", pterm.Green(StepCheck), pterm.White(label), value)
+	} else {
+		fmt.Printf("%s %-10s %s\n", StepCheck, label, value)
+	}
+}
+
+// StepFail prints a failed step
+func StepFail(label, value string) {
+	if IsTTY() {
+		fmt.Printf("%s %-10s %s\n", pterm.Red(StepCross), pterm.White(label), value)
+	} else {
+		fmt.Printf("%s %-10s %s\n", StepCross, label, value)
+	}
+}
+
+// SkillBox prints a skill in a styled box with name and description
+func SkillBox(name, description, location string) {
+	if !IsTTY() {
+		fmt.Printf("\n── %s ──\n", name)
+		if description != "" {
+			fmt.Printf("  %s\n", description)
+		}
+		if location != "" {
+			fmt.Printf("  Location: %s\n", location)
+		}
+		return
+	}
+
+	// Build content lines
+	var lines []string
+	lines = append(lines, "")
+
+	if description != "" {
+		wrapped := wrapText(description, 55)
+		for _, line := range wrapped {
+			lines = append(lines, "  "+line)
+		}
+	}
+
+	if location != "" {
+		lines = append(lines, "")
+		lines = append(lines, fmt.Sprintf("  %s %s", pterm.Gray("Location:"), pterm.Gray(location)))
+	}
+
+	lines = append(lines, "")
+
+	// Calculate max width
+	maxLen := 0
+	for _, line := range lines {
+		w := displayWidth(line)
+		if w > maxLen {
+			maxLen = w
+		}
+	}
+
+	// Pad lines
+	var content strings.Builder
+	for i, line := range lines {
+		padded := line
+		w := displayWidth(line)
+		if w < maxLen {
+			padded = line + strings.Repeat(" ", maxLen-w)
+		}
+		content.WriteString(padded)
+		if i < len(lines)-1 {
+			content.WriteString("\n")
+		}
+	}
+
+	box := pterm.DefaultBox.
+		WithTitle(pterm.Cyan(name)).
+		WithTitleTopLeft()
+	box.Println(content.String())
+}
+
+// SkillBoxCompact prints a compact skill box (for multiple skills)
+func SkillBoxCompact(name, location string) {
+	if IsTTY() {
+		loc := location
+		if loc == "." {
+			loc = "root"
+		}
+		fmt.Printf("  %s %s %s\n", pterm.Cyan(StepBullet), pterm.White(name), pterm.Gray("("+loc+")"))
+	} else {
+		loc := location
+		if loc == "." {
+			loc = "root"
+		}
+		fmt.Printf("  %s %s (%s)\n", StepBullet, name, loc)
+	}
+}
+
+// SkillDisplay holds skill info for display
+type SkillDisplay struct {
+	Name        string
+	Description string
+	Path        string
+}
+
+// wrapText wraps text to specified width
+func wrapText(text string, width int) []string {
+	if len(text) <= width {
+		return []string{text}
+	}
+
+	var lines []string
+	words := strings.Fields(text)
+	currentLine := ""
+
+	for _, word := range words {
+		if currentLine == "" {
+			currentLine = word
+		} else if len(currentLine)+1+len(word) <= width {
+			currentLine += " " + word
+		} else {
+			lines = append(lines, currentLine)
+			currentLine = word
+		}
+	}
+
+	if currentLine != "" {
+		lines = append(lines, currentLine)
+	}
+
+	return lines
+}

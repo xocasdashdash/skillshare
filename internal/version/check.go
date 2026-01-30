@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+// Version is set by main.go at startup
+var Version = "dev"
+
 const (
 	githubRepo     = "runkids/skillshare"
 	checkInterval  = 24 * time.Hour

@@ -11,6 +11,9 @@ import (
 var version = "dev"
 
 func main() {
+	// Set version for other packages to use
+	versioncheck.Version = version
+
 	if len(os.Args) < 2 {
 		printUsage()
 		os.Exit(1)
