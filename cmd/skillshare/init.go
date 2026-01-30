@@ -724,6 +724,9 @@ func createDefaultSkill(sourcePath string, dryRun bool) {
 		return
 	}
 
+	ui.Header("Installing skillshare skill")
+	ui.Info("Downloading from GitHub...")
+
 	// Try to install from GitHub using install package
 	source, err := install.ParseSource(skillshareSkillSource)
 	if err == nil {
@@ -736,6 +739,7 @@ func createDefaultSkill(sourcePath string, dryRun bool) {
 
 	if err != nil {
 		// Fallback to minimal version
+		ui.Warning("Download failed, using fallback version")
 		if err := os.MkdirAll(skillshareSkillDir, 0755); err != nil {
 			ui.Warning("Failed to create skillshare skill directory: %v", err)
 			return
@@ -744,7 +748,7 @@ func createDefaultSkill(sourcePath string, dryRun bool) {
 			ui.Warning("Failed to create skillshare skill: %v", err)
 			return
 		}
-		ui.Success("Created default skill: skillshare")
+		ui.Success("Created default skill: skillshare (minimal)")
 		ui.Info("Run 'skillshare upgrade --skill' to get the full version")
 		return
 	}
