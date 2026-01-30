@@ -61,10 +61,16 @@ AI reads skillshare skill → runs: skillshare sync
 
 ## Installation
 
-### Quick Install
+### Quick Install (macOS/Linux)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/runkids/skillshare/main/install.sh | sh
+```
+
+### Quick Install (Windows PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/runkids/skillshare/main/install.ps1 | iex
 ```
 
 ### Homebrew (macOS)
@@ -76,9 +82,13 @@ brew install runkids/tap/skillshare
 ### Uninstall
 
 ```bash
+# macOS/Linux
 brew uninstall skillshare               # Homebrew
 sudo rm /usr/local/bin/skillshare       # Manual install
 rm -rf ~/.config/skillshare             # Config & data (optional)
+
+# Windows
+Remove-Item "$env:LOCALAPPDATA\Programs\skillshare" -Recurse -Force
 ```
 
 ### Shorthand (Optional)
