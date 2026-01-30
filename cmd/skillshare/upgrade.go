@@ -44,6 +44,9 @@ func cmdUpgrade(args []string) error {
 		}
 	}
 
+	// Show logo
+	ui.Logo(version)
+
 	// Default: upgrade both
 	upgradeCLI := !skillOnly
 	upgradeSkill := !cliOnly
@@ -78,6 +81,9 @@ func cmdUpgrade(args []string) error {
 func upgradeCLIBinary(dryRun, force bool) error {
 	ui.Header("Upgrading CLI")
 
+	// Show current version first
+	ui.Info("Current version: %s", version)
+
 	// Get current executable path
 	execPath, err := os.Executable()
 	if err != nil {
@@ -98,19 +104,15 @@ func upgradeCLIBinary(dryRun, force bool) error {
 		return runBrewUpgrade()
 	}
 
-	// Get current version
-	currentVersion := version
-
 	// Get latest version from GitHub
 	latestVersion, downloadURL, err := getLatestRelease()
 	if err != nil {
 		return fmt.Errorf("failed to check latest version: %w", err)
 	}
 
-	ui.Info("Current version: %s", currentVersion)
 	ui.Info("Latest version:  %s", latestVersion)
 
-	if currentVersion == latestVersion && !force {
+	if version == latestVersion && !force {
 		ui.Success("Already up to date")
 		return nil
 	}
