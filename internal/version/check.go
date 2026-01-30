@@ -2,8 +2,6 @@ package version
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -126,28 +124,9 @@ func saveCache(cache *Cache) error {
 }
 
 // fetchLatestVersion fetches the latest version from GitHub
+// Uses the shared FetchLatestVersionOnly which supports GITHUB_TOKEN
 func fetchLatestVersion() (string, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", githubRepo)
-
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(url)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("GitHub API returned %d", resp.StatusCode)
-	}
-
-	var release struct {
-		TagName string `json:"tag_name"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
-		return "", err
-	}
-
-	return strings.TrimPrefix(release.TagName, "v"), nil
+	return FetchLatestVersionOnly()
 }
 
 // compareVersions returns true if v1 < v2 (proper semver comparison)

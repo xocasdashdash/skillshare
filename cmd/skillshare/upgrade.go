@@ -3,23 +3,19 @@ package main
 import (
 	"archive/tar"
 	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"skillshare/internal/config"
 	"skillshare/internal/install"
 	"skillshare/internal/ui"
-	versioncheck "skillshare/internal/version"
+	versionpkg "skillshare/internal/version"
 )
-
-const githubRepo = "runkids/skillshare"
 
 func cmdUpgrade(args []string) error {
 	dryRun := false
@@ -104,11 +100,12 @@ func upgradeCLIBinary(dryRun, force bool) error {
 
 	// Get latest version from GitHub
 	treeSpinner := ui.StartTreeSpinner("Checking latest version...", false)
-	latestVersion, downloadURL, err := getLatestRelease()
+	release, err := versionpkg.FetchLatestRelease()
 	if err != nil {
 		treeSpinner.Fail("Failed to check")
 		return fmt.Errorf("failed to check latest version: %w", err)
 	}
+	latestVersion := release.Version
 	treeSpinner.Success(fmt.Sprintf("Latest: v%s", latestVersion))
 
 	if version == latestVersion && !force {
@@ -133,6 +130,12 @@ func upgradeCLIBinary(dryRun, force bool) error {
 		}
 	}
 
+	// Get download URL for current platform
+	downloadURL, err := release.GetDownloadURL()
+	if err != nil {
+		return fmt.Errorf("failed to get download URL: %w", err)
+	}
+
 	// Download
 	fmt.Println()
 	downloadSpinner := ui.StartSpinner(fmt.Sprintf("Downloading v%s...", latestVersion))
@@ -143,7 +146,7 @@ func upgradeCLIBinary(dryRun, force bool) error {
 	downloadSpinner.Success(fmt.Sprintf("Upgraded to v%s", latestVersion))
 
 	// Clear version cache so next check fetches fresh data
-	versioncheck.ClearCache()
+	versionpkg.ClearCache()
 
 	return nil
 }
@@ -219,48 +222,6 @@ func upgradeSkillshareSkill(dryRun, force bool) error {
 	ui.Info("Run 'skillshare sync' to distribute to all targets")
 
 	return nil
-}
-
-type githubRelease struct {
-	TagName string `json:"tag_name"`
-	Assets  []struct {
-		Name               string `json:"name"`
-		BrowserDownloadURL string `json:"browser_download_url"`
-	} `json:"assets"`
-}
-
-func getLatestRelease() (version string, downloadURL string, err error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", githubRepo)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return "", "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return "", "", fmt.Errorf("GitHub API returned %d", resp.StatusCode)
-	}
-
-	var release githubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
-		return "", "", err
-	}
-
-	version = strings.TrimPrefix(release.TagName, "v")
-
-	// Find matching asset
-	osName := runtime.GOOS
-	archName := runtime.GOARCH
-	expectedName := fmt.Sprintf("skillshare_%s_%s_%s.tar.gz", version, osName, archName)
-
-	for _, asset := range release.Assets {
-		if asset.Name == expectedName {
-			return version, asset.BrowserDownloadURL, nil
-		}
-	}
-
-	return "", "", fmt.Errorf("no release found for %s/%s", osName, archName)
 }
 
 func downloadAndReplace(url, destPath string) error {
@@ -359,7 +320,7 @@ func runBrewUpgrade() error {
 	err := cmd.Run()
 	if err == nil {
 		// Clear version cache so next check fetches fresh data
-		versioncheck.ClearCache()
+		versionpkg.ClearCache()
 	}
 	return err
 }
