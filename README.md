@@ -117,7 +117,7 @@ Done. Your skills are now synced across all AI CLI tools.
 | macOS/Linux | `~/.config/skillshare/skills/` | Symlinks |
 | Windows | `%USERPROFILE%\.config\skillshare\skills\` | NTFS Junctions (no admin required) |
 
-<p align="center">
+<p>
   <img src=".github/assets/windows-init.png" alt="Windows init demo" width="720">
 </p>
 
