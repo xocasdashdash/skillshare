@@ -11,7 +11,7 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://skillshare.runkids.work',
+  url: 'https://skillshare.runkids.cc',
   baseUrl: '/',
 
   organizationName: 'runkids',

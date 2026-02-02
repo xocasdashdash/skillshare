@@ -5,12 +5,13 @@
 <h1 align="center" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">skillshare</h1>
 
 <p align="center">
-  <a href="https://skillshare.runkids.work"><img src="https://img.shields.io/badge/Website-skillshare.runkids.work-blue?logo=docusaurus" alt="Website"></a>
+  <a href="https://skillshare.runkids.cc"><img src="https://img.shields.io/badge/Website-skillshare.runkids.cc-blue?logo=docusaurus" alt="Website"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/runkids/skillshare" alt="Go Version"></a>
   <a href="https://github.com/runkids/skillshare/releases"><img src="https://img.shields.io/github/v/release/runkids/skillshare" alt="Release"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue" alt="Platform">
   <a href="https://goreportcard.com/report/github.com/runkids/skillshare"><img src="https://goreportcard.com/badge/github.com/runkids/skillshare" alt="Go Report Card"></a>
+  <a href="https://deepwiki.com/runkids/skillshare"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
@@ -27,12 +28,12 @@
 </p>
 
 <p align="center">
-  <a href="https://skillshare.runkids.work">Website</a> •
+  <a href="https://skillshare.runkids.cc">Website</a> •
   <a href="#installation">Install</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#commands">Commands</a> •
   <a href="#team-edition">Team Edition</a> •
-  <a href="https://skillshare.runkids.work/docs/intro">Docs</a>
+  <a href="https://skillshare.runkids.cc/docs/intro">Docs</a>
 </p>
 
 > [!NOTE]
@@ -152,15 +153,15 @@ Done. Your skills are now synced across all AI CLI tools.
 
 ## Documentation
 
-📖 **Full documentation at [skillshare.runkids.work](https://skillshare.runkids.work/docs/intro)**
+📖 **Full documentation at [skillshare.runkids.cc](https://skillshare.runkids.cc/docs/intro)**
 
 | Guide | Description |
 |-------|-------------|
-| [Getting Started](https://skillshare.runkids.work/docs/intro) | Quick start guide |
-| [Commands](https://skillshare.runkids.work/docs/commands/init) | All CLI commands |
-| [Team Edition](https://skillshare.runkids.work/docs/guides/team-sharing) | Team sharing with tracked repos |
-| [Cross-machine](https://skillshare.runkids.work/docs/guides/cross-machine-sync) | Multi-machine sync |
-| [FAQ](https://skillshare.runkids.work/docs/troubleshooting/faq) | FAQ & troubleshooting |
+| [Getting Started](https://skillshare.runkids.cc/docs/intro) | Quick start guide |
+| [Commands](https://skillshare.runkids.cc/docs/commands/init) | All CLI commands |
+| [Team Edition](https://skillshare.runkids.cc/docs/guides/team-sharing) | Team sharing with tracked repos |
+| [Cross-machine](https://skillshare.runkids.cc/docs/guides/cross-machine-sync) | Multi-machine sync |
+| [FAQ](https://skillshare.runkids.cc/docs/troubleshooting/faq) | FAQ & troubleshooting |
 
 ---
 
@@ -218,7 +219,7 @@ skillshare search commit -n 5     # Limit results
 
 > **Note:** Requires GitHub authentication. Run `gh auth login` or set `GITHUB_TOKEN`.
 
-See [Search Guide](https://skillshare.runkids.work/docs/commands/search) for details.
+See [Search Guide](https://skillshare.runkids.cc/docs/commands/search) for details.
 
 ---
 
@@ -241,7 +242,7 @@ skillshare sync
 - **Auto-pruning** — Orphaned symlinks removed on sync
 - **Collision detection** — Warns about duplicate skill names
 
-See [Team Edition Guide](https://skillshare.runkids.work/docs/guides/team-sharing) for details.
+See [Team Edition Guide](https://skillshare.runkids.cc/docs/guides/team-sharing) for details.
 
 ---
 
@@ -263,7 +264,7 @@ Recover with git: `cd ~/.config/skillshare/skills && git checkout -- deleted-ski
 
 No. skillshare uses NTFS junctions (not symlinks), which don't require elevated permissions.
 
-See [FAQ & Troubleshooting](https://skillshare.runkids.work/docs/troubleshooting/faq) for more.
+See [FAQ & Troubleshooting](https://skillshare.runkids.cc/docs/troubleshooting/faq) for more.
 
 ---
 
