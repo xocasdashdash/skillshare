@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -130,13 +131,36 @@ func countRepoSkills(repoName string, discovered []sync.DiscoveredSkill) int {
 }
 
 func cmdList(args []string) error {
-	verbose, showHelp, err := parseListArgs(args)
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	if mode == modeAuto {
+		if projectConfigExists(cwd) {
+			mode = modeProject
+		} else {
+			mode = modeGlobal
+		}
+	}
+
+	verbose, showHelp, err := parseListArgs(rest)
 	if showHelp {
 		printListHelp()
 		return nil
 	}
 	if err != nil {
 		return err
+	}
+
+	if mode == modeProject {
+		_ = verbose
+		return cmdListProject(cwd)
 	}
 
 	cfg, err := config.Load()
@@ -208,6 +232,8 @@ List all installed skills in the source directory.
 
 Options:
   --verbose, -v   Show detailed information (source, type, install date)
+  --project, -p   Use project-level config in current directory
+  --global, -g    Use global config (~/.config/skillshare)
   --help, -h      Show this help
 
 Examples:

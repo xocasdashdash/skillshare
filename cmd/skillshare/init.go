@@ -270,12 +270,27 @@ func printInitSuccess(sourcePath string, dryRun bool) {
 }
 
 func cmdInit(args []string) error {
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	if mode == modeProject {
+		return cmdInitProject(rest)
+	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("cannot determine home directory: %w", err)
 	}
 
-	opts, err := parseInitArgs(args)
+	if mode == modeAuto {
+		if cwd, cwdErr := os.Getwd(); cwdErr == nil && projectConfigExists(cwd) {
+			return cmdInitProject(rest)
+		}
+	}
+
+	opts, err := parseInitArgs(rest)
 	if err != nil {
 		return err
 	}

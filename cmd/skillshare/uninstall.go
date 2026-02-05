@@ -173,7 +173,29 @@ func performUninstall(target *uninstallTarget, cfg *config.Config) error {
 }
 
 func cmdUninstall(args []string) error {
-	opts, showHelp, err := parseUninstallArgs(args)
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	if mode == modeAuto {
+		if projectConfigExists(cwd) {
+			mode = modeProject
+		} else {
+			mode = modeGlobal
+		}
+	}
+
+	if mode == modeProject {
+		return cmdUninstallProject(rest, cwd)
+	}
+
+	opts, showHelp, err := parseUninstallArgs(rest)
 	if showHelp {
 		printUninstallHelp()
 		return err
@@ -249,6 +271,8 @@ For tracked repositories (_repo-name):
 Options:
   --force, -f     Skip confirmation and ignore uncommitted changes
   --dry-run, -n   Preview without making changes
+  --project, -p   Use project-level config in current directory
+  --global, -g    Use global config (~/.config/skillshare)
   --help, -h      Show this help
 
 Examples:

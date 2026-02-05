@@ -15,24 +15,81 @@ import (
 )
 
 func cmdTarget(args []string) error {
-	if len(args) < 1 {
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	if len(rest) < 1 {
 		return fmt.Errorf("usage: skillshare target <add|remove|list|name> [options]")
 	}
 
-	subcmd := args[0]
-	subargs := args[1:]
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	if mode == modeAuto {
+		if projectConfigExists(cwd) {
+			mode = modeProject
+		} else {
+			mode = modeGlobal
+		}
+	}
+
+	subcmd := rest[0]
+	subargs := rest[1:]
 
 	switch subcmd {
+	case "help", "--help", "-h":
+		printTargetHelp()
+		return nil
 	case "add":
+		if mode == modeProject {
+			return targetAddProject(subargs, cwd)
+		}
 		return targetAdd(subargs)
 	case "remove", "rm":
+		if mode == modeProject {
+			return targetRemoveProject(subargs, cwd)
+		}
 		return targetRemove(subargs)
 	case "list", "ls":
+		if mode == modeProject {
+			return targetListProject(cwd)
+		}
 		return targetList()
 	default:
 		// Assume it's a target name - show info or modify settings
+		if mode == modeProject {
+			return targetInfoProject(subcmd, subargs, cwd)
+		}
 		return targetInfo(subcmd, subargs)
 	}
+}
+
+func printTargetHelp() {
+	fmt.Println(`Usage: skillshare target <add|remove|list|name> [options]
+
+Manage target skill directories.
+
+Subcommands:
+  add <name> [path]      Add a target (path optional for known project targets)
+  remove <name>          Remove a target
+  remove --all           Remove all targets
+  list                   List configured targets
+  <name>                 Show target info
+
+Options:
+  --project, -p          Use project-level config in current directory
+  --global, -g           Use global config (~/.config/skillshare)
+
+Examples:
+  skillshare target add cursor
+  skillshare target add my-ide .my-ide/skills
+  skillshare target remove cursor
+  skillshare target list
+  skillshare target cursor`)
 }
 
 func targetAdd(args []string) error {

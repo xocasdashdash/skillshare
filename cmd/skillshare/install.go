@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -120,7 +121,29 @@ func dispatchInstall(source *install.Source, cfg *config.Config, opts install.In
 }
 
 func cmdInstall(args []string) error {
-	parsed, showHelp, err := parseInstallArgs(args)
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	if mode == modeAuto {
+		if projectConfigExists(cwd) {
+			mode = modeProject
+		} else {
+			mode = modeGlobal
+		}
+	}
+
+	if mode == modeProject {
+		return cmdInstallProject(rest, cwd)
+	}
+
+	parsed, showHelp, err := parseInstallArgs(rest)
 	if showHelp {
 		printInstallHelp()
 		return err
@@ -655,6 +678,8 @@ Options:
   --update, -u        Update existing (git pull if possible, else reinstall)
   --track, -t         Install as tracked repo (preserves .git for updates)
   --dry-run, -n       Preview the installation without making changes
+  --project, -p       Use project-level config in current directory
+  --global, -g        Use global config (~/.config/skillshare)
   --help, -h          Show this help
 
 Examples:

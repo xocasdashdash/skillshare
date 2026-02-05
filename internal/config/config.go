@@ -23,55 +23,6 @@ type Config struct {
 	Ignore  []string                `yaml:"ignore,omitempty"`
 }
 
-// DefaultTargets returns the well-known CLI skills directories
-func DefaultTargets() map[string]TargetConfig {
-	home, _ := os.UserHomeDir()
-	return map[string]TargetConfig{
-		"adal":         {Path: filepath.Join(home, ".adal", "skills")},
-		"agents":       {Path: filepath.Join(home, ".config", "agents", "skills")}, // Global, portable across AI coding agents
-		"amp":          {Path: filepath.Join(home, ".config", "agents", "skills")}, // Same as agents
-		"antigravity":  {Path: filepath.Join(home, ".gemini", "antigravity", "global_skills")},
-		"augment":      {Path: filepath.Join(home, ".augment", "rules")},
-		"claude":       {Path: filepath.Join(home, ".claude", "skills")},
-		"cline":        {Path: filepath.Join(home, ".cline", "skills")},
-		"codebuddy":    {Path: filepath.Join(home, ".codebuddy", "skills")},
-		"codex":        {Path: filepath.Join(home, ".codex", "skills")},
-		"commandcode":  {Path: filepath.Join(home, ".commandcode", "skills")},
-		"continue":     {Path: filepath.Join(home, ".continue", "skills")},
-		"copilot":      {Path: filepath.Join(home, ".copilot", "skills")},
-		"crush":        {Path: filepath.Join(home, ".config", "crush", "skills")},
-		"cursor":       {Path: filepath.Join(home, ".cursor", "skills")},
-		"droid":        {Path: filepath.Join(home, ".factory", "skills")},
-		"gemini":       {Path: filepath.Join(home, ".gemini", "skills")},
-		"goose":        {Path: filepath.Join(home, ".config", "goose", "skills")},
-		"iflow":        {Path: filepath.Join(home, ".iflow", "skills")},
-		"junie":        {Path: filepath.Join(home, ".junie", "skills")},
-		"kilocode":     {Path: filepath.Join(home, ".kilocode", "skills")},
-		"kimi":         {Path: filepath.Join(home, ".kimi", "skills")},
-		"kiro":         {Path: filepath.Join(home, ".kiro", "skills")},
-		"kode":         {Path: filepath.Join(home, ".kode", "skills")},
-		"letta":        {Path: filepath.Join(home, ".letta", "skills")},
-		"mcpjam":       {Path: filepath.Join(home, ".mcpjam", "skills")},
-		"moltbot":      {Path: filepath.Join(home, ".moltbot", "skills")}, // legacy name for openclaw
-		"mux":          {Path: filepath.Join(home, ".mux", "skills")},
-		"neovate":      {Path: filepath.Join(home, ".neovate", "skills")},
-		"openclaude":   {Path: filepath.Join(home, ".openclaude", "skills")},
-		"openclaw":     {Path: filepath.Join(home, ".openclaw", "skills")},
-		"opencode":     {Path: filepath.Join(home, ".config", "opencode", "skills")},
-		"openhands":    {Path: filepath.Join(home, ".openhands", "skills")},
-		"pi":           {Path: filepath.Join(home, ".pi", "agent", "skills")},
-		"pochi":        {Path: filepath.Join(home, ".pochi", "skills")},
-		"qoder":        {Path: filepath.Join(home, ".qoder", "skills")},
-		"qwen":         {Path: filepath.Join(home, ".qwen", "skills")},
-		"roo":          {Path: filepath.Join(home, ".roo", "skills")},
-		"trae":         {Path: filepath.Join(home, ".trae", "skills")},
-		"trae-cn":      {Path: filepath.Join(home, ".trae-cn", "skills")},
-		"vibe":         {Path: filepath.Join(home, ".vibe", "skills")}, // Mistral Vibe
-		"windsurf":     {Path: filepath.Join(home, ".codeium", "windsurf", "skills")},
-		"zencoder":     {Path: filepath.Join(home, ".zencoder", "skills")},
-	}
-}
-
 // ConfigPath returns the config file path, respecting SKILLSHARE_CONFIG env var
 func ConfigPath() string {
 	// Allow override for testing

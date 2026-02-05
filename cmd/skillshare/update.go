@@ -13,14 +13,36 @@ import (
 )
 
 func cmdUpdate(args []string) error {
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	if mode == modeAuto {
+		if projectConfigExists(cwd) {
+			mode = modeProject
+		} else {
+			mode = modeGlobal
+		}
+	}
+
+	if mode == modeProject {
+		return cmdUpdateProject(rest, cwd)
+	}
+
 	var name string
 	var updateAll bool
 	var dryRun bool
 	var force bool
 
 	// Parse arguments
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
+	for i := 0; i < len(rest); i++ {
+		arg := rest[i]
 		switch {
 		case arg == "--all" || arg == "-a":
 			updateAll = true
@@ -423,6 +445,8 @@ Options:
   --all, -a           Update all tracked repos + skills with metadata
   --force, -f         Discard local changes and force update
   --dry-run, -n       Preview without making changes
+  --project, -p       Use project-level config in current directory
+  --global, -g        Use global config (~/.config/skillshare)
   --help, -h          Show this help
 
 Examples:

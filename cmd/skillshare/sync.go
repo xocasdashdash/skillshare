@@ -11,10 +11,32 @@ import (
 )
 
 func cmdSync(args []string) error {
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	if mode == modeAuto {
+		if projectConfigExists(cwd) {
+			mode = modeProject
+		} else {
+			mode = modeGlobal
+		}
+	}
+
+	if mode == modeProject {
+		return cmdSyncProject(rest, cwd)
+	}
+
 	dryRun := false
 	force := false
 
-	for _, arg := range args {
+	for _, arg := range rest {
 		switch arg {
 		case "--dry-run", "-n":
 			dryRun = true

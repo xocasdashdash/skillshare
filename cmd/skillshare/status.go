@@ -18,6 +18,31 @@ import (
 )
 
 func cmdStatus(args []string) error {
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	if mode == modeAuto {
+		if projectConfigExists(cwd) {
+			mode = modeProject
+		} else {
+			mode = modeGlobal
+		}
+	}
+
+	if mode == modeProject {
+		if len(rest) > 0 {
+			return fmt.Errorf("unexpected arguments: %v", rest)
+		}
+		return cmdStatusProject(cwd)
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err

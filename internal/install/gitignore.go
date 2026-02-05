@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+const (
+	gitignoreMarkerStart = "# BEGIN SKILLSHARE MANAGED - DO NOT EDIT"
+	gitignoreMarkerEnd   = "# END SKILLSHARE MANAGED"
+)
+
 // UpdateGitIgnore adds an entry to the .gitignore file in the given directory.
 // If the entry already exists, it does nothing.
 // Creates the .gitignore file if it doesn't exist.
@@ -19,44 +24,22 @@ func UpdateGitIgnore(dir, entry string) error {
 		entry = entry + "/"
 	}
 
-	// Check if entry already exists
-	exists, err := gitignoreContains(gitignorePath, entry)
+	lines, err := readGitignoreLines(gitignorePath)
 	if err != nil {
 		return err
 	}
-	if exists {
-		return nil // Already ignored
+
+	lines, startIdx, endIdx := ensureMarkerBlock(lines)
+	if containsGitignoreEntry(lines[startIdx+1:endIdx], entry) {
+		return nil
 	}
 
-	// Append entry to .gitignore
-	f, err := os.OpenFile(gitignorePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to open .gitignore: %w", err)
-	}
-	defer f.Close()
+	updated := make([]string, 0, len(lines)+1)
+	updated = append(updated, lines[:endIdx]...)
+	updated = append(updated, entry)
+	updated = append(updated, lines[endIdx:]...)
 
-	// Check if file needs newline before entry
-	needsNewline := false
-	if info, err := f.Stat(); err == nil && info.Size() > 0 {
-		// Read last byte to check if it's a newline
-		content, err := os.ReadFile(gitignorePath)
-		if err == nil && len(content) > 0 && content[len(content)-1] != '\n' {
-			needsNewline = true
-		}
-	}
-
-	var writeErr error
-	if needsNewline {
-		_, writeErr = f.WriteString("\n" + entry + "\n")
-	} else {
-		_, writeErr = f.WriteString(entry + "\n")
-	}
-
-	if writeErr != nil {
-		return fmt.Errorf("failed to write to .gitignore: %w", writeErr)
-	}
-
-	return nil
+	return writeGitignoreLines(gitignorePath, updated)
 }
 
 // RemoveFromGitIgnore removes an entry from the .gitignore file.
@@ -69,42 +52,45 @@ func RemoveFromGitIgnore(dir, entry string) (bool, error) {
 		entry = entry + "/"
 	}
 
-	// Read existing content
-	content, err := os.ReadFile(gitignorePath)
+	lines, err := readGitignoreLines(gitignorePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return false, nil // No .gitignore, nothing to remove
+			return false, nil
 		}
-		return false, fmt.Errorf("failed to read .gitignore: %w", err)
+		return false, err
 	}
 
-	// Find and remove the entry
-	lines := strings.Split(string(content), "\n")
-	var newLines []string
-	found := false
+	startIdx, endIdx := findMarkerBlock(lines)
+	if startIdx == -1 || endIdx == -1 || startIdx >= endIdx {
+		return false, nil
+	}
 
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
+	found := false
+	for i := startIdx + 1; i < endIdx; i++ {
+		trimmed := strings.TrimSpace(lines[i])
 		if trimmed == entry || trimmed == strings.TrimSuffix(entry, "/") {
 			found = true
-			continue // Skip this line
+			continue
 		}
-		newLines = append(newLines, line)
 	}
 
 	if !found {
 		return false, nil
 	}
 
-	// Write back
-	newContent := strings.Join(newLines, "\n")
-	// Ensure file ends with newline if it has content
-	if len(newContent) > 0 && !strings.HasSuffix(newContent, "\n") {
-		newContent += "\n"
+	updated := make([]string, 0, len(lines))
+	updated = append(updated, lines[:startIdx+1]...)
+	for i := startIdx + 1; i < endIdx; i++ {
+		trimmed := strings.TrimSpace(lines[i])
+		if trimmed == entry || trimmed == strings.TrimSuffix(entry, "/") {
+			continue
+		}
+		updated = append(updated, lines[i])
 	}
+	updated = append(updated, lines[endIdx:]...)
 
-	if err := os.WriteFile(gitignorePath, []byte(newContent), 0644); err != nil {
-		return false, fmt.Errorf("failed to write .gitignore: %w", err)
+	if err := writeGitignoreLines(gitignorePath, updated); err != nil {
+		return false, err
 	}
 
 	return true, nil
@@ -133,4 +119,80 @@ func gitignoreContains(path, entry string) (bool, error) {
 	}
 
 	return false, scanner.Err()
+}
+
+func readGitignoreLines(path string) ([]string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []string{}, nil
+		}
+		return nil, fmt.Errorf("failed to read .gitignore: %w", err)
+	}
+
+	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
+	lines := strings.Split(normalized, "\n")
+	for len(lines) > 0 && lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	return lines, nil
+}
+
+func writeGitignoreLines(path string, lines []string) error {
+	content := strings.Join(lines, "\n")
+	if content != "" {
+		content += "\n"
+	}
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write .gitignore: %w", err)
+	}
+	return nil
+}
+
+func findMarkerBlock(lines []string) (int, int) {
+	startIdx := -1
+	endIdx := -1
+	for i, line := range lines {
+		if strings.TrimSpace(line) == gitignoreMarkerStart {
+			startIdx = i
+			break
+		}
+	}
+	if startIdx == -1 {
+		return -1, -1
+	}
+	for i := startIdx + 1; i < len(lines); i++ {
+		if strings.TrimSpace(lines[i]) == gitignoreMarkerEnd {
+			endIdx = i
+			break
+		}
+	}
+	return startIdx, endIdx
+}
+
+func ensureMarkerBlock(lines []string) ([]string, int, int) {
+	startIdx, endIdx := findMarkerBlock(lines)
+	if startIdx != -1 && endIdx != -1 && startIdx < endIdx {
+		return lines, startIdx, endIdx
+	}
+
+	if len(lines) > 0 {
+		lines = append(lines, "")
+	}
+	startIdx = len(lines)
+	lines = append(lines, gitignoreMarkerStart, gitignoreMarkerEnd)
+	endIdx = startIdx + 1
+	return lines, startIdx, endIdx
+}
+
+func containsGitignoreEntry(lines []string, entry string) bool {
+	entryNoSlash := strings.TrimSuffix(entry, "/")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == entry || trimmed == entryNoSlash {
+			return true
+		}
+	}
+	return false
 }

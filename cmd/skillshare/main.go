@@ -146,7 +146,7 @@ func printUsage() {
 
 	// Target Management
 	fmt.Println("TARGET MANAGEMENT")
-	cmd("target add", "<name> <path>", "Add a target")
+	cmd("target add", "<name> [path]", "Add a target (path optional in project mode)")
 	cmd("target remove", "<name>", "Unlink target and restore skills")
 	cmd("target list", "", "List all targets")
 	cmd("diff", "", "Show differences between source and targets")
@@ -172,11 +172,19 @@ func printUsage() {
 	cmd("help", "", "Show this help")
 	fmt.Println()
 
+	// Global Options
+	fmt.Println("GLOBAL OPTIONS")
+	fmt.Printf("  %s%-33s%s %s\n", c, "--project, -p", r, "Use project-level config in current directory")
+	fmt.Printf("  %s%-33s%s %s\n", c, "--global, -g", r, "Use global config (~/.config/skillshare)")
+	fmt.Println()
+
 	// Examples
 	fmt.Println("EXAMPLES")
 	fmt.Println(g + "  skillshare status                                   # Check current state")
 	fmt.Println("  skillshare sync --dry-run                           # Preview before sync")
 	fmt.Println("  skillshare collect claude                           # Import local skills")
+	fmt.Println("  skillshare install anthropics/skills/pdf -p         # Project install")
+	fmt.Println("  skillshare target add cursor -p                     # Project target")
 	fmt.Println("  skillshare push -m \"Add new skill\"                  # Push to remote")
 	fmt.Println("  skillshare pull                                     # Pull from remote")
 	fmt.Println("  skillshare install github.com/team/skills --track   # Team repo")
