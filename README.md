@@ -34,7 +34,7 @@
   <a href="#commands">Commands</a> •
   <a href="#project-skills">Project Skills</a> •
   <a href="#organization-skills">Organization Skills</a> •
-  <a href="https://skillshare.runkids.cc/docs/intro">Docs</a>
+  <a href="https://skillshare.runkids.cc/docs">Docs</a>
 </p>
 
 > [!NOTE]
