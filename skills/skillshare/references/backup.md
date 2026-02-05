@@ -1,5 +1,7 @@
 # Backup & Restore
 
+**Global mode only.** Not available in project mode (project targets are reproducible via `install -p && sync`).
+
 ## backup
 
 Create backups of target skill directories.

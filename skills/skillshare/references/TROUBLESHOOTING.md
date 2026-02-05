@@ -4,30 +4,34 @@
 
 | Problem | Solution |
 |---------|----------|
-| "config not found" | `skillshare init` |
+| "config not found" | `skillshare init` (global) or `skillshare init -p` (project) |
 | Target shows differences | `skillshare sync` |
-| Lost source files | `cd ~/.config/skillshare/skills && git checkout -- .` |
+| Lost source files (global) | `cd ~/.config/skillshare/skills && git checkout -- .` |
+| Lost source files (project) | `git checkout -- .skillshare/skills/` |
 | Skill not appearing | `skillshare sync` after install |
 | Git push fails | Check remote: `git -C ~/.config/skillshare/skills remote -v` |
+| Project mode not detected | Verify `.skillshare/config.yaml` exists in cwd |
+| Wrong mode detected | Use `-p` (project) or `-g` (global) to force |
 
 ## Diagnostic Commands
 
 ```bash
 skillshare doctor          # Check environment
-skillshare status          # Overview
+skillshare status          # Overview (auto-detects mode)
 skillshare diff            # Show differences
-ls -la ~/.claude/skills    # Check symlinks
+ls -la ~/.claude/skills    # Check global symlinks
+ls -la .claude/skills      # Check project symlinks
 ```
 
 ## Recovery
 
 ```bash
-skillshare backup          # Safety backup first
+skillshare backup          # Safety backup first (global only)
 skillshare sync --dry-run  # Preview changes
 skillshare sync            # Apply fix
 ```
 
-## Git Recovery
+## Git Recovery (Global)
 
 ```bash
 cd ~/.config/skillshare/skills
@@ -36,12 +40,24 @@ git checkout -- <skill>/   # Restore specific skill
 git checkout -- .          # Restore all skills
 ```
 
+## Project Recovery
+
+```bash
+# Re-install remote skills from config
+skillshare install -p
+
+# Re-sync to targets
+skillshare sync
+```
+
 ## AI Assistant Notes
 
 ### Symlink Safety
 
 - **merge mode** (default): Per-skill symlinks. Edit anywhere = edit source.
 - **symlink mode**: Entire directory symlinked.
+
+Both modes apply to global and project targets.
 
 **Safe commands:** `skillshare uninstall`, `skillshare target remove`
 
@@ -54,7 +70,9 @@ AI cannot respond to CLI prompts. Always use flags:
 ```bash
 # Good (non-interactive)
 skillshare init --copy-from claude --all-targets --git
+skillshare init -p --targets "claude-code,cursor"
 skillshare uninstall my-skill --force
+skillshare uninstall my-skill --force -p
 
 # Bad (requires user input)
 skillshare init

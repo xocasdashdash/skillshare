@@ -1,10 +1,12 @@
 # Init Command
 
-Initialize skillshare configuration.
+Initialize skillshare configuration (global or project).
+
+## Global Init
 
 **Source:** Always `~/.config/skillshare/skills` (use `--source` only if user explicitly requests).
 
-## Flags
+### Flags
 
 | Flag | Description |
 |------|-------------|
@@ -21,7 +23,7 @@ Initialize skillshare configuration.
 | `--remote <url>` | Set git remote |
 | `--dry-run` | Preview changes |
 
-## AI Usage (Non-Interactive)
+### AI Usage (Non-Interactive)
 
 ```bash
 # Step 1: Check for existing skills
@@ -37,8 +39,51 @@ skillshare init --copy-from claude --all-targets --git
 skillshare status
 ```
 
-## Adding New Targets Later
+### Adding New Targets Later
 
 ```bash
 skillshare init --discover --select "windsurf,kilocode"
+```
+
+---
+
+## Project Init (`-p`)
+
+Creates `.skillshare/` in current directory with `config.yaml`, `.gitignore`, and `skills/`.
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-p, --project` | Enable project mode |
+| `--targets "claude-code,cursor"` | Specific targets (non-interactive) |
+| `--discover` | Discover new AI tools |
+| `--discover --select "a,b"` | Non-interactive discovery |
+| `--dry-run, -n` | Preview changes |
+
+**Note:** `--copy-from`, `--git`, `--source` are not available in project mode.
+
+### AI Usage (Non-Interactive)
+
+```bash
+# Initialize with specific targets
+skillshare init -p --targets "claude-code,cursor"
+
+# Verify
+skillshare status
+```
+
+### What It Creates
+
+```
+.skillshare/
+├── config.yaml       # targets list
+├── .gitignore        # ignores cloned repos
+└── skills/           # project skill source
+```
+
+### Adding Targets to Existing Project
+
+```bash
+skillshare init -p --discover --select "windsurf"
 ```

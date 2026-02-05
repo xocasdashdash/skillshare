@@ -1,5 +1,7 @@
 # Install, Update, Uninstall & New
 
+All commands support project mode with `-p` flag. Auto-detected for `install -p` (when config lists remote skills).
+
 ## install
 
 Install skills from local path or git repository.
@@ -24,16 +26,23 @@ git@github.com:...            # SSH URL
 ### Examples
 
 ```bash
+# Global
 skillshare install anthropics/skills              # Browse official skills
 skillshare install anthropics/skills/skills/pdf   # Direct install
 skillshare install ~/Downloads/my-skill           # Local
 skillshare install github.com/team/repo --track   # Team repo
+
+# Project
+skillshare install anthropics/skills/skills/pdf -p    # Install to .skillshare/skills/
+skillshare install github.com/team/repo --track -p    # Track in project
+skillshare install -p                                 # Install all remote skills from config
 ```
 
 ### Flags
 
 | Flag | Description |
 |------|-------------|
+| `-p, --project` | Install to project source |
 | `--name <n>` | Override skill name |
 | `--force, -f` | Overwrite existing |
 | `--update, -u` | Update if exists |
@@ -41,6 +50,8 @@ skillshare install github.com/team/repo --track   # Team repo
 | `--dry-run, -n` | Preview |
 
 **Tracked repos:** Prefixed with `_`, nested with `__` (e.g., `_team__frontend__ui`).
+
+**Project `install -p` (no source):** Installs all remote skills listed in `.skillshare/config.yaml`. Useful for new team members.
 
 **After install:** `skillshare sync`
 
@@ -52,12 +63,17 @@ Update installed skills or tracked repositories.
 - **Regular skills:** Reinstalls from stored source metadata
 
 ```bash
+# Global
 skillshare update my-skill       # Update from stored source
 skillshare update _team-skills   # Git pull tracked repo
-skillshare update team-skills    # _ prefix is optional
 skillshare update --all          # All tracked repos + skills
 skillshare update --all -n       # Preview updates
-skillshare update _repo --force  # Discard local changes
+
+# Project
+skillshare update my-skill -p       # Update project skill
+skillshare update _team-skills -p   # Pull tracked repo in project
+skillshare update --all -p          # All project remote/tracked skills
+skillshare update _repo --force -p  # Discard local changes
 ```
 
 **Safety:** Tracked repos with uncommitted changes are skipped. Use `--force` to override.
@@ -69,8 +85,13 @@ skillshare update _repo --force  # Discard local changes
 Remove a skill from source.
 
 ```bash
+# Global
 skillshare uninstall my-skill          # With confirmation
 skillshare uninstall my-skill --force  # Skip confirmation
+
+# Project
+skillshare uninstall my-skill -p          # Remove from .skillshare/skills/
+skillshare uninstall my-skill --force -p  # Skip confirmation
 ```
 
 **After uninstall:** `skillshare sync`
@@ -80,8 +101,12 @@ skillshare uninstall my-skill --force  # Skip confirmation
 Create a new skill template.
 
 ```bash
-skillshare new <name>           # Create SKILL.md template
-skillshare new <name> --dry-run # Preview
+# Global
+skillshare new <name>               # Create SKILL.md template
+
+# Project
+skillshare new <name> -p            # Create in .skillshare/skills/
+skillshare new <name> --dry-run -p  # Preview
 ```
 
 **After create:** Edit SKILL.md → `skillshare sync`

@@ -1,12 +1,17 @@
 # Status & Inspection Commands
 
+Commands with auto-detection run in project mode when `.skillshare/config.yaml` exists in cwd. Use `-g` to force global.
+
 ## status
 
 Overview of source, targets, and sync state.
 
 ```bash
-skillshare status
+skillshare status          # Auto-detects mode
+skillshare status -g       # Force global
 ```
+
+Project mode output includes: source path, targets with sync mode, remote skills list.
 
 ## diff
 
@@ -22,9 +27,12 @@ skillshare diff claude         # Specific target
 List installed skills.
 
 ```bash
-skillshare list                # Basic list
+skillshare list                # Auto-detects mode
 skillshare list --verbose      # With source info
+skillshare list -g             # Force global
 ```
+
+Project mode shows local vs remote skills.
 
 ## search
 
