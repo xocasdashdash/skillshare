@@ -181,4 +181,4 @@ skillshare sync  # ← Don't forget!
 - [upgrade](/docs/commands/upgrade) — Upgrade CLI and built-in skill
 - [uninstall](/docs/commands/uninstall) — Remove skills
 - [sync](/docs/commands/sync) — Sync skills to targets
-- [Team Sharing](/docs/guides/team-sharing) — Tracked repos and team sharing
+- [Organization-Wide Skills](/docs/guides/organization-sharing) — Organization sharing with tracked repos

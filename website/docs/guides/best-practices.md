@@ -273,5 +273,5 @@ Before installing third-party skills:
 ## Related
 
 - [Creating Skills](./creating-skills) — Skill creation guide
-- [Team Sharing](./team-sharing) — Team workflow
+- [Organization-Wide Skills](./organization-sharing) — Organization workflow
 - [Skill Format](/docs/concepts/skill-format) — Format specification

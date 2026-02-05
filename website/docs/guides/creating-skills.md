@@ -286,4 +286,4 @@ Before publishing:
 
 - [Skill Format](/docs/concepts/skill-format) — Detailed format reference
 - [Commands: new](/docs/commands/new) — Create command
-- [Team Sharing](./team-sharing) — Share with your team
+- [Organization-Wide Skills](./organization-sharing) — Share across your organization

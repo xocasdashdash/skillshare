@@ -18,7 +18,8 @@ Install tools get skills onto agents. **Skillshare keeps them in sync.**
 | Pull back edits | — | **Bidirectional** — collect from any agent |
 | Cross-machine | Re-run install on each machine | **git push/pull** — one command sync |
 | Local + installed | Managed separately | **Unified** in single source directory |
-| Team sharing | Commit skills.json or re-install | **Tracked repos** — git pull to update |
+| Organization sharing | Commit skills.json or re-install | **Tracked repos** — git pull to update |
+| Project skills | Copy skills per repo, diverge over time | **Project mode** — auto-detected, shared via git |
 | AI integration | Manual CLI only | **Built-in skill** — AI operates directly |
 
 ## Quick Start
@@ -43,18 +44,28 @@ Done. Your skills are now synced across all AI CLI tools.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                       Source Directory                      │
-│                 ~/.config/skillshare/skills/                │
+│                    DUAL-LEVEL ARCHITECTURE                  │
+│                                                             │
+│  ORGANIZATION LEVEL              PROJECT LEVEL              │
+│  ~/.config/skillshare/           .skillshare/skills/        │
+│  ├── my-skill/                   ├── api-conventions/       │
+│  └── _company-std/               └── deploy-guide/          │
+│         │                               │                   │
+│         ▼ sync                          ▼ sync              │
+│  ~/.claude/skills/               .claude/skills/            │
+│  (system-wide targets)           (project-local targets)    │
+│                                  ← auto-detected by cd      │
 └─────────────────────────────────────────────────────────────┘
-                              │ sync
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-       ┌───────────┐   ┌───────────┐   ┌───────────┐
-       │  Claude   │   │  OpenCode │   │  Cursor   │   ...
-       └───────────┘   └───────────┘   └───────────┘
 ```
 
 Edit in source → all targets update. Edit in target → changes go to source (via symlinks).
+
+## Key Features
+
+- **Auto-Detection** — `cd` into a project with `.skillshare/` and skillshare switches to project mode automatically
+- **Dual-Level Architecture** — Organization skills for company standards + project skills for repo context
+- **Instant Updates** — Symlink-based sync means edits reflect immediately across all AI tools
+- **Team Ready** — Organization skills via tracked repos, project skills via git commit
 
 ## Supported Platforms
 
@@ -70,6 +81,9 @@ Edit in source → all targets update. Edit in target → changes go to source (
 
 **Already have skills?**
 - [From Existing Skills](/docs/getting-started/from-existing-skills) — Migrate and consolidate
+
+**Project-level skills:**
+- [Project Setup](/docs/guides/project-setup) — Set up project-scoped skills
 
 **Learn more:**
 - [Core Concepts](/docs/concepts) — Source, targets, sync modes

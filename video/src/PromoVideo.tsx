@@ -2,7 +2,7 @@ import { AbsoluteFill, Sequence } from 'remotion';
 import { PainPoint } from './scenes/PainPoint';
 import { TerminalDemo } from './scenes/TerminalDemo';
 import { Architecture } from './scenes/Architecture';
-import { TeamFeature } from './scenes/TeamFeature';
+import { OrganizationFeature } from './scenes/OrganizationFeature';
 import { AIFeature } from './scenes/AIFeature';
 import { ClosingLogo } from './scenes/ClosingLogo';
 import { SceneWrapper } from './components/Transition3D';
@@ -35,10 +35,10 @@ export const PromoVideo = () => {
         </SceneWrapper>
       </Sequence>
 
-      {/* Scene 4: Team Feature (11.3-15.3s) */}
+      {/* Scene 4: Organization Feature (11.3-15.3s) */}
       <Sequence from={11.3 * FPS} durationInFrames={4 * FPS}>
         <SceneWrapper entranceType="slideUp" exitType="flipOut">
-          <TeamFeature />
+          <OrganizationFeature />
         </SceneWrapper>
       </Sequence>
 

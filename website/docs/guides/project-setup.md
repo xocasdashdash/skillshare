@@ -8,13 +8,15 @@ Set up project-level skills from scratch — skills scoped to a single repositor
 
 ## When to Use Project Mode
 
-| Scenario | Use |
-|----------|-----|
-| Skills for a specific project | **Project mode** |
-| Skills shared across all projects | Global mode |
-| Team-specific skills committed to repo | **Project mode** |
-| Personal skills on multiple machines | Global mode |
-| Monorepo with project-specific AI context | **Project mode** |
+| Scenario | Example | Use |
+|----------|---------|-----|
+| Monorepo onboarding | New hire clones repo, instantly gets all project context | **Project mode** |
+| API conventions | "All endpoints must use camelCase and return standard error format" | **Project mode** |
+| Domain-specific context | Finance regulatory rules, healthcare compliance guidelines | **Project mode** |
+| Deployment knowledge | "Deploy to staging via `make deploy-staging`, requires VPN" | **Project mode** |
+| Project tooling | Custom test patterns, migration scripts, build configuration | **Project mode** |
+| Skills shared across all projects | Company-wide coding standards, security audit | Organization mode |
+| Personal skills on multiple machines | Personal formatting preferences, workflow shortcuts | Global mode |
 
 ---
 
@@ -60,6 +62,10 @@ skillshare init -p
 │    → targets: claude-code, cursor                                │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+:::tip Auto-Detection
+After initialization, skillshare auto-detects project mode whenever you `cd` into this directory. No `-p` flag needed for subsequent commands.
+:::
 
 You can also specify targets directly:
 
@@ -129,21 +135,23 @@ git commit -m "Add project-level skills"
 
 ## New Team Member Onboarding
 
-When a new member clones the repo:
+### Without skillshare
+
+1. Clone the repo
+2. Read the README to find which skills to install
+3. Manually copy or install each skill
+4. Configure each AI CLI tool separately
+5. Hope you didn't miss anything
+
+### With skillshare
 
 ```bash
-# 1. Clone the project
 git clone github.com/team/my-project
 cd my-project
-
-# 2. Install remote skills from config
-skillshare install -p
-
-# 3. Sync to targets
-skillshare sync
+skillshare install -p && skillshare sync
 ```
 
-`skillshare install -p` (no URL) reads `.skillshare/config.yaml` and installs all listed remote skills.
+Done. All project skills are installed and synced. `skillshare install -p` (no URL) reads `.skillshare/config.yaml` and installs all listed remote skills automatically.
 
 ---
 
@@ -184,22 +192,40 @@ skills:
 
 ## Coexistence with Global Mode
 
-Project and global skills work independently:
+Project and global (organization) skills work independently:
 
 ```
-Global source                       Project source
+Organization level                  Project level
 ~/.config/skillshare/skills/        .skillshare/skills/
 ├── personal-skill/                 ├── project-skill/
-└── _team-repo/                     └── remote-skill/
+└── _company-std/                   └── remote-skill/
          │                                   │
          ▼                                   ▼
    ~/.claude/skills/                .claude/skills/
-   (global targets)                 (project targets — separate)
+   (system-wide targets)            (project-local targets)
 ```
 
-- Project mode targets are **project-local** (e.g., `.claude/skills/` inside the project)
-- Global mode targets are **system-wide** (e.g., `~/.claude/skills/`)
+- Project targets are **project-local** (e.g., `.claude/skills/` inside the project)
+- Organization targets are **system-wide** (e.g., `~/.claude/skills/`)
 - They don't conflict — different directories, different scope
+
+### Real-World Example: Alice's Two Projects
+
+Alice works on a finance app and a marketing dashboard. She has:
+
+- **Organization skills**: Company coding standards, security audit (available everywhere)
+- **Finance project skills**: Regulatory compliance, financial API conventions
+- **Marketing project skills**: Analytics patterns, A/B testing guidelines
+
+```bash
+cd ~/finance-app
+skillshare status     # Shows finance project skills + org skills in system-wide targets
+
+cd ~/marketing-dash
+skillshare status     # Shows marketing project skills + same org skills
+```
+
+Each project gets its own context, while organization standards apply globally.
 
 ---
 
@@ -207,6 +233,6 @@ Global source                       Project source
 
 - [Project Skills](/docs/concepts/project-skills) — Core concepts
 - [Project Workflow](/docs/workflows/project-workflow) — Daily operations
-- [Team Sharing](/docs/guides/team-sharing) — Global-mode team sharing with tracked repos
+- [Organization-Wide Skills](/docs/guides/organization-sharing) — Organization sharing with tracked repos
 - [Commands: init](/docs/commands/init) — Init command details
 - [Commands: install](/docs/commands/install) — Install command details

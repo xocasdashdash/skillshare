@@ -83,4 +83,4 @@ You should see:
 
 - [Create your own skill](/docs/guides/creating-skills)
 - [Sync across machines](/docs/guides/cross-machine-sync)
-- [Share with your team](/docs/guides/team-sharing)
+- [Organization-wide skills](/docs/guides/organization-sharing)

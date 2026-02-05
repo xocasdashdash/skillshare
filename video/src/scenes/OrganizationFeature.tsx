@@ -5,13 +5,13 @@ import { colors } from '../styles/colors';
 
 const FPS = 30;
 
-export const TeamFeature = () => {
+export const OrganizationFeature = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   // Timeline (1.5x speed):
   // 0-0.3s: Title flies in
-  // 0.3-0.7s: Terminal + Team visual appear
+  // 0.3-0.7s: Terminal + Organization visual appear
   // 0.7-2.3s: Typewriter animation
   // 2.3-2.7s: Hold
 
@@ -33,7 +33,7 @@ export const TeamFeature = () => {
   const pulsePhase = (frame % 30) / 30;
   const pulseOpacity = 0.3 + 0.4 * Math.sin(pulsePhase * Math.PI * 2);
 
-  const command = 'skillshare install team/skills --track';
+  const command = 'skillshare install org/skills --track';
 
   return (
     <AbsoluteFill
@@ -75,7 +75,7 @@ export const TeamFeature = () => {
             textShadow: `0 0 60px ${colors.primary}60`,
           }}
         >
-          Team Edition
+          Organization Skills
         </h1>
       </div>
 
@@ -102,7 +102,7 @@ export const TeamFeature = () => {
           />
         </MacTerminal>
 
-        {/* Right: Team visualization - enlarged */}
+        {/* Right: Organization visualization - enlarged */}
         <div
           style={{
             display: 'flex',
@@ -195,10 +195,10 @@ export const TeamFeature = () => {
             <SyncParticle startX={110} startY={0} endX={190} endY={50} delay={16} />
           </svg>
 
-          {/* Team members with sync animation */}
+          {/* Organization members with sync animation */}
           <div style={{ display: 'flex', gap: '24px' }}>
             {[0, 1, 2].map((i) => (
-              <TeamMember key={i} index={i} />
+              <OrgMember key={i} index={i} />
             ))}
           </div>
 
@@ -212,7 +212,7 @@ export const TeamFeature = () => {
               marginTop: '8px',
             }}
           >
-            Share with your team
+            Share across your organization
           </span>
         </div>
       </div>
@@ -287,8 +287,8 @@ const SyncParticle = ({
   );
 };
 
-// Team member avatar component with sync checkmark - enlarged
-const TeamMember = ({ index }: { index: number }) => {
+// Organization member avatar component with sync checkmark - enlarged
+const OrgMember = ({ index }: { index: number }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 

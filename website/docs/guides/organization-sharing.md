@@ -2,33 +2,33 @@
 sidebar_position: 3
 ---
 
-# Team Sharing
+# Organization-Wide Skills
 
-Share skills across your entire team using tracked repositories.
+Share skills across all projects using tracked repositories.
 
 ## Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    TEAM SHARING WORKFLOW                        │
+│                  ORGANIZATION SHARING WORKFLOW                  │
 │                                                                 │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │              GitHub: team/shared-skills                 │   │
+│   │           GitHub: your-org/shared-skills                │   │
 │   │   frontend/ui/   backend/api/   devops/deploy/          │   │
-│   └─────────────────────────────────────────────────────────┘   │
+│   └──────────────────────────┬──────────────────────────────┘   │
 │                              │                                  │
 │              skillshare install --track                         │
 │                              │                                  │
 │                              ▼                                  │
 │   ┌─────────────────────────────────────────────────────────┐   │
 │   │  Alice's Machine          Bob's Machine                 │   │
-│   │  _team-skills/            _team-skills/                 │   │
+│   │  _org-skills/             _org-skills/                  │   │
 │   │  ├── frontend/ui/         ├── frontend/ui/              │   │
 │   │  ├── backend/api/         ├── backend/api/              │   │
 │   │  └── devops/deploy/       └── devops/deploy/            │   │
-│   └─────────────────────────────────────────────────────────┘   │
+│   └──────────────────────────┬──────────────────────────────┘   │
 │                              │                                  │
-│              skillshare update _team-skills                     │
+│              skillshare update _org-skills                      │
 │                              │                                  │
 │                              ▼                                  │
 │   ┌─────────────────────────────────────────────────────────┐   │
@@ -40,14 +40,26 @@ Share skills across your entire team using tracked repositories.
 
 ---
 
-## Why Team Sharing?
+## Usage Scenarios
 
-| Without Team Sharing | With Team Sharing |
-|---------------------|-------------------|
+| Scenario | Example |
+|----------|---------|
+| **Company coding standards** | Enforce consistent naming, error handling, and architecture across all repos |
+| **Security audit skills** | Organization-wide security review checklist applied to every project |
+| **Deployment knowledge** | Standard CI/CD patterns, infrastructure conventions, release processes |
+| **Code review guidelines** | Consistent review criteria across all teams and projects |
+| **Cross-project patterns** | Shared API design patterns, logging standards, testing frameworks |
+
+---
+
+## Why Organization Sharing?
+
+| Without Organization Skills | With Organization Skills |
+|-----------------------------|--------------------------|
 | "Hey, grab the latest deploy skill from Slack" | `skillshare update --all` |
 | Copy-paste skills between machines | One command installs everything |
 | "Which version of the skill do you have?" | Everyone syncs from same source |
-| Skills scattered across docs/repos | One curated repo for the team |
+| Skills scattered across docs/repos | One curated repo for the organization |
 
 ---
 
@@ -55,10 +67,10 @@ Share skills across your entire team using tracked repositories.
 
 ### Step 1: Create a skills repo
 
-Create a GitHub/GitLab/Bitbucket repository for your team's skills.
+Create a GitHub/GitLab/Bitbucket repository for your organization's skills.
 
 ```bash
-mkdir team-skills && cd team-skills
+mkdir org-skills && cd org-skills
 git init
 
 # Create skill structure
@@ -82,7 +94,7 @@ git push -u origin main
 Send this to your team:
 
 ```bash
-skillshare install github.com/your-org/team-skills --track && skillshare sync
+skillshare install github.com/your-org/org-skills --track && skillshare sync
 ```
 
 ---
@@ -92,8 +104,8 @@ skillshare install github.com/your-org/team-skills --track && skillshare sync
 ### Initial setup
 
 ```bash
-# Install the team skills repo
-skillshare install github.com/team/skills --track
+# Install the organization skills repo
+skillshare install github.com/org/skills --track
 
 # Sync to your AI CLIs
 skillshare sync
@@ -117,14 +129,14 @@ Organize skills in folders — skillshare auto-flattens them for AI CLI compatib
 SOURCE                              TARGET
 (your organization)                 (what AI CLI sees)
 ────────────────────────────────────────────────────────────
-_team-skills/
+_org-skills/
 ├── frontend/
-│   ├── react/          ───►   _team-skills__frontend__react/
-│   └── vue/            ───►   _team-skills__frontend__vue/
+│   ├── react/          ───►   _org-skills__frontend__react/
+│   └── vue/            ───►   _org-skills__frontend__vue/
 ├── backend/
-│   └── api/            ───►   _team-skills__backend__api/
+│   └── api/            ───►   _org-skills__backend__api/
 └── devops/
-    └── deploy/         ───►   _team-skills__devops__deploy/
+    └── deploy/         ───►   _org-skills__devops__deploy/
 
 • _ prefix = tracked repository
 • __ (double underscore) = path separator
@@ -162,9 +174,9 @@ name: team-b:ui
 
 ---
 
-## Multiple Team Repos
+## Multiple Organization Repos
 
-Install multiple team repos:
+Install multiple repos for different teams or concerns:
 
 ```bash
 # Frontend team
@@ -210,12 +222,29 @@ skillshare install git@github.com:org/private-skills.git --track
 
 ---
 
+## Organization vs Project Skills
+
+| | Organization Skills | Project Skills |
+|---|---|---|
+| **Scope** | All projects on machine | Single repository |
+| **Source** | `~/.config/skillshare/skills/_repo/` | `.skillshare/skills/` |
+| **Install** | `skillshare install <url> --track` | `skillshare install <url> -p` |
+| **Shared via** | Each member installs tracked repo | Committed to project git repo |
+| **Best for** | Coding standards, security, org patterns | API conventions, domain context, project tooling |
+| **Coexistence** | Works alongside project skills | Works alongside organization skills |
+
+:::tip Use Both
+Organization skills provide company-wide standards. Project skills provide repo-specific context. They complement each other — use both for the best developer experience.
+:::
+
+---
+
 ## Best Practices
 
 ### For Team Leads
 
 1. **Use clear structure**: Organize by function (frontend, backend, devops)
-2. **Namespace skills**: `team:skill-name` to avoid collisions
+2. **Namespace skills**: `org:skill-name` to avoid collisions
 3. **Document requirements**: README with setup instructions
 4. **Version control**: Use tags for stable releases
 
@@ -230,5 +259,7 @@ skillshare install git@github.com:org/private-skills.git --track
 ## Related
 
 - [Tracked Repositories](/docs/concepts/tracked-repositories) — How tracked repos work
+- [Project Skills](/docs/concepts/project-skills) — Project-level skills
+- [Project Setup](/docs/guides/project-setup) — Project-level setup guide
 - [Cross-Machine Sync](./cross-machine-sync) — Personal cross-machine sync
 - [Commands: install](/docs/commands/install) — Install command details

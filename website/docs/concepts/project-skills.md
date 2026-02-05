@@ -6,28 +6,63 @@ sidebar_position: 6
 
 Run skillshare at the project level — skills scoped to a single repository, shared via git.
 
+## Usage Scenarios
+
+| Scenario | Example |
+|----------|---------|
+| **Monorepo onboarding** | New developer clones repo, runs `skillshare install -p && skillshare sync` — instant project context |
+| **API conventions** | Embed API style guides as skills so every AI assistant follows team conventions |
+| **Domain-specific context** | Finance app with regulatory rules, healthcare app with compliance guidelines |
+| **Project tooling** | CI/CD deployment knowledge, testing patterns, migration scripts specific to this repo |
+| **Onboarding acceleration** | "How does auth work here?" — the AI already knows, from committed project skills |
+
+---
+
 ## Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                    PROJECT MODE                                  │
-│                                                                  │
-│    ┌────────────────────────────────────────────────┐            │
-│    │           .skillshare/skills/                  │            │
-│    │   (project source — committed to git)          │            │
-│    │                                                │            │
-│    │   my-skill/   remote-skill/                    │            │
-│    └────────────────────────┬───────────────────────┘            │
-│                  sync ↓     │                                    │
-│          ┌──────────────────┼──────────────────┐                 │
-│          ▼                  ▼                  ▼                 │
-│    ┌──────────┐       ┌──────────┐       ┌──────────┐            │
-│    │  .claude │       │  .cursor │       │  custom  │            │
-│    │  /skills │       │  /skills │       │  /skills │            │
-│    └──────────┘       └──────────┘       └──────────┘            │
-│                         TARGETS                                  │
-│           (merge or symlink mode, per-target)                    │
-└──────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         PROJECT MODE                            │
+│                                                                 │
+│   ┌─────────────────────────────────────────────────────────┐   │
+│   │            .skillshare/skills/                          │   │
+│   │   (project source — committed to git)                   │   │
+│   │                                                         │   │
+│   │   my-skill/   remote-skill/                             │   │
+│   └────────────────────────┬────────────────────────────────┘   │
+│                  sync ↓    │                                    │
+│         ┌──────────────────┼──────────────────┐                 │
+│         ▼                  ▼                  ▼                 │
+│   ┌──────────┐       ┌──────────┐       ┌──────────┐            │
+│   │  .claude │       │  .cursor │       │  custom  │            │
+│   │  /skills │       │  /skills │       │  /skills │            │
+│   └──────────┘       └──────────┘       └──────────┘            │
+│                         TARGETS                                 │
+│          (merge or symlink mode, per-target)                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Auto-Detection
+
+Skillshare automatically enters project mode when `.skillshare/config.yaml` exists in the current directory:
+
+```bash
+cd my-project/           # Has .skillshare/config.yaml
+skillshare sync          # → Project mode (auto-detected)
+skillshare status        # → Project mode (auto-detected)
+```
+
+:::tip Zero Config
+Just `cd` into any project with `.skillshare/` — skillshare detects it automatically. No flags, no environment variables, no configuration needed.
+:::
+
+To force a specific mode:
+
+```bash
+skillshare sync -p       # Force project mode
+skillshare sync -g       # Force global mode
 ```
 
 ---
@@ -103,25 +138,6 @@ skills:                            # Remote skills (installed via install -p)
 
 ---
 
-## Auto-Detection
-
-Skillshare automatically enters project mode when `.skillshare/config.yaml` exists in the current directory:
-
-```bash
-cd my-project/           # Has .skillshare/config.yaml
-skillshare sync          # → Project mode (auto-detected)
-skillshare status        # → Project mode (auto-detected)
-```
-
-No flags needed. To force a specific mode:
-
-```bash
-skillshare sync -p       # Force project mode
-skillshare sync -g       # Force global mode
-```
-
----
-
 ## Mode Restrictions
 
 Project mode has some intentional limitations:
@@ -138,9 +154,22 @@ Project mode has some intentional limitations:
 
 ---
 
+## When to Use: Project vs Organization
+
+| Need | Use |
+|------|-----|
+| Skills specific to **one repo** (API style, deployment, domain rules) | **Project skills** — committed to the repo |
+| Skills shared across **all projects** (coding standards, security audit) | **Organization skills** — tracked repos via `--track` |
+| **Onboarding** a new member to a specific project | **Project skills** — clone + install + sync |
+| **Onboarding** a new member to the organization | **Organization skills** — one install command |
+| Both repo context **and** org standards | **Use both** — they coexist independently |
+
+---
+
 ## Related
 
 - [Project Setup Guide](/docs/guides/project-setup) — Step-by-step setup tutorial
 - [Project Workflow](/docs/workflows/project-workflow) — Daily operations
+- [Organization-Wide Skills](/docs/guides/organization-sharing) — Organization-level sharing
 - [Source & Targets](/docs/concepts/source-and-targets) — How source and targets work
 - [Sync Modes](/docs/concepts/sync-modes) — Merge vs symlink

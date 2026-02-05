@@ -27,6 +27,27 @@ The edit → sync → commit cycle for project-level skill management.
 
 ---
 
+## Team Collaboration Scenario
+
+A typical team workflow showing how project skills stay in sync:
+
+```
+Alice (adds a skill)                    Bob (gets the update)
+──────────────────────                  ──────────────────────
+skillshare new api-guide -p
+$EDITOR .skillshare/skills/api-guide/
+skillshare sync
+git add . && git commit && git push
+                                        git pull
+                                        skillshare install -p
+                                        skillshare sync
+                                        → api-guide now in .claude/skills/
+```
+
+Bob doesn't need to know which skills were added — `skillshare install -p` reads the config and installs everything listed.
+
+---
+
 ## Common Operations
 
 ### Add a New Skill
@@ -193,6 +214,10 @@ skillshare sync          # Auto project mode
 skillshare status        # Auto project mode
 skillshare list          # Auto project mode
 ```
+
+:::tip Zero Config
+Just `cd` into a project directory — skillshare detects `.skillshare/config.yaml` and automatically switches to project mode. No flags needed.
+:::
 
 ### Edit and See Changes Instantly
 

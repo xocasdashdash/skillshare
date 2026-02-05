@@ -11,7 +11,8 @@ In-depth guides for specific use cases.
 | Guide | Description |
 |-------|-------------|
 | [Creating Skills](./creating-skills) | Create and publish your own skills |
-| [Team Sharing](./team-sharing) | Share skills across your team |
+| [Organization-Wide Skills](./organization-sharing) | Share skills across your organization |
+| [Project Setup](./project-setup) | Set up project-scoped skills |
 | [Cross-Machine Sync](./cross-machine-sync) | Sync skills across computers |
 | [Migration](./migration) | Migrate from other tools |
 | [Best Practices](./best-practices) | Naming, organization, and versioning |
@@ -27,7 +28,8 @@ In-depth guides for specific use cases.
 
 ### For Teams
 
-- [Team Sharing](./team-sharing) — Set up team skill sharing
+- [Organization-Wide Skills](./organization-sharing) — Set up organization-wide skill sharing
+- [Project Setup](./project-setup) — Set up project-level skills
 - [Best Practices](./best-practices) — Team conventions
 
 ### For Migration

@@ -10,27 +10,33 @@ Understanding these concepts helps you get the most out of skillshare.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      SKILLSHARE MODEL                           │
+│                     DUAL-LEVEL ARCHITECTURE                     │
 │                                                                 │
-│                        ┌──────────┐                             │
-│                        │  Remote  │                             │
-│                        │  (git)   │                             │
-│                        └────┬─────┘                             │
-│                    push ↑   │   ↓ pull                          │
-│                             │                                   │
-│    ┌────────────────────────┼────────────────────────┐          │
-│    │                  SOURCE                         │          │
-│    │        ~/.config/skillshare/skills/             │          │
-│    │                                                 │          │
-│    │   my-skill/   another/   _team-repo/            │          │
-│    └────────────────────────┬────────────────────────┘          │
-│                 sync ↓      │      ↑ collect                    │
-│         ┌───────────────────┼───────────────────┐               │
-│         ▼                   ▼                   ▼               │
-│   ┌──────────┐        ┌──────────┐        ┌──────────┐          │
-│   │  Claude  │        │  Cursor  │        │  Codex   │          │
-│   └──────────┘        └──────────┘        └──────────┘          │
-│                         TARGETS                                 │
+│  ORGANIZATION LEVEL (global, cross-project)                     │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  Source: ~/.config/skillshare/skills/                     │  │
+│  │  ├── my-skill/         (personal)                         │  │
+│  │  ├── _company-std/     (tracked: org-wide standards)      │  │
+│  │  └── _team-tools/      (tracked: team shared skills)      │  │
+│  └─────────────────────────────┬─────────────────────────────┘  │
+│                     sync ↓     │     ↑ collect                  │
+│           ┌────────────────────┼────────────────────┐           │
+│           ▼                    ▼                    ▼           │
+│     ~/.claude/skills     ~/.cursor/skills     ~/.opencode/      │
+│     (system-wide)        (system-wide)        (system-wide)     │
+│                                                                 │
+│  PROJECT LEVEL (repo-scoped, shared via git)                    │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  Source: .skillshare/skills/     ← auto-detected by cd    │  │
+│  │  ├── api-conventions/  (local, committed to repo)         │  │
+│  │  └── deploy-guide/     (remote, in .gitignore)            │  │
+│  └─────────────────────────────┬─────────────────────────────┘  │
+│                     sync ↓     │                                │
+│           ┌────────────────────┼────────────────────┐           │
+│           ▼                    ▼                    ▼           │
+│     .claude/skills       .cursor/skills       .custom/skills    │
+│     (project-local)      (project-local)      (project-local)   │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -43,6 +49,7 @@ Understanding these concepts helps you get the most out of skillshare.
 | **Tracked Repos** | Git repos installed with `--track` | [→ Tracked Repositories](./tracked-repositories) |
 | **Skill Format** | SKILL.md structure and metadata | [→ Skill Format](./skill-format) |
 | **Project Skills** | Project-level skills scoped to a repository | [→ Project Skills](./project-skills) |
+| **Organization Skills** | Organization-wide skills via tracked repositories | [→ Organization-Wide Skills](/docs/guides/organization-sharing) |
 
 ---
 
@@ -69,4 +76,9 @@ Understanding these concepts helps you get the most out of skillshare.
 ### Project Skills
 - Skills scoped to a single repository (`.skillshare/skills/`)
 - Shared with team via git — auto-detected when `.skillshare/` exists
-- Always uses merge mode, targets configured per-project
+- Sync mode configurable per-target (merge default, symlink optional)
+
+### Organization Skills
+- Shared across all projects via tracked repositories (`--track`)
+- Install once, update with `skillshare update --all`
+- Complements project skills — organization for standards, project for repo context

@@ -218,7 +218,7 @@ name: team-b:ui
 
 ## Related
 
-- [Team Sharing](/docs/guides/team-sharing) — Full team workflow
+- [Organization-Wide Skills](/docs/guides/organization-sharing) — Full organization workflow
 - [Project Skills](/docs/concepts/project-skills) — Project mode concepts
 - [Commands: install](/docs/commands/install) — Install options
 - [Commands: update](/docs/commands/update) — Update command

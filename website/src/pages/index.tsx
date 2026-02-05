@@ -133,8 +133,8 @@ const whyFeatures = [
   },
   {
     Icon: GitBranch,
-    title: 'Team Sharing',
-    description: 'Install team repos once, update anytime with git pull. Changes sync to all agents instantly.',
+    title: 'Dual-Level Skills',
+    description: 'Organization-wide standards via tracked repos, plus project-scoped skills shared via git. Both auto-detected.',
   },
   {
     Icon: Sparkles,

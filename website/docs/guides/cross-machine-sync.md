@@ -235,6 +235,6 @@ skillshare pull 2>/dev/null
 
 ## Related
 
-- [Team Sharing](./team-sharing) — Share with your team
+- [Organization-Wide Skills](./organization-sharing) — Share across your organization
 - [Commands: push](/docs/commands/push) — Push command details
 - [Commands: pull](/docs/commands/pull) — Pull command details

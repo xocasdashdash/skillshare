@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <strong>One source of truth for AI CLI skills. Sync everywhere with one command and simplify team sharing.</strong><br>
+  <strong>One source of truth for AI CLI skills. Sync everywhere with one command — from personal to organization-wide.</strong><br>
   Claude Code, OpenClaw, OpenCode & 40+ more.
 </p>
 
@@ -33,7 +33,7 @@
   <a href="#quick-start">Quick Start</a> •
   <a href="#commands">Commands</a> •
   <a href="#project-skills">Project Skills</a> •
-  <a href="#team-edition">Team Edition</a> •
+  <a href="#organization-skills">Organization Skills</a> •
   <a href="https://skillshare.runkids.cc/docs/intro">Docs</a>
 </p>
 
@@ -55,7 +55,8 @@ Install tools get skills onto agents. **Skillshare keeps them in sync.**
 | ↔️ **Bidirectional Sync** | Created a skill in Claude? Collect it back to source and share with OpenClaw, OpenCode, and others. |
 | 🌐 **Cross-machine Sync** | One git push/pull syncs skills across all your machines. No re-running install commands. |
 | 📦 **Unified Source** | Local skills and installed skills live together in one directory. No separate management. |
-| 👥 **Team Sharing** | Install team repos once, update anytime with git pull. Changes sync to all agents instantly. |
+| 👥 **Organization Skills** | Install shared repos once, update anytime with git pull. Changes sync to all agents instantly. |
+| 📁 **Project Skills** | Scope skills to a repo, share via git. Auto-detected when you `cd` into the project. |
 | ✨ **AI-Native** | Built-in skill lets AI operate skillshare directly. No manual CLI needed. |
 
 ## Installation
@@ -161,7 +162,7 @@ Done. Your skills are now synced across all AI CLI tools.
 | [Getting Started](https://skillshare.runkids.cc/docs/intro) | Quick start guide |
 | [Commands](https://skillshare.runkids.cc/docs/commands/init) | All CLI commands |
 | [Project Skills](https://skillshare.runkids.cc/docs/guides/project-setup) | Project-level skills setup |
-| [Team Edition](https://skillshare.runkids.cc/docs/guides/team-sharing) | Team sharing with tracked repos |
+| [Organization Skills](https://skillshare.runkids.cc/docs/guides/organization-sharing) | Organization-wide sharing with tracked repos |
 | [Cross-machine](https://skillshare.runkids.cc/docs/guides/cross-machine-sync) | Multi-machine sync |
 | [FAQ](https://skillshare.runkids.cc/docs/troubleshooting/faq) | FAQ & troubleshooting |
 
@@ -251,9 +252,9 @@ See [Project Skills Guide](https://skillshare.runkids.cc/docs/guides/project-set
 
 ---
 
-## Team Edition
+## Organization Skills
 
-Share skills across your team with tracked repositories.
+Share skills across your organization with tracked repositories.
 
 ```bash
 # Install team repo
@@ -270,7 +271,7 @@ skillshare sync
 - **Auto-pruning** — Orphaned symlinks removed on sync
 - **Collision detection** — Warns about duplicate skill names
 
-See [Team Edition Guide](https://skillshare.runkids.cc/docs/guides/team-sharing) for details.
+See [Organization Skills Guide](https://skillshare.runkids.cc/docs/guides/organization-sharing) for details.
 
 ---
 

@@ -3,7 +3,7 @@ import { PromoVideo } from './PromoVideo';
 import { PainPoint } from './scenes/PainPoint';
 import { TerminalDemo } from './scenes/TerminalDemo';
 import { Architecture } from './scenes/Architecture';
-import { TeamFeature } from './scenes/TeamFeature';
+import { OrganizationFeature } from './scenes/OrganizationFeature';
 import { AIFeature } from './scenes/AIFeature';
 import { ClosingLogo } from './scenes/ClosingLogo';
 
@@ -52,8 +52,8 @@ export const RemotionRoot = () => {
           height={HEIGHT}
         />
         <Composition
-          id="Scene4-TeamFeature"
-          component={TeamFeature}
+          id="Scene4-Organization"
+          component={OrganizationFeature}
           durationInFrames={4 * FPS}
           fps={FPS}
           width={WIDTH}

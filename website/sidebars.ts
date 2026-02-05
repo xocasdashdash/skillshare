@@ -44,7 +44,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/index',
         'guides/creating-skills',
-        'guides/team-sharing',
+        'guides/organization-sharing',
         'guides/cross-machine-sync',
         'guides/migration',
         'guides/best-practices',

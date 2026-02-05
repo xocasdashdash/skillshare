@@ -213,4 +213,4 @@ After migrating:
 
 - [Getting Started](/docs/getting-started/from-existing-skills) — Detailed migration walkthrough
 - [Commands: collect](/docs/commands/collect) — Collect command
-- [Team Sharing](./team-sharing) — Team migration
+- [Organization-Wide Skills](./organization-sharing) — Organization migration

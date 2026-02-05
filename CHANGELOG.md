@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.0] - 2026-02-05
+
+### Added
+- **Project-level skills** — scope skills to a single repository, shared via git
+  - `skillshare init -p` to initialize project mode
+  - `.skillshare/` directory with `config.yaml`, `skills/`, and `.gitignore`
+  - All core commands support `-p` flag: `sync`, `install`, `uninstall`, `update`, `list`, `status`, `target`, `collect`
+- **Auto-detection** — commands automatically switch to project mode when `.skillshare/config.yaml` exists
+- **Per-target sync mode for project mode** — each target can use `merge` or `symlink` independently
+- **`--discover` flag** — detect and add new AI CLI targets to existing project config
+- **Tracked repos in project mode** — `install --track -p` clones repos into `.skillshare/skills/`
+- Integration tests for all project mode commands
+
+### Changed
+- Terminology: "Team Sharing" → "Organization-Wide Skills", "Team Edition" → "Organization Skills"
+- Documentation restructured with dual-level architecture (Organization + Project)
+- Unified project sync output format with global sync
+
 ## [0.8.0] - 2026-01-31
 
 ### Breaking Changes
