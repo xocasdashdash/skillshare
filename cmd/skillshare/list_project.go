@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"skillshare/internal/install"
+	"skillshare/internal/ui"
 	"skillshare/internal/utils"
 )
 
@@ -52,30 +53,37 @@ func cmdListProject(root string) error {
 		return skills[i].Name < skills[j].Name
 	})
 
-	fmt.Println("Skills (project):")
 	if len(skills) == 0 {
-		fmt.Println("  (none)")
+		ui.Info("No skills installed")
+		ui.Info("Use 'skillshare install -p <source>' to install a skill")
 		return nil
 	}
 
-	maxLen := 0
+	ui.Header("Installed skills (project)")
+
+	maxNameLen := 0
 	for _, skill := range skills {
-		if len(skill.Name) > maxLen {
-			maxLen = len(skill.Name)
+		if len(skill.Name) > maxNameLen {
+			maxNameLen = len(skill.Name)
 		}
 	}
 
+	for _, skill := range skills {
+		suffix := "local"
+		if skill.Remote {
+			suffix = abbreviateSource(skill.Source)
+		}
+		format := fmt.Sprintf("  %s→%s %%-%ds  %s%%s%s\n", ui.Cyan, ui.Reset, maxNameLen, ui.Gray, ui.Reset)
+		fmt.Printf(format, skill.Name, suffix)
+	}
+
+	fmt.Println()
 	remoteCount := 0
 	for _, skill := range skills {
 		if skill.Remote {
 			remoteCount++
-			fmt.Printf("  %-*s  remote  %s\n", maxLen, skill.Name, skill.Source)
-		} else {
-			fmt.Printf("  %-*s  local\n", maxLen, skill.Name)
 		}
 	}
-
-	fmt.Println()
-	fmt.Printf("%d skill(s): %d remote, %d local\n", len(skills), remoteCount, len(skills)-remoteCount)
+	ui.Info("%d skill(s): %d remote, %d local", len(skills), remoteCount, len(skills)-remoteCount)
 	return nil
 }

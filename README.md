@@ -32,6 +32,7 @@
   <a href="#installation">Install</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#commands">Commands</a> •
+  <a href="#project-skills">Project Skills</a> •
   <a href="#team-edition">Team Edition</a> •
   <a href="https://skillshare.runkids.cc/docs/intro">Docs</a>
 </p>
@@ -40,9 +41,9 @@
 > **Recent Updates**
 > | Version | Highlights |
 > |---------|------------|
+> | [0.9.0](https://github.com/runkids/skillshare/releases/tag/v0.9.0) | Project-level skills — scope skills to a single repo, share via git |
 > | [0.8.0](https://github.com/runkids/skillshare/releases/tag/v0.8.0) | `pull` → `collect` rename, clearer command symmetry, refactoring |
 > | [0.7.0](https://github.com/runkids/skillshare/releases/tag/v0.7.0) | Windows support, GitHub skill search |
-> | [0.6.0](https://github.com/runkids/skillshare/releases/tag/v0.6.0) | Team Edition with tracked repos |
 
 ## Why skillshare?
 
@@ -159,6 +160,7 @@ Done. Your skills are now synced across all AI CLI tools.
 |-------|-------------|
 | [Getting Started](https://skillshare.runkids.cc/docs/intro) | Quick start guide |
 | [Commands](https://skillshare.runkids.cc/docs/commands/init) | All CLI commands |
+| [Project Skills](https://skillshare.runkids.cc/docs/guides/project-setup) | Project-level skills setup |
 | [Team Edition](https://skillshare.runkids.cc/docs/guides/team-sharing) | Team sharing with tracked repos |
 | [Cross-machine](https://skillshare.runkids.cc/docs/guides/cross-machine-sync) | Multi-machine sync |
 | [FAQ](https://skillshare.runkids.cc/docs/troubleshooting/faq) | FAQ & troubleshooting |
@@ -220,6 +222,32 @@ skillshare search commit -n 5     # Limit results
 > **Note:** Requires GitHub authentication. Run `gh auth login` or set `GITHUB_TOKEN`.
 
 See [Search Guide](https://skillshare.runkids.cc/docs/commands/search) for details.
+
+---
+
+## Project Skills
+
+Scope skills to a single repository — shared with your team via git.
+
+```bash
+# Initialize project-level skills
+skillshare init -p
+
+# Create or install skills
+skillshare new my-skill -p
+skillshare install anthropics/skills/skills/pdf -p
+
+# Sync to targets
+skillshare sync
+```
+
+**Features:**
+- **Project-scoped** — Skills live in `.skillshare/skills/`, committed to the project repo
+- **Auto-detection** — Commands auto-detect project mode when `.skillshare/` exists
+- **Team onboarding** — New members run `skillshare install -p && skillshare sync`
+- **Coexists with global** — Project and global skills work independently
+
+See [Project Skills Guide](https://skillshare.runkids.cc/docs/guides/project-setup) for details.
 
 ---
 

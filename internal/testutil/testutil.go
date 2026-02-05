@@ -231,6 +231,79 @@ func (sb *Sandbox) CreateSymlink(target, link string) {
 	}
 }
 
+// SetupProjectDir creates a project directory with .skillshare/ structure.
+// Returns the project root path.
+func (sb *Sandbox) SetupProjectDir(targets ...string) string {
+	sb.T.Helper()
+	projectRoot := filepath.Join(sb.Root, "project")
+	skillshareDir := filepath.Join(projectRoot, ".skillshare")
+	skillsDir := filepath.Join(skillshareDir, "skills")
+
+	for _, dir := range []string{skillsDir} {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			sb.T.Fatalf("failed to create %s: %v", dir, err)
+		}
+	}
+
+	// Write empty .gitignore
+	if err := os.WriteFile(filepath.Join(skillshareDir, ".gitignore"), []byte(""), 0644); err != nil {
+		sb.T.Fatalf("failed to create .gitignore: %v", err)
+	}
+
+	// Build config
+	cfg := "targets:\n"
+	for _, t := range targets {
+		cfg += "  - " + t + "\n"
+	}
+
+	if err := os.WriteFile(filepath.Join(skillshareDir, "config.yaml"), []byte(cfg), 0644); err != nil {
+		sb.T.Fatalf("failed to write config: %v", err)
+	}
+
+	// Create target directories
+	knownPaths := map[string]string{
+		"claude-code": ".claude/skills",
+		"cursor":      ".cursor/skills",
+		"codex":       ".agents/skills",
+	}
+	for _, t := range targets {
+		if p, ok := knownPaths[t]; ok {
+			os.MkdirAll(filepath.Join(projectRoot, p), 0755)
+		}
+	}
+
+	return projectRoot
+}
+
+// CreateProjectSkill creates a skill inside .skillshare/skills/.
+func (sb *Sandbox) CreateProjectSkill(projectRoot, name string, files map[string]string) string {
+	sb.T.Helper()
+	skillDir := filepath.Join(projectRoot, ".skillshare", "skills", name)
+	if err := os.MkdirAll(skillDir, 0755); err != nil {
+		sb.T.Fatalf("failed to create project skill: %v", err)
+	}
+	for filename, content := range files {
+		path := filepath.Join(skillDir, filename)
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			sb.T.Fatalf("failed to write %s: %v", path, err)
+		}
+	}
+	return skillDir
+}
+
+// WriteProjectConfig writes a config.yaml to .skillshare/config.yaml.
+func (sb *Sandbox) WriteProjectConfig(projectRoot, cfg string) {
+	sb.T.Helper()
+	dir := filepath.Join(projectRoot, ".skillshare")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		sb.T.Fatalf("failed to create .skillshare: %v", err)
+	}
+	path := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(path, []byte(cfg), 0644); err != nil {
+		sb.T.Fatalf("failed to write project config: %v", err)
+	}
+}
+
 // ListDir returns the names of files in a directory
 func (sb *Sandbox) ListDir(path string) []string {
 	sb.T.Helper()

@@ -132,8 +132,52 @@ skillshare update --all
 skillshare sync
 ```
 
+## Project Mode
+
+Update skills and tracked repos in the project:
+
+```bash
+skillshare update pdf -p             # Update single skill (reinstall)
+skillshare update team-skills -p     # Update tracked repo (git pull)
+skillshare update --all -p           # Update everything
+skillshare update --all -p --dry-run # Preview
+```
+
+### How It Works
+
+| Type | Method | Detected by |
+|------|--------|-------------|
+| **Tracked repo** (`_repo`) | `git pull` | Has `.git/` directory |
+| **Remote skill** (with metadata) | Reinstall from source | Has `.skillshare-meta.json` |
+| **Local skill** | Skipped | No metadata |
+
+The `_` prefix is optional — `skillshare update team-skills -p` auto-detects `_team-skills`.
+
+### Handling Conflicts
+
+Tracked repos with uncommitted changes are blocked by default:
+
+```bash
+# Option 1: Commit changes first
+cd .skillshare/skills/_team-skills
+git add . && git commit -m "My changes"
+skillshare update team-skills -p
+
+# Option 2: Discard and force update
+skillshare update team-skills -p --force
+```
+
+### Typical Workflow
+
+```bash
+skillshare update --all -p
+skillshare sync
+git add .skillshare/ && git commit -m "Update remote skills"
+```
+
 ## Related
 
 - [install](/docs/commands/install) — Install skills
 - [upgrade](/docs/commands/upgrade) — Upgrade CLI and built-in skill
 - [sync](/docs/commands/sync) — Sync to targets
+- [Project Skills](/docs/concepts/project-skills) — Project mode concepts

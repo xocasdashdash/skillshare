@@ -191,6 +191,8 @@ func cmdUninstall(args []string) error {
 		}
 	}
 
+	applyModeLabel(mode)
+
 	if mode == modeProject {
 		return cmdUninstallProject(rest, cwd)
 	}

@@ -342,9 +342,9 @@ func TestParseSource_GeminiCLIMonorepo(t *testing.T) {
 
 func TestExpandGitHubShorthand(t *testing.T) {
 	tests := []struct {
-		name   string
-		input  string
-		want   string
+		name  string
+		input string
+		want  string
 	}{
 		{
 			name:  "owner/repo shorthand",

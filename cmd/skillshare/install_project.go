@@ -65,10 +65,6 @@ func cmdInstallProject(args []string, root string) error {
 		return err
 	}
 
-	if parsed.opts.Track {
-		return fmt.Errorf("tracked repositories are not supported in project mode")
-	}
-
 	if !projectConfigExists(root) {
 		if err := performProjectInit(root, projectInitOptions{}); err != nil {
 			return err

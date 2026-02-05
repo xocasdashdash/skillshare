@@ -37,10 +37,6 @@ func cmdSyncProject(args []string, root string) error {
 		return fmt.Errorf("source directory does not exist: %s", runtime.sourcePath)
 	}
 
-	if dryRun {
-		ui.Warning("Dry run mode - no changes will be made")
-	}
-
 	discoveredSkills, discoverErr := sync.DiscoverSourceSkills(runtime.sourcePath)
 	if discoverErr == nil {
 		collisions := sync.CheckNameCollisions(discoveredSkills)
@@ -58,27 +54,41 @@ func cmdSyncProject(args []string, root string) error {
 		}
 	}
 
+	ui.Header("Syncing project skills")
+	if dryRun {
+		ui.Warning("Dry run mode - no changes will be made")
+	}
+
+	hasError := false
 	for _, entry := range runtime.config.Targets {
 		name := entry.Name
 		target, ok := runtime.targets[name]
 		if !ok {
 			ui.Error("%s: target not found", name)
+			hasError = true
 			continue
 		}
 
-		result, err := sync.SyncTargetMerge(name, target, runtime.sourcePath, dryRun, force)
-		if err != nil {
-			ui.Error("%s: %v", name, err)
-			continue
+		mode := target.Mode
+		if mode == "" {
+			mode = "merge"
 		}
 
-		if _, err := sync.PruneOrphanLinks(target.Path, runtime.sourcePath, dryRun); err != nil {
-			ui.Warning("%s: prune failed: %v", name, err)
+		if mode == "symlink" {
+			if err := syncSymlinkMode(name, target, runtime.sourcePath, dryRun, force); err != nil {
+				ui.Error("%s: %v", name, err)
+				hasError = true
+			}
+		} else {
+			if err := syncMergeMode(name, target, runtime.sourcePath, dryRun, force); err != nil {
+				ui.Error("%s: %v", name, err)
+				hasError = true
+			}
 		}
+	}
 
-		synced := len(result.Linked) + len(result.Updated)
-		displayPath := projectTargetDisplayPath(entry)
-		fmt.Printf("  %-12s %-16s ✓ %d skills synced\n", name, displayPath, synced)
+	if hasError {
+		return fmt.Errorf("some targets failed to sync")
 	}
 
 	return nil

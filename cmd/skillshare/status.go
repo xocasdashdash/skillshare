@@ -36,6 +36,8 @@ func cmdStatus(args []string) error {
 		}
 	}
 
+	applyModeLabel(mode)
+
 	if mode == modeProject {
 		if len(rest) > 0 {
 			return fmt.Errorf("unexpected arguments: %v", rest)

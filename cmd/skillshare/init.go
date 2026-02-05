@@ -157,11 +157,13 @@ func handleExistingInit(opts *initOptions) (bool, error) {
 		return true, reinitWithDiscover(cfg, opts.selectArg, opts.dryRun)
 	}
 
-	return true, fmt.Errorf("already initialized. Run 'skillshare init --discover' to add new agents")
+	return true, fmt.Errorf("already initialized. Run 'skillshare init --discover' to add new agents, or 'skillshare init -p' to initialize project-level skills")
 }
 
 // performFreshInit performs a fresh initialization
 func performFreshInit(opts *initOptions, home string) error {
+	ui.Logo(version)
+
 	// Detect existing CLI skills directories
 	detected := detectCLIDirectories(home)
 
@@ -275,6 +277,8 @@ func cmdInit(args []string) error {
 		return err
 	}
 
+	applyModeLabel(mode)
+
 	if mode == modeProject {
 		return cmdInitProject(rest)
 	}
@@ -286,6 +290,7 @@ func cmdInit(args []string) error {
 
 	if mode == modeAuto {
 		if cwd, cwdErr := os.Getwd(); cwdErr == nil && projectConfigExists(cwd) {
+			applyModeLabel(modeProject)
 			return cmdInitProject(rest)
 		}
 	}

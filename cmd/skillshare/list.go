@@ -149,6 +149,8 @@ func cmdList(args []string) error {
 		}
 	}
 
+	applyModeLabel(mode)
+
 	verbose, showHelp, err := parseListArgs(rest)
 	if showHelp {
 		printListHelp()

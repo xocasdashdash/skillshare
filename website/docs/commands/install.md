@@ -85,6 +85,44 @@ skillshare install ~/Downloads/my-skill
 skillshare install /absolute/path/to/skill
 ```
 
+## Project Mode
+
+Install skills into a project's `.skillshare/skills/` directory:
+
+```bash
+# Install a skill into the project
+skillshare install anthropics/skills/skills/pdf -p
+
+# Install all remote skills from config (for new team members)
+skillshare install -p
+```
+
+### How It Differs
+
+| | Global | Project (`-p`) |
+|---|---|---|
+| Destination | `~/.config/skillshare/skills/` | `.skillshare/skills/` |
+| `--track` | Supported | Supported |
+| Config update | None | Adds to `.skillshare/config.yaml` `skills:` |
+| No-arg install | Not available | Installs all skills listed in config |
+
+**No-arg install** reads `.skillshare/config.yaml` and installs all listed remote skills — useful for onboarding:
+
+```bash
+git clone github.com/team/project && cd project
+skillshare install -p    # Install all remote skills from config
+skillshare sync          # Sync to targets
+```
+
+**Tracked repos in project mode** work the same as global — the repo is cloned with `.git` preserved and added to `.skillshare/.gitignore`:
+
+```bash
+skillshare install github.com/team/skills --track -p
+skillshare sync
+```
+
+See [Project Setup](/docs/guides/project-setup) for the full guide.
+
 ## Options
 
 | Flag | Short | Description |
@@ -93,6 +131,7 @@ skillshare install /absolute/path/to/skill
 | `--force` | `-f` | Overwrite existing skill |
 | `--update` | `-u` | Update if exists (git pull or reinstall) |
 | `--track` | `-t` | Keep `.git` for tracked repos |
+| `--project` | `-p` | Install into project `.skillshare/skills/` |
 | `--dry-run` | `-n` | Preview only |
 
 ## Common Scenarios

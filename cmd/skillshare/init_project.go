@@ -13,7 +13,10 @@ import (
 )
 
 type projectInitOptions struct {
-	dryRun bool
+	dryRun    bool
+	targets   []string // Non-interactive target list
+	discover  bool
+	selectArg string // Non-interactive selection for --discover
 }
 
 type detectedProjectTarget struct {
@@ -25,17 +28,34 @@ type detectedProjectTarget struct {
 
 func parseProjectInitArgs(args []string) (projectInitOptions, bool, error) {
 	opts := projectInitOptions{}
-	for _, arg := range args {
-		switch arg {
-		case "--dry-run", "-n":
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case arg == "--dry-run" || arg == "-n":
 			opts.dryRun = true
-		case "--help", "-h":
+		case arg == "--help" || arg == "-h":
 			return opts, true, nil
-		default:
-			if strings.HasPrefix(arg, "-") {
-				return opts, false, fmt.Errorf("unknown option: %s", arg)
+		case arg == "--discover" || arg == "-d":
+			opts.discover = true
+		case arg == "--select":
+			if i+1 >= len(args) {
+				return opts, false, fmt.Errorf("--select requires a value")
 			}
+			i++
+			opts.selectArg = args[i]
+		case arg == "--targets":
+			if i+1 >= len(args) {
+				return opts, false, fmt.Errorf("--targets requires a value")
+			}
+			i++
+			opts.targets = strings.Split(args[i], ",")
+		case strings.HasPrefix(arg, "-"):
+			return opts, false, fmt.Errorf("unknown option: %s", arg)
 		}
+	}
+
+	if opts.selectArg != "" && !opts.discover {
+		return opts, false, fmt.Errorf("--select requires --discover flag")
 	}
 
 	return opts, false, nil
@@ -63,23 +83,43 @@ func performProjectInit(root string, opts projectInitOptions) error {
 	projectDir := filepath.Join(root, ".skillshare")
 	configPath := config.ProjectConfigPath(root)
 	if _, err := os.Stat(projectDir); err == nil {
-		return fmt.Errorf("project already initialized: %s", projectDir)
+		if opts.discover {
+			return reinitProjectWithDiscover(root, opts)
+		}
+		return fmt.Errorf("project already initialized: %s\nRun 'skillshare init -p --discover' to add new targets", projectDir)
 	}
 
-	detected := detectProjectCLIDirectories(root)
-	available := detected
-	if len(available) == 0 {
-		ui.Warning("No AI CLI directories detected.")
-		available = listAllProjectTargets()
-	}
+	ui.Logo(version)
+	ui.Header("Initializing project-level skills")
 
-	selected, err := promptProjectTargets(available)
-	if err != nil {
-		return err
+	var selected []config.ProjectTargetEntry
+
+	// If --targets provided, skip interactive prompt
+	if len(opts.targets) > 0 {
+		selected = make([]config.ProjectTargetEntry, 0, len(opts.targets))
+		for _, name := range opts.targets {
+			name = strings.TrimSpace(name)
+			if name != "" {
+				selected = append(selected, config.ProjectTargetEntry{Name: name})
+			}
+		}
+	} else {
+		detected := detectProjectCLIDirectories(root)
+		available := detected
+		if len(available) == 0 {
+			ui.Warning("No AI CLI directories detected.")
+			available = listAllProjectTargets()
+		}
+
+		var err error
+		selected, err = promptProjectTargets(available)
+		if err != nil {
+			return err
+		}
 	}
 
 	if opts.dryRun {
-		ui.Header("Dry run complete")
+		ui.Header("Dry run complete (project)")
 		ui.Info("Would create .skillshare/skills/")
 		ui.Info("Would write config: %s", configPath)
 		return nil
@@ -109,7 +149,7 @@ func performProjectInit(root string, opts projectInitOptions) error {
 	ui.Success("Added %d target(s)", len(selected))
 	fmt.Println()
 
-	ui.Header("Initialized successfully")
+	ui.Header("Initialized successfully (project)")
 	ui.Success("Source: .skillshare/skills/")
 	ui.Success("Config: %s", config.ProjectConfigPath(root))
 	fmt.Println()
@@ -249,6 +289,112 @@ func createProjectTargetDirs(root string, targets []config.ProjectTargetEntry) e
 			return fmt.Errorf("failed to create target directory: %w", err)
 		}
 	}
+
+	return nil
+}
+
+// reinitProjectWithDiscover detects new targets and adds them to existing project config
+func reinitProjectWithDiscover(root string, opts projectInitOptions) error {
+	ui.Logo(version)
+	ui.Header("Discovering new targets")
+
+	cfg, err := config.LoadProject(root)
+	if err != nil {
+		return err
+	}
+
+	// Build set of existing target names
+	existing := make(map[string]bool)
+	for _, t := range cfg.Targets {
+		existing[t.Name] = true
+	}
+
+	// Detect AI CLI directories in project
+	detected := detectProjectCLIDirectories(root)
+	if len(detected) == 0 {
+		detected = listAllProjectTargets()
+	}
+
+	// Filter out already-configured targets
+	var newTargets []detectedProjectTarget
+	for _, d := range detected {
+		if !existing[d.name] {
+			newTargets = append(newTargets, d)
+		}
+	}
+
+	if len(newTargets) == 0 {
+		ui.Info("No new targets detected")
+		return nil
+	}
+
+	ui.Success("Found %d new target(s)", len(newTargets))
+
+	var selected []config.ProjectTargetEntry
+
+	// Non-interactive: --select
+	if opts.selectArg != "" {
+		names := strings.Split(opts.selectArg, ",")
+		for _, name := range names {
+			name = strings.TrimSpace(name)
+			if name == "" {
+				continue
+			}
+			found := false
+			for _, d := range newTargets {
+				if d.name == name {
+					found = true
+					break
+				}
+			}
+			if !found {
+				if existing[name] {
+					ui.Info("Target already in config: %s (skipped)", name)
+				} else {
+					ui.Warning("Target not detected: %s (skipped)", name)
+				}
+				continue
+			}
+			selected = append(selected, config.ProjectTargetEntry{Name: name})
+		}
+	} else {
+		// Interactive selection
+		var err error
+		selected, err = promptProjectTargets(newTargets)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(selected) == 0 {
+		ui.Info("No new targets added")
+		return nil
+	}
+
+	if opts.dryRun {
+		ui.Warning("Dry run - would add %d target(s) to config", len(selected))
+		for _, t := range selected {
+			fmt.Printf("  + %s\n", t.Name)
+		}
+		return nil
+	}
+
+	// Add to config and save
+	cfg.Targets = append(cfg.Targets, selected...)
+	if err := cfg.Save(root); err != nil {
+		return err
+	}
+
+	// Create target directories
+	if err := createProjectTargetDirs(root, selected); err != nil {
+		return err
+	}
+
+	ui.Success("Added %d target(s) to config", len(selected))
+	for _, t := range selected {
+		fmt.Printf("  + %s\n", t.Name)
+	}
+	ui.Info("Run 'skillshare sync' to sync skills to new targets")
 
 	return nil
 }

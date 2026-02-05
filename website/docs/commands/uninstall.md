@@ -87,7 +87,31 @@ skillshare uninstall old-skill
 skillshare sync  # Remove from Claude, Cursor, etc.
 ```
 
+## Project Mode
+
+Uninstall a skill or tracked repo from the project's `.skillshare/skills/`:
+
+```bash
+skillshare uninstall my-skill -p          # Remove a skill
+skillshare uninstall team-skills -p       # Remove tracked repo (_ prefix optional)
+skillshare uninstall team-skills -p -f    # Force remove with uncommitted changes
+```
+
+In project mode, uninstall:
+- Removes the skill directory from `.skillshare/skills/`
+- Removes the skill's entry from `.skillshare/config.yaml` `skills:` list (for remote skills)
+- Removes the entry from `.skillshare/.gitignore` (for remote/tracked skills)
+- For tracked repos: checks for uncommitted changes (use `--force` to override)
+- The `_` prefix is optional — auto-detected
+
+```bash
+skillshare uninstall pdf -p
+skillshare sync
+git add .skillshare/ && git commit -m "Remove pdf skill"
+```
+
 ## Related
 
 - [install](/docs/commands/install) — Install skills
 - [list](/docs/commands/list) — List installed skills
+- [Project Skills](/docs/concepts/project-skills) — Project mode concepts

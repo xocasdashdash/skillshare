@@ -156,8 +156,18 @@ func targetRemoveProject(args []string, root string) error {
 
 	for _, name := range toRemove {
 		if target, ok := targets[name]; ok {
-			if err := unlinkMergeModeSafe(target.Path, sourcePath); err != nil {
-				ui.Warning("%s: %v", name, err)
+			mode := target.Mode
+			if mode == "" {
+				mode = "merge"
+			}
+			if mode == "symlink" {
+				if err := unlinkSymlinkMode(target.Path, sourcePath); err != nil {
+					ui.Warning("%s: %v", name, err)
+				}
+			} else {
+				if err := unlinkMergeModeSafe(target.Path, sourcePath); err != nil {
+					ui.Warning("%s: %v", name, err)
+				}
 			}
 		}
 	}
@@ -260,7 +270,11 @@ func targetListProject(root string) error {
 	ui.Header("Configured Targets (project)")
 	for _, entry := range targets {
 		displayPath := projectTargetDisplayPath(entry)
-		fmt.Printf("  %-12s %s (merge)\n", entry.Name, displayPath)
+		mode := entry.Mode
+		if mode == "" {
+			mode = "merge"
+		}
+		fmt.Printf("  %-12s %s (%s)\n", entry.Name, displayPath, mode)
 	}
 
 	return nil
@@ -273,10 +287,15 @@ func targetInfoProject(name string, args []string, root string) error {
 		}
 	}
 
+	var newMode string
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--mode", "-m":
-			return fmt.Errorf("target mode is fixed to merge in project mode")
+			if i+1 >= len(args) {
+				return fmt.Errorf("--mode requires a value (merge or symlink)")
+			}
+			newMode = args[i+1]
+			i++
 		}
 	}
 
@@ -285,16 +304,20 @@ func targetInfoProject(name string, args []string, root string) error {
 		return err
 	}
 
-	var targetEntry *config.ProjectTargetEntry
+	var targetIdx int = -1
 	for i := range cfg.Targets {
 		if cfg.Targets[i].Name == name {
-			targetEntry = &cfg.Targets[i]
+			targetIdx = i
 			break
 		}
 	}
 
-	if targetEntry == nil {
+	if targetIdx < 0 {
 		return fmt.Errorf("target '%s' not found. Use 'skillshare target list' to see available targets", name)
+	}
+
+	if newMode != "" {
+		return updateTargetModeProject(cfg, targetIdx, newMode, root)
 	}
 
 	targets, err := config.ResolveProjectTargets(root, cfg)
@@ -307,14 +330,49 @@ func targetInfoProject(name string, args []string, root string) error {
 		return fmt.Errorf("target '%s' not resolved", name)
 	}
 
+	targetEntry := cfg.Targets[targetIdx]
 	sourcePath := filepath.Join(root, ".skillshare", "skills")
-	status, linked, local := sync.CheckStatusMerge(target.Path, sourcePath)
+
+	mode := targetEntry.Mode
+	displayMode := mode
+	if mode == "" {
+		displayMode = "merge (default)"
+		mode = "merge"
+	}
 
 	ui.Header(fmt.Sprintf("Target: %s", name))
-	fmt.Printf("  Path:   %s\n", projectTargetDisplayPath(*targetEntry))
-	fmt.Printf("  Mode:   merge\n")
-	fmt.Printf("  Status: %s (%d shared, %d local)\n", status, linked, local)
+	fmt.Printf("  Path:   %s\n", projectTargetDisplayPath(targetEntry))
+	fmt.Printf("  Mode:   %s\n", displayMode)
 
+	if mode == "symlink" {
+		status := sync.CheckStatus(target.Path, sourcePath)
+		fmt.Printf("  Status: %s\n", status)
+	} else {
+		status, linked, local := sync.CheckStatusMerge(target.Path, sourcePath)
+		fmt.Printf("  Status: %s (%d shared, %d local)\n", status, linked, local)
+	}
+
+	return nil
+}
+
+func updateTargetModeProject(cfg *config.ProjectConfig, idx int, newMode string, root string) error {
+	if newMode != "merge" && newMode != "symlink" {
+		return fmt.Errorf("invalid mode '%s'. Use 'merge' or 'symlink'", newMode)
+	}
+
+	entry := &cfg.Targets[idx]
+	oldMode := entry.Mode
+	if oldMode == "" {
+		oldMode = "merge"
+	}
+
+	entry.Mode = newMode
+	if err := cfg.Save(root); err != nil {
+		return err
+	}
+
+	ui.Success("Changed %s mode: %s -> %s", entry.Name, oldMode, newMode)
+	ui.Info("Run 'skillshare sync' to apply the new mode")
 	return nil
 }
 

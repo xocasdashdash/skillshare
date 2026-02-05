@@ -28,15 +28,36 @@ func cmdUninstallProject(args []string, root string) error {
 		}
 	}
 
-	skillPath := filepath.Join(root, ".skillshare", "skills", opts.skillName)
-	if info, err := os.Stat(skillPath); err != nil || !info.IsDir() {
-		return fmt.Errorf("skill '%s' not found in .skillshare/skills", opts.skillName)
+	skillName := opts.skillName
+
+	// Normalize _ prefix for tracked repos
+	if !strings.HasPrefix(skillName, "_") {
+		prefixed := filepath.Join(root, ".skillshare", "skills", "_"+skillName)
+		if install.IsGitRepo(prefixed) {
+			skillName = "_" + skillName
+		}
 	}
+
+	skillPath := filepath.Join(root, ".skillshare", "skills", skillName)
+	if info, err := os.Stat(skillPath); err != nil || !info.IsDir() {
+		return fmt.Errorf("skill '%s' not found in .skillshare/skills", skillName)
+	}
+
+	isTracked := install.IsGitRepo(skillPath)
 
 	if opts.dryRun {
 		ui.Warning("[dry-run] would remove %s", skillPath)
 		ui.Warning("[dry-run] would update .skillshare/config.yaml and .skillshare/.gitignore")
 		return nil
+	}
+
+	// Check for uncommitted changes in tracked repos
+	if isTracked && !opts.force {
+		if isDirty, _ := isRepoDirty(skillPath); isDirty {
+			ui.Error("Repository has uncommitted changes!")
+			ui.Info("Use --force to uninstall anyway, or commit/stash your changes first")
+			return fmt.Errorf("uncommitted changes detected, use --force to override")
+		}
 	}
 
 	if !opts.force {
@@ -61,7 +82,7 @@ func cmdUninstallProject(args []string, root string) error {
 
 	updatedSkills := make([]config.ProjectSkill, 0, len(cfg.Skills))
 	for _, skill := range cfg.Skills {
-		if skill.Name != opts.skillName {
+		if skill.Name != skillName {
 			updatedSkills = append(updatedSkills, skill)
 		}
 	}
@@ -70,11 +91,15 @@ func cmdUninstallProject(args []string, root string) error {
 		return err
 	}
 
-	if _, err := install.RemoveFromGitIgnore(filepath.Join(root, ".skillshare"), filepath.Join("skills", opts.skillName)); err != nil {
+	if _, err := install.RemoveFromGitIgnore(filepath.Join(root, ".skillshare"), filepath.Join("skills", skillName)); err != nil {
 		ui.Warning("Could not update .skillshare/.gitignore: %v", err)
 	}
 
-	ui.Success("Uninstalled: %s", opts.skillName)
+	if isTracked {
+		ui.Success("Uninstalled tracked repository: %s", skillName)
+	} else {
+		ui.Success("Uninstalled: %s", skillName)
+	}
 	ui.Info("Run 'skillshare sync' to clean up symlinks")
 	return nil
 }

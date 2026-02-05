@@ -23,6 +23,7 @@ const sidebars: SidebarsConfig = {
         'concepts/sync-modes',
         'concepts/tracked-repositories',
         'concepts/skill-format',
+        'concepts/project-skills',
       ],
     },
     {
@@ -34,6 +35,7 @@ const sidebars: SidebarsConfig = {
         'workflows/skill-discovery',
         'workflows/backup-restore',
         'workflows/troubleshooting-workflow',
+        'workflows/project-workflow',
       ],
     },
     {
@@ -46,6 +48,7 @@ const sidebars: SidebarsConfig = {
         'guides/cross-machine-sync',
         'guides/migration',
         'guides/best-practices',
+        'guides/project-setup',
       ],
     },
     {

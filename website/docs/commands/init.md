@@ -43,12 +43,87 @@ skillshare init --dry-run    # Preview without changes
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+## Project Mode
+
+Initialize project-level skills with `-p`:
+
+```bash
+skillshare init -p                              # Interactive
+skillshare init -p --targets claude-code,cursor  # Non-interactive
+```
+
+### What Happens
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ skillshare init -p                                               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Create .skillshare/ directory                                 │
+│    → .skillshare/skills/                                         │
+│    → .skillshare/config.yaml                                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. Detect AI CLI directories in project                          │
+│    → Found: .claude/, .cursor/                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. Create target skill directories                               │
+│    → .claude/skills/                                             │
+│    → .cursor/skills/                                             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. Write config.yaml                                             │
+│    → targets: claude-code, cursor                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+After init, commit `.skillshare/` to git. See [Project Setup](/docs/guides/project-setup) for the full guide.
+
+## Discover Mode
+
+Re-run init on an existing setup to detect and add new AI CLI targets:
+
+### Global
+
+```bash
+skillshare init --discover              # Interactive selection
+skillshare init --discover --select codex,opencode  # Non-interactive
+```
+
+Scans for newly installed AI CLIs not yet in your config and prompts you to add them.
+
+### Project
+
+```bash
+skillshare init -p --discover           # Interactive selection
+skillshare init -p --discover --select gemini-cli  # Non-interactive
+```
+
+Scans the project directory for new AI CLI directories (e.g., `.gemini/`) and adds them as targets.
+
+:::tip
+If you run `skillshare init` on an already-initialized setup without `--discover`, the error message will hint you to use it.
+:::
+
 ## Options
 
 | Flag | Description |
 |------|-------------|
 | `--source <path>` | Custom source directory |
 | `--remote <url>` | Set git remote (implies git init) |
+| `--project, -p` | Initialize project-level skills in current directory |
+| `--targets <list>` | Comma-separated target names (project mode) |
+| `--discover, -d` | Detect and add new AI CLI targets to existing config |
+| `--select <list>` | Comma-separated targets to add (requires `--discover`) |
 | `--dry-run` | Preview without changes |
 
 ## Common Scenarios
@@ -62,4 +137,12 @@ skillshare init --remote git@github.com:you/my-skills.git
 
 # Use existing skills directory
 skillshare init --source ~/.config/skillshare/skills
+
+# Project-level setup
+skillshare init -p
+skillshare init -p --targets claude-code,cursor
+
+# Add newly installed CLIs to existing config
+skillshare init --discover
+skillshare init -p --discover
 ```

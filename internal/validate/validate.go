@@ -101,6 +101,7 @@ func Path(path string) error {
 // Errors are returned when:
 //   - The path does not exist
 //   - The path is not a directory
+//
 // Warnings are returned when:
 //   - The path doesn't end with "skills" or "skill"
 func TargetPath(path string) (warnings []string, err error) {

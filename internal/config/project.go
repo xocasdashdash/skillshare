@@ -16,6 +16,7 @@ import (
 type ProjectTargetEntry struct {
 	Name string
 	Path string
+	Mode string // "merge" or "symlink", default "merge"
 }
 
 func (t *ProjectTargetEntry) UnmarshalYAML(value *yaml.Node) error {
@@ -27,23 +28,33 @@ func (t *ProjectTargetEntry) UnmarshalYAML(value *yaml.Node) error {
 	var decoded struct {
 		Name string `yaml:"name"`
 		Path string `yaml:"path"`
+		Mode string `yaml:"mode"`
 	}
 	if err := value.Decode(&decoded); err != nil {
 		return err
 	}
 	t.Name = strings.TrimSpace(decoded.Name)
 	t.Path = strings.TrimSpace(decoded.Path)
+	t.Mode = strings.TrimSpace(decoded.Mode)
 	return nil
 }
 
 func (t ProjectTargetEntry) MarshalYAML() (interface{}, error) {
-	if strings.TrimSpace(t.Path) == "" {
+	hasPath := strings.TrimSpace(t.Path) != ""
+	hasMode := strings.TrimSpace(t.Mode) != ""
+
+	if !hasPath && !hasMode {
 		return t.Name, nil
 	}
-	return map[string]string{
-		"name": t.Name,
-		"path": t.Path,
-	}, nil
+
+	obj := map[string]string{"name": t.Name}
+	if hasPath {
+		obj["path"] = t.Path
+	}
+	if hasMode {
+		obj["mode"] = t.Mode
+	}
+	return obj, nil
 }
 
 // ProjectSkill represents a remote skill entry in project config.
@@ -142,7 +153,7 @@ func ResolveProjectTargets(projectRoot string, cfg *ProjectConfig) (map[string]T
 			absPath = filepath.Join(projectRoot, filepath.FromSlash(targetPath))
 		}
 
-		resolved[name] = TargetConfig{Path: absPath}
+		resolved[name] = TargetConfig{Path: absPath, Mode: entry.Mode}
 	}
 
 	return resolved, nil

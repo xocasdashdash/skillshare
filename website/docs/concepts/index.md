@@ -42,6 +42,7 @@ Understanding these concepts helps you get the most out of skillshare.
 | **Sync Modes** | Merge vs symlink — how files are linked | [→ Sync Modes](./sync-modes) |
 | **Tracked Repos** | Git repos installed with `--track` | [→ Tracked Repositories](./tracked-repositories) |
 | **Skill Format** | SKILL.md structure and metadata | [→ Skill Format](./skill-format) |
+| **Project Skills** | Project-level skills scoped to a repository | [→ Project Skills](./project-skills) |
 
 ---
 
@@ -64,3 +65,8 @@ Understanding these concepts helps you get the most out of skillshare.
 - `SKILL.md` with YAML frontmatter
 - Required: `name` field
 - Optional: `description`, custom metadata
+
+### Project Skills
+- Skills scoped to a single repository (`.skillshare/skills/`)
+- Shared with team via git — auto-detected when `.skillshare/` exists
+- Always uses merge mode, targets configured per-project

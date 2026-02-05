@@ -37,6 +37,8 @@ func cmdTarget(args []string) error {
 		}
 	}
 
+	applyModeLabel(mode)
+
 	subcmd := rest[0]
 	subargs := rest[1:]
 

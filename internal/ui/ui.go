@@ -131,6 +131,10 @@ func isTTY() bool {
 }
 
 // Logo prints the ASCII art logo with optional version and animation
+// ModeLabel is an optional label appended after the version in the logo.
+// Set to "project" to display "(project)" next to the version.
+var ModeLabel string
+
 func Logo(version string) {
 	LogoAnimated(version, isTTY())
 }
@@ -145,10 +149,14 @@ func LogoAnimated(version string, animate bool) {
 	}
 
 	// Last line varies based on version
+	suffix := ""
+	if ModeLabel != "" {
+		suffix = `  ` + Accent + `(` + ModeLabel + `)` + Reset
+	}
 	if version != "" {
-		lines = append(lines, Primary+`|___/_|\_\_|_|_|___/_| |_|\__,_|_|  \___|`+Reset+`  `+Muted+`v`+version+Reset)
+		lines = append(lines, Primary+`|___/_|\_\_|_|_|___/_| |_|\__,_|_|  \___|`+Reset+`  `+Muted+`v`+version+Reset+suffix)
 	} else {
-		lines = append(lines, Primary+`|___/_|\_\_|_|_|___/_| |_|\__,_|_|  \___|`+Reset+`  `+Muted+`Sync skills across all AI CLI tools`+Reset)
+		lines = append(lines, Primary+`|___/_|\_\_|_|_|___/_| |_|\__,_|_|  \___|`+Reset+`  `+Muted+`Sync skills across all AI CLI tools`+Reset+suffix)
 	}
 
 	if animate {

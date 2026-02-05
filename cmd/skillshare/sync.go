@@ -29,6 +29,8 @@ func cmdSync(args []string) error {
 		}
 	}
 
+	applyModeLabel(mode)
+
 	if mode == modeProject {
 		return cmdSyncProject(rest, cwd)
 	}

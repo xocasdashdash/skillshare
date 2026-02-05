@@ -31,6 +31,8 @@ func cmdUpdate(args []string) error {
 		}
 	}
 
+	applyModeLabel(mode)
+
 	if mode == modeProject {
 		return cmdUpdateProject(rest, cwd)
 	}

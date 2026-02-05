@@ -137,8 +137,43 @@ skillshare sync
 skillshare target remove cursor
 ```
 
+## Project Mode
+
+Manage targets for the current project:
+
+```bash
+skillshare target add windsurf -p                     # Add known target
+skillshare target add custom ./tools/ai/skills -p     # Add custom path
+skillshare target remove cursor -p                     # Remove target
+skillshare target list -p                              # List project targets
+skillshare target claude-code -p                       # Show target info
+```
+
+### How It Differs
+
+| | Global | Project (`-p`) |
+|---|---|---|
+| Config | `~/.config/skillshare/config.yaml` | `.skillshare/config.yaml` |
+| Paths | Absolute (e.g., `~/.claude/skills`) | Relative or absolute (e.g., `.claude/skills`) |
+| Sync mode | Merge or symlink | Merge or symlink (default merge) |
+| Mode change | `--mode` flag | `--mode` flag |
+
+### Project Target List Example
+
+```
+Project Targets
+  claude-code    .claude/skills (merge)
+  cursor         .cursor/skills (merge)
+  custom-tool    ./tools/ai/skills (merge)
+```
+
+Targets in project mode support:
+- **Known target names** (e.g., `claude-code`, `cursor`) — resolved to project-local paths
+- **Custom paths** — relative to project root or absolute with `~` expansion
+
 ## Related
 
 - [sync](/docs/commands/sync) — Sync skills to targets
 - [status](/docs/commands/status) — Show target status
 - [Targets](/docs/targets) — Target management guide
+- [Project Skills](/docs/concepts/project-skills) — Project mode concepts

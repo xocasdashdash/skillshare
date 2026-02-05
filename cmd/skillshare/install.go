@@ -139,6 +139,8 @@ func cmdInstall(args []string) error {
 		}
 	}
 
+	applyModeLabel(mode)
+
 	if mode == modeProject {
 		return cmdInstallProject(rest, cwd)
 	}

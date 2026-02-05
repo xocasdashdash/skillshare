@@ -53,6 +53,27 @@ Push skills from source to all targets.
 
 ---
 
+## Project Mode
+
+When `.skillshare/config.yaml` exists in the current directory, sync auto-detects project mode:
+
+```bash
+cd my-project/
+skillshare sync          # Auto-detected project mode
+skillshare sync -p       # Explicit project mode
+```
+
+**Project sync** defaults to merge mode (per-skill symlinks), but each target can be set to symlink mode via `skillshare target <name> --mode symlink -p`. Backup is not created (project targets are reproducible from source).
+
+```
+.skillshare/skills/                 .claude/skills/
+├── my-skill/          ────────►    ├── my-skill/ → (symlink)
+├── pdf/               ────────►    ├── pdf/      → (symlink)
+└── ...                             └── local/    (preserved)
+```
+
+---
+
 ## Sync
 
 Push skills from source to all targets.

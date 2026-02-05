@@ -147,6 +147,43 @@ skillshare uninstall _team-skills
 
 ---
 
+## Project Mode
+
+Tracked repos also work in project mode. The repo is cloned into `.skillshare/skills/` and added to `.skillshare/.gitignore` (so the tracked repo's git history doesn't conflict with your project's git):
+
+```bash
+# Install tracked repo into project
+skillshare install github.com/team/shared-skills --track -p
+skillshare sync
+
+# Update via git pull
+skillshare update team-skills -p
+skillshare sync
+
+# Force update (discard local changes)
+skillshare update team-skills -p --force
+
+# Uninstall
+skillshare uninstall team-skills -p
+```
+
+**Directory structure:**
+
+```
+<project-root>/
+└── .skillshare/
+    ├── .gitignore           # Contains: skills/_team-skills
+    └── skills/
+        └── _team-skills/    # Tracked repo with .git/ preserved
+            ├── .git/
+            ├── frontend/ui/
+            └── backend/api/
+```
+
+Nested skills are auto-flattened the same way as global mode — `_team-skills/frontend/ui` becomes `_team-skills__frontend__ui` in targets.
+
+---
+
 ## Custom Name
 
 ```bash
@@ -182,5 +219,6 @@ name: team-b:ui
 ## Related
 
 - [Team Sharing](/docs/guides/team-sharing) — Full team workflow
+- [Project Skills](/docs/concepts/project-skills) — Project mode concepts
 - [Commands: install](/docs/commands/install) — Install options
 - [Commands: update](/docs/commands/update) — Update command

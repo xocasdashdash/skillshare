@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"skillshare/internal/ui"
 )
 
 type runMode int
@@ -36,6 +38,14 @@ func parseModeArgs(args []string) (runMode, []string, error) {
 	}
 
 	return mode, rest, nil
+}
+
+// applyModeLabel sets ui.ModeLabel when in project mode.
+// Call after mode is resolved and before any UI output.
+func applyModeLabel(mode runMode) {
+	if mode == modeProject {
+		ui.ModeLabel = "project"
+	}
 }
 
 func projectConfigExists(root string) bool {

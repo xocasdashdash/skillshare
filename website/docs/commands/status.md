@@ -62,8 +62,37 @@ Shows each configured target with:
 
 Compares your CLI and skill versions against the latest releases.
 
+## Project Mode
+
+In a project directory, status shows project-specific information:
+
+```bash
+skillshare status        # Auto-detected if .skillshare/ exists
+skillshare status -p     # Explicit project mode
+```
+
+### Example Output
+
+```
+Project Skills (.skillshare/)
+
+Source
+  ✓ .skillshare/skills (3 skills)
+
+Targets
+  ✓ claude-code  [merge] .claude/skills (3 synced)
+  ✓ cursor       [merge] .cursor/skills (3 synced)
+
+Remote Skills
+  ✓ pdf          anthropic/skills/pdf
+  ✓ review       github.com/team/tools
+```
+
+Project status does not show Tracked Repositories or Version sections (these are global-only features).
+
 ## Related
 
 - [sync](/docs/commands/sync) — Sync skills to targets
 - [diff](/docs/commands/diff) — Show detailed differences
 - [doctor](/docs/commands/doctor) — Diagnose issues
+- [Project Skills](/docs/concepts/project-skills) — Project mode concepts
