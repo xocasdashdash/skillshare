@@ -9,6 +9,58 @@ import (
 	"skillshare/internal/testutil"
 )
 
+func TestBackup_AfterSync_SkipsSymlinks(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.CreateSkill("agent-browser", map[string]string{"SKILL.md": "# Agent Browser"})
+	targetPath := sb.CreateTarget("claude")
+
+	// Create a local skill that should be preserved in backup
+	localSkillPath := filepath.Join(targetPath, "my-local")
+	os.MkdirAll(localSkillPath, 0755)
+	os.WriteFile(filepath.Join(localSkillPath, "SKILL.md"), []byte("# Local"), 0644)
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets:
+  claude:
+    path: ` + targetPath + `
+`)
+
+	// Sync first — creates symlink for agent-browser in target
+	syncResult := sb.RunCLI("sync")
+	syncResult.AssertSuccess(t)
+
+	// Verify symlink was created
+	agentPath := filepath.Join(targetPath, "agent-browser")
+	info, err := os.Lstat(agentPath)
+	if err != nil {
+		t.Fatalf("agent-browser should exist after sync: %v", err)
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		t.Fatal("agent-browser should be a symlink after sync")
+	}
+
+	// Backup should succeed despite symlinks in target
+	backupResult := sb.RunCLI("backup")
+	backupResult.AssertSuccess(t)
+
+	// Verify backup contains local skill but not the symlinked one
+	backupDir := filepath.Join(sb.Home, ".config", "skillshare", "backups")
+	entries, err := os.ReadDir(backupDir)
+	if err != nil || len(entries) == 0 {
+		t.Fatal("backup directory should contain a timestamp directory")
+	}
+
+	backupPath := filepath.Join(backupDir, entries[0].Name(), "claude")
+	if _, err := os.Stat(filepath.Join(backupPath, "my-local", "SKILL.md")); err != nil {
+		t.Error("local skill should be in backup")
+	}
+	if _, err := os.Lstat(filepath.Join(backupPath, "agent-browser")); !os.IsNotExist(err) {
+		t.Error("symlinked skill should NOT be in backup")
+	}
+}
+
 func TestBackup_CreatesBackup(t *testing.T) {
 	sb := testutil.NewSandbox(t)
 	defer sb.Cleanup()

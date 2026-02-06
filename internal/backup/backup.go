@@ -123,48 +123,47 @@ type BackupInfo struct {
 	Date      time.Time
 }
 
-// copyDir copies a directory recursively
+// copyDir copies a directory recursively, skipping symlinks and junctions.
+// Uses os.ReadDir + os.Lstat instead of filepath.Walk to avoid failures
+// when os.Lstat on Windows junctions returns nil info with an error.
 func copyDir(src, dst string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+	if err := os.MkdirAll(dst, 0755); err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		// Use Lstat to detect symlinks/junctions without following them
+		info, err := os.Lstat(srcPath)
 		if err != nil {
-			// On Windows, reading a junction/symlink may fail with "Incorrect function"
-			// Skip these entries instead of failing the entire backup
-			if info != nil && (info.Mode()&os.ModeSymlink != 0 || info.Mode()&os.ModeIrregular != 0) {
-				return nil
-			}
-			// For directories that are junctions, skip the entire subtree
-			if info != nil && info.IsDir() {
-				return filepath.SkipDir
-			}
-			return err
+			// Cannot stat (e.g. broken junction on Windows) — skip
+			continue
 		}
 
-		// Skip symlinks/junctions - we only backup real files
+		// Skip symlinks and junctions — they point to source, not local data
 		if info.Mode()&os.ModeSymlink != 0 {
-			if info.IsDir() {
-				return filepath.SkipDir // Skip junction directory and its contents
-			}
-			return nil
+			continue
 		}
-
-		// Use Lstat to double-check for junctions (Windows reparse points)
-		linfo, lerr := os.Lstat(path)
-		if lerr == nil && linfo.Mode()&os.ModeSymlink != 0 {
-			if linfo.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-
-		relPath, _ := filepath.Rel(src, path)
-		dstPath := filepath.Join(dst, relPath)
 
 		if info.IsDir() {
-			return os.MkdirAll(dstPath, info.Mode())
+			if err := copyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		} else if info.Mode().IsRegular() {
+			if err := copyFile(srcPath, dstPath); err != nil {
+				return err
+			}
 		}
+	}
 
-		return copyFile(path, dstPath)
-	})
+	return nil
 }
 
 // copyFile copies a single file

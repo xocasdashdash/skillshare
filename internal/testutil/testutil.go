@@ -43,6 +43,8 @@ func NewSandbox(t *testing.T) *Sandbox {
 		candidates := []string{
 			filepath.Join(cwd, "bin", "skillshare"),
 			filepath.Join(cwd, "..", "..", "bin", "skillshare"),
+			filepath.Join(cwd, "bin", "skillshare.exe"),
+			filepath.Join(cwd, "..", "..", "bin", "skillshare.exe"),
 		}
 		for _, path := range candidates {
 			if _, err := os.Stat(path); err == nil {
