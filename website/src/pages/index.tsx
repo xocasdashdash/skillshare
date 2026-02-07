@@ -230,7 +230,7 @@ function UIHighlightsSection() {
           Web UI Highlights
         </Heading>
         <p className={styles.sectionSubtitle}>
-          Next release focus: visual workflow for dashboard, browsing, sync, and search.
+          v0.10.0 delivers a complete visual workflow across dashboard, skills, install, targets, sync, collect, backup, git sync, and search.
         </p>
         <div className={styles.uiHighlightsGrid}>
           {uiHighlights.map((item) => (
