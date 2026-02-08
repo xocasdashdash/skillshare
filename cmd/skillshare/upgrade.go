@@ -5,6 +5,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -331,6 +332,9 @@ func writeBinary(r io.Reader, destPath string) error {
 		// Rename running exe to .old
 		if err := os.Rename(destPath, oldPath); err != nil {
 			os.Remove(tmpPath)
+			if errors.Is(err, os.ErrPermission) {
+				return fmt.Errorf("binary is locked by another process (is 'skillshare ui' running?)\n         Close other skillshare processes and try again")
+			}
 			return fmt.Errorf("failed to rename current binary: %w", err)
 		}
 		// Rename new exe to correct name
