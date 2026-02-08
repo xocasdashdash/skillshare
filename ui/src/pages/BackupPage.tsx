@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Archive,
   Clock,
@@ -11,6 +12,7 @@ import {
 import { api } from '../api/client';
 import type { BackupInfo } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useAppContext } from '../context/AppContext';
 import Card from '../components/Card';
 import HandButton from '../components/HandButton';
 import Badge from '../components/Badge';
@@ -44,8 +46,35 @@ function formatDate(dateStr: string): string {
 }
 
 export default function BackupPage() {
+  const { isProjectMode } = useAppContext();
   const { toast } = useToast();
   const { data, loading, error, refetch } = useApi(() => api.listBackups(), []);
+
+  if (isProjectMode) {
+    return (
+      <div className="animate-sketch-in">
+        <Card decoration="tape" className="text-center py-12">
+          <Archive size={40} strokeWidth={2} className="text-pencil-light mx-auto mb-4" />
+          <h2
+            className="text-2xl font-bold text-pencil mb-2"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Backup & Restore is not available in project mode
+          </h2>
+          <p className="text-pencil-light mb-4">
+            Project skills are managed through your project's own version control.
+          </p>
+          <Link
+            to="/"
+            className="text-blue hover:underline"
+            style={{ fontFamily: 'var(--font-hand)' }}
+          >
+            Back to Dashboard
+          </Link>
+        </Card>
+      </div>
+    );
+  }
 
   const [creating, setCreating] = useState(false);
   const [cleanupOpen, setCleanupOpen] = useState(false);

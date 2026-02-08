@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   LayoutDashboard,
   Puzzle,
@@ -15,8 +15,9 @@ import {
   X,
 } from 'lucide-react';
 import { wobbly, shadows } from '../design';
+import { useAppContext } from '../context/AppContext';
 
-const navItems = [
+const allNavItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/skills', icon: Puzzle, label: 'Skills' },
   { to: '/install', icon: Download, label: 'Install' },
@@ -31,6 +32,14 @@ const navItems = [
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isProjectMode } = useAppContext();
+
+  const navItems = useMemo(() => {
+    if (isProjectMode) {
+      return allNavItems.filter((item) => item.to !== '/git' && item.to !== '/backup');
+    }
+    return allNavItems;
+  }, [isProjectMode]);
 
   return (
     <div className="flex min-h-screen">
@@ -72,12 +81,22 @@ export default function Layout() {
           >
             skillshare
           </h1>
-          <p
-            className="text-sm text-pencil-light mt-0.5"
-            style={{ fontFamily: 'var(--font-hand)' }}
-          >
-            Web Dashboard
-          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p
+              className="text-sm text-pencil-light"
+              style={{ fontFamily: 'var(--font-hand)' }}
+            >
+              Web Dashboard
+            </p>
+            {isProjectMode && (
+              <span
+                className="text-xs px-1.5 py-0.5 bg-info-light text-blue border border-blue font-medium"
+                style={{ borderRadius: wobbly.sm, fontFamily: 'var(--font-hand)' }}
+              >
+                Project
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Navigation */}

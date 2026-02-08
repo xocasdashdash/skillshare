@@ -85,12 +85,39 @@ ss status
 skillshare init --dry-run
 ```
 
-### Web UI in the Playground
+### Project Mode in the Playground
 
-The playground container includes pre-built frontend assets and maps port 19420 to the host. To launch the web dashboard:
+The playground automatically sets up a demo project at `~/demo-project` with a sample skill and a `claude` target. You can start exploring project mode right away:
 
 ```bash
-skillshare ui --host 0.0.0.0 --no-open
+cd ~/demo-project
+skillshare status        # auto-detects project mode
+skillshare list
+skillshare sync --dry-run
+```
+
+To launch the project mode web dashboard, use the built-in alias:
+
+```bash
+skillshare-ui-p          # starts project mode dashboard on port 19420
+```
+
+Or run the command manually from the demo project directory:
+
+```bash
+cd ~/demo-project
+skillshare ui -p --host 0.0.0.0 --no-open
+```
+
+Then open `http://localhost:19420` on your host machine.
+
+### Web UI in the Playground
+
+The playground container includes pre-built frontend assets and maps port 19420 to the host. To launch the global mode web dashboard:
+
+```bash
+skillshare init          # required before first use
+skillshare-ui            # alias for: skillshare ui --host 0.0.0.0 --no-open
 ```
 
 Then open `http://localhost:19420` in your host browser. Use `--host 0.0.0.0` because the container's `127.0.0.1` is not reachable from the host.

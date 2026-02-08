@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"skillshare/internal/config"
 	"skillshare/internal/install"
 )
 
@@ -135,6 +136,11 @@ func (s *Server) handleInstallBatch(w http.ResponseWriter, r *http.Request) {
 		summary += " (some errors)"
 	}
 
+	// Reconcile project config after install
+	if s.IsProjectMode() && installed > 0 {
+		_ = config.ReconcileProjectSkills(s.projectRoot, s.projectCfg, s.cfg.Source)
+	}
+
 	writeJSON(w, map[string]any{
 		"results": results,
 		"summary": summary,
@@ -181,6 +187,11 @@ func (s *Server) handleInstall(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+		// Reconcile project config after tracked repo install
+		if s.IsProjectMode() {
+			_ = config.ReconcileProjectSkills(s.projectRoot, s.projectCfg, s.cfg.Source)
+		}
+
 		writeJSON(w, map[string]any{
 			"repoName":   result.RepoName,
 			"skillCount": result.SkillCount,
@@ -201,6 +212,11 @@ func (s *Server) handleInstall(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
+	}
+
+	// Reconcile project config after single install
+	if s.IsProjectMode() {
+		_ = config.ReconcileProjectSkills(s.projectRoot, s.projectCfg, s.cfg.Source)
 	}
 
 	writeJSON(w, map[string]any{

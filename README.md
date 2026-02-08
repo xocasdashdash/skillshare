@@ -191,11 +191,13 @@ skillshare sync
 ## Web Dashboard
 
 ```bash
-skillshare ui
+skillshare ui            # Global mode
+skillshare ui -p         # Project mode (manages .skillshare/)
 ```
 
 - Opens `http://127.0.0.1:19420`
-- Requires `skillshare init` first
+- Requires `skillshare init` (or `init -p` for project mode) first
+- Auto-detects project mode when `.skillshare/config.yaml` exists
 - Runs from the same CLI binary (no extra frontend setup)
 
 For containers/remote hosts:
@@ -240,6 +242,11 @@ Inside the playground:
 skillshare --help
 skillshare init --dry-run
 skillshare ui --host 0.0.0.0 --no-open
+
+# Project mode (pre-configured demo project)
+cd ~/demo-project
+skillshare status
+skillshare-ui-p          # project mode dashboard on port 19420
 ```
 
 ## Development

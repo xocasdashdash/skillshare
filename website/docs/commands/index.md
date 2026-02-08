@@ -109,6 +109,7 @@ skillshare backup
 
 # Web UI
 skillshare ui
+skillshare ui -p          # Project mode
 ```
 
 ---

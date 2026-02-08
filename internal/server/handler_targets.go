@@ -67,9 +67,24 @@ func (s *Server) handleAddTarget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.Name == "" || body.Path == "" {
-		writeError(w, http.StatusBadRequest, "name and path are required")
+	if body.Name == "" {
+		writeError(w, http.StatusBadRequest, "name is required")
 		return
+	}
+
+	// In project mode, path can be resolved from known targets
+	if body.Path == "" {
+		if s.IsProjectMode() {
+			if known, ok := config.LookupProjectTarget(body.Name); ok {
+				body.Path = known.Path
+			} else {
+				writeError(w, http.StatusBadRequest, "unknown target, path is required")
+				return
+			}
+		} else {
+			writeError(w, http.StatusBadRequest, "name and path are required")
+			return
+		}
 	}
 
 	if _, exists := s.cfg.Targets[body.Name]; exists {
@@ -78,7 +93,13 @@ func (s *Server) handleAddTarget(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.cfg.Targets[body.Name] = config.TargetConfig{Path: body.Path}
-	if err := s.cfg.Save(); err != nil {
+
+	// In project mode, also update the project config
+	if s.IsProjectMode() {
+		s.projectCfg.Targets = append(s.projectCfg.Targets, config.ProjectTargetEntry{Name: body.Name})
+	}
+
+	if err := s.saveConfig(); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to save config: "+err.Error())
 		return
 	}
@@ -105,7 +126,19 @@ func (s *Server) handleRemoveTarget(w http.ResponseWriter, r *http.Request) {
 	}
 
 	delete(s.cfg.Targets, name)
-	if err := s.cfg.Save(); err != nil {
+
+	// In project mode, also remove from project config
+	if s.IsProjectMode() {
+		filtered := make([]config.ProjectTargetEntry, 0, len(s.projectCfg.Targets))
+		for _, t := range s.projectCfg.Targets {
+			if t.Name != name {
+				filtered = append(filtered, t)
+			}
+		}
+		s.projectCfg.Targets = filtered
+	}
+
+	if err := s.saveConfig(); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to save config: "+err.Error())
 		return
 	}

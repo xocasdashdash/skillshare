@@ -190,6 +190,25 @@ skills:
 
 ---
 
+## Web Dashboard
+
+The web dashboard supports project mode — manage skills, targets, sync, and config visually:
+
+```bash
+cd my-project
+skillshare ui -p
+```
+
+Or simply `skillshare ui` if `.skillshare/config.yaml` exists (auto-detected).
+
+In project mode, the dashboard:
+- Shows a **"Project" badge** in the sidebar
+- Hides **Git Sync** (use your project's own git)
+- Edits **`.skillshare/config.yaml`** in the Config page
+- Automatically **reconciles** `skills:` entries after installing remote skills
+
+---
+
 ## Coexistence with Global Mode
 
 Project and global (organization) skills work independently:

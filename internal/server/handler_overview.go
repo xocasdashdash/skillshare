@@ -44,7 +44,7 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 	// Tracked repos
 	trackedRepos := buildTrackedRepos(s.cfg.Source, skills)
 
-	writeJSON(w, map[string]any{
+	resp := map[string]any{
 		"source":        s.cfg.Source,
 		"skillCount":    len(skills),
 		"topLevelCount": topLevelCount,
@@ -52,7 +52,13 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 		"mode":          mode,
 		"version":       versioncheck.Version,
 		"trackedRepos":  trackedRepos,
-	})
+		"isProjectMode": s.IsProjectMode(),
+	}
+	if s.IsProjectMode() {
+		resp["projectRoot"] = s.projectRoot
+	}
+
+	writeJSON(w, resp)
 }
 
 func buildTrackedRepos(sourceDir string, skills []sync.DiscoveredSkill) []trackedRepoItem {

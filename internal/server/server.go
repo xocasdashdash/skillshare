@@ -14,9 +14,13 @@ type Server struct {
 	addr string
 	mux  *http.ServeMux
 	mu   sync.Mutex // protects write operations (sync, install, uninstall, config)
+
+	// Project mode fields (empty/nil for global mode)
+	projectRoot string
+	projectCfg  *config.ProjectConfig
 }
 
-// New creates a new Server
+// New creates a new Server for global mode
 func New(cfg *config.Config, addr string) *Server {
 	s := &Server{
 		cfg:  cfg,
@@ -25,6 +29,63 @@ func New(cfg *config.Config, addr string) *Server {
 	}
 	s.registerRoutes()
 	return s
+}
+
+// NewProject creates a new Server for project mode
+func NewProject(cfg *config.Config, projectCfg *config.ProjectConfig, projectRoot, addr string) *Server {
+	s := &Server{
+		cfg:         cfg,
+		addr:        addr,
+		mux:         http.NewServeMux(),
+		projectRoot: projectRoot,
+		projectCfg:  projectCfg,
+	}
+	s.registerRoutes()
+	return s
+}
+
+// IsProjectMode returns true when serving a project-scoped dashboard
+func (s *Server) IsProjectMode() bool {
+	return s.projectRoot != ""
+}
+
+// configPath returns the config file path for the current mode
+func (s *Server) configPath() string {
+	if s.IsProjectMode() {
+		return config.ProjectConfigPath(s.projectRoot)
+	}
+	return config.ConfigPath()
+}
+
+// saveConfig persists the config for the current mode
+func (s *Server) saveConfig() error {
+	if s.IsProjectMode() {
+		return s.projectCfg.Save(s.projectRoot)
+	}
+	return s.cfg.Save()
+}
+
+// reloadConfig reloads the config for the current mode
+func (s *Server) reloadConfig() error {
+	if s.IsProjectMode() {
+		pcfg, err := config.LoadProject(s.projectRoot)
+		if err != nil {
+			return err
+		}
+		s.projectCfg = pcfg
+		targets, err := config.ResolveProjectTargets(s.projectRoot, pcfg)
+		if err != nil {
+			return err
+		}
+		s.cfg.Targets = targets
+		return nil
+	}
+	newCfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+	s.cfg = newCfg
+	return nil
 }
 
 // Start starts the HTTP server (blocking)

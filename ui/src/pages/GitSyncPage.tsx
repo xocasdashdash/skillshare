@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   GitBranch,
   Globe,
@@ -15,6 +16,7 @@ import {
 import { api } from '../api/client';
 import type { PullResponse } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useAppContext } from '../context/AppContext';
 import { shortenHome } from '../lib/paths';
 import Card from '../components/Card';
 import HandButton from '../components/HandButton';
@@ -38,8 +40,35 @@ function fileName(line: string): string {
 }
 
 export default function GitSyncPage() {
+  const { isProjectMode } = useAppContext();
   const { toast } = useToast();
   const { data: status, loading, error, refetch } = useApi(() => api.gitStatus(), []);
+
+  if (isProjectMode) {
+    return (
+      <div className="animate-sketch-in">
+        <Card decoration="tape" className="text-center py-12">
+          <GitBranch size={40} strokeWidth={2} className="text-pencil-light mx-auto mb-4" />
+          <h2
+            className="text-2xl font-bold text-pencil mb-2"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Git Sync is not available in project mode
+          </h2>
+          <p className="text-pencil-light mb-4">
+            Project skills are managed through your project's own version control.
+          </p>
+          <Link
+            to="/"
+            className="text-blue hover:underline"
+            style={{ fontFamily: 'var(--font-hand)' }}
+          >
+            Back to Dashboard
+          </Link>
+        </Card>
+      </div>
+    );
+  }
 
   const [commitMsg, setCommitMsg] = useState('');
   const [pushDryRun, setPushDryRun] = useState(false);

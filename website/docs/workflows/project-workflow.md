@@ -202,6 +202,18 @@ Installed skills (project)
 
 ---
 
+## Web Dashboard
+
+Use the web UI for visual project skill management:
+
+```bash
+skillshare ui -p
+```
+
+Or just `skillshare ui` if `.skillshare/config.yaml` exists (auto-detected). The dashboard hides Git Sync (use your project's own git) and edits `.skillshare/config.yaml` directly.
+
+---
+
 ## Tips
 
 ### Auto-Detection

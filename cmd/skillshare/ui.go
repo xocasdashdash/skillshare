@@ -13,40 +13,95 @@ import (
 )
 
 func cmdUI(args []string) error {
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
 	port := "19420"
 	host := "127.0.0.1"
 	noOpen := false
 
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
+	for i := 0; i < len(rest); i++ {
+		switch rest[i] {
 		case "--port":
-			if i+1 < len(args) {
+			if i+1 < len(rest) {
 				i++
-				port = args[i]
+				port = rest[i]
 			} else {
 				return fmt.Errorf("--port requires a value")
 			}
 		case "--host":
-			if i+1 < len(args) {
+			if i+1 < len(rest) {
 				i++
-				host = args[i]
+				host = rest[i]
 			} else {
 				return fmt.Errorf("--host requires a value")
 			}
 		case "--no-open":
 			noOpen = true
 		default:
-			return fmt.Errorf("unknown flag: %s", args[i])
+			return fmt.Errorf("unknown flag: %s", rest[i])
 		}
 	}
 
-	cfg, err := loadUIConfig()
+	// Auto-detect project mode
+	if mode == modeAuto {
+		cwd, _ := os.Getwd()
+		if projectConfigExists(cwd) {
+			mode = modeProject
+		} else {
+			mode = modeGlobal
+		}
+	}
+
+	applyModeLabel(mode)
+
+	addr := host + ":" + port
+	url := "http://" + addr
+
+	if mode == modeProject {
+		return startProjectUI(addr, url, noOpen)
+	}
+	return startGlobalUI(addr, url, noOpen)
+}
+
+func startProjectUI(addr, url string, noOpen bool) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	if !projectConfigExists(cwd) {
+		return fmt.Errorf("project not initialized: run 'skillshare init -p' first")
+	}
+
+	rt, err := loadProjectRuntime(cwd)
 	if err != nil {
 		return err
 	}
 
-	addr := host + ":" + port
-	url := "http://" + addr
+	// Build synthetic global config from project runtime
+	cfg := &config.Config{
+		Source:  rt.sourcePath,
+		Targets: rt.targets,
+		Mode:    "merge",
+	}
+
+	if !noOpen {
+		ui.Success("Opening %s in your browser... (project mode)", url)
+		openBrowser(url)
+	}
+
+	srv := server.NewProject(cfg, rt.config, cwd, addr)
+	return srv.Start()
+}
+
+func startGlobalUI(addr, url string, noOpen bool) error {
+	cfg, err := loadUIConfig()
+	if err != nil {
+		return err
+	}
 
 	if !noOpen {
 		ui.Success("Opening %s in your browser...", url)
@@ -94,5 +149,5 @@ func openBrowser(url string) {
 	default:
 		return
 	}
-	cmd.Start()
+	_ = cmd.Start()
 }

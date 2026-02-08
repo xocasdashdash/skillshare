@@ -16,15 +16,24 @@ Opens `http://127.0.0.1:19420` in your default browser.
 
 | Flag | Default | Description |
 |------|---------|-------------|
+| `-p`, `--project` | | Run in project mode (uses `.skillshare/`) |
+| `-g`, `--global` | | Run in global mode (uses `~/.config/skillshare/`) |
 | `--port <port>` | `19420` | HTTP server port |
 | `--host <host>` | `127.0.0.1` | Bind address (use `0.0.0.0` for Docker) |
 | `--no-open` | `false` | Don't open browser automatically |
+
+:::tip Auto-Detection
+If `.skillshare/config.yaml` exists in the current directory, the dashboard automatically starts in project mode. Use `-g` to force global mode.
+:::
 
 ## Examples
 
 ```bash
 # Default: opens browser on localhost:19420
 skillshare ui
+
+# Project mode (manage .skillshare/ skills)
+skillshare ui -p
 
 # Custom port
 skillshare ui --port 8080
@@ -50,6 +59,18 @@ skillshare ui --no-open &
 | **Git Sync** | Push/pull source repo with dirty-state checks and force pull |
 | **Search** | GitHub skill search with one-click install |
 | **Config** | YAML config editor with validation |
+
+### Project Mode Differences
+
+When running in project mode (`-p`), the dashboard adapts:
+
+- **"Project" badge** in the sidebar indicates project mode
+- **Git Sync page** is hidden (project skills use the project's own git)
+- **Backup & Restore page** is hidden (use version control instead)
+- **Tracked Repos section** is hidden from Dashboard (not applicable)
+- **Config page** shows `.skillshare/config.yaml` instead of the global config
+- **Available targets** lists project-level targets (e.g., `.claude/skills/` relative to project root)
+- **Install** automatically reconciles `skills:` entries in the project config
 
 ## UI Preview
 
@@ -96,6 +117,19 @@ skillshare ui --host 0.0.0.0 --no-open
 
 Then open `http://localhost:19420` on your host machine (port 19420 is mapped automatically).
 
+## Project Mode
+
+The web dashboard fully supports project-level skills:
+
+```bash
+cd my-project
+skillshare ui -p
+```
+
+Or simply `skillshare ui` if `.skillshare/config.yaml` exists (auto-detected).
+
+The dashboard reads and writes `.skillshare/config.yaml`, syncs to project-local targets, and reconciles remote skill entries after install — just like the CLI.
+
 ## Architecture
 
 The web UI is a single-page React application embedded in the Go binary via `go:embed`. No external dependencies are needed at runtime — just the `skillshare` binary.
@@ -112,4 +146,5 @@ skillshare ui
 
 - [status](/docs/commands/status) — CLI status check
 - [sync](/docs/commands/sync) — CLI sync command
+- [Project Setup](/docs/guides/project-setup) — Project mode setup guide
 - [Docker Sandbox](/docs/guides/docker-sandbox) — Run UI in Docker

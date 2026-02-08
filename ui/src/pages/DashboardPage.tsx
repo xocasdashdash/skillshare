@@ -24,6 +24,7 @@ import { useToast } from '../components/Toast';
 import { api } from '../api/client';
 import type { Target as TargetType } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useAppContext } from '../context/AppContext';
 import { wobbly, shadows } from '../design';
 import { shortenHome } from '../lib/paths';
 
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   const { data, loading, error } = useApi(() => api.getOverview());
   const [updatingAll, setUpdatingAll] = useState(false);
   const { toast } = useToast();
+  const { isProjectMode } = useAppContext();
 
   if (loading) return <PageSkeleton />;
   if (error) {
@@ -174,8 +176,8 @@ export default function DashboardPage() {
         </p>
       </Card>
 
-      {/* Tracked Repositories */}
-      {data.trackedRepos && data.trackedRepos.length > 0 && (
+      {/* Tracked Repositories (hidden in project mode) */}
+      {!isProjectMode && data.trackedRepos && data.trackedRepos.length > 0 && (
         <TrackedReposSection repos={data.trackedRepos} />
       )}
 

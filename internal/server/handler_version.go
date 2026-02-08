@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"skillshare/internal/config"
 	versioncheck "skillshare/internal/version"
 )
 
@@ -17,8 +18,14 @@ func (s *Server) handleVersionCheck(w http.ResponseWriter, r *http.Request) {
 		cliLatest = &result.LatestVersion
 	}
 
-	// Skill version (local)
-	skillVersion := versioncheck.ReadLocalSkillVersion(s.cfg.Source)
+	// Skill version (local) — always check global source for built-in skill
+	skillSourceDir := s.cfg.Source
+	if s.IsProjectMode() {
+		if globalCfg, err := config.Load(); err == nil {
+			skillSourceDir = globalCfg.Source
+		}
+	}
+	skillVersion := versioncheck.ReadLocalSkillVersion(skillSourceDir)
 
 	// Skill version (remote) — network call with 3s timeout
 	var skillLatest *string

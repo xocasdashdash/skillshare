@@ -9,6 +9,7 @@ import { PageSkeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { api } from '../api/client';
 import { useApi } from '../hooks/useApi';
+import { useAppContext } from '../context/AppContext';
 import { handTheme } from '../lib/codemirror-theme';
 
 export default function ConfigPage() {
@@ -17,6 +18,7 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const { toast } = useToast();
+  const { isProjectMode } = useAppContext();
 
   const extensions = useMemo(() => [yaml(), EditorView.lineWrapping], []);
 
@@ -69,7 +71,9 @@ export default function ConfigPage() {
           >
             Config
           </h2>
-          <p className="text-pencil-light">Edit your skillshare configuration</p>
+          <p className="text-pencil-light">
+            {isProjectMode ? 'Edit your project configuration' : 'Edit your skillshare configuration'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {dirty && (
@@ -99,7 +103,7 @@ export default function ConfigPage() {
             className="text-base text-pencil-light"
             style={{ fontFamily: 'var(--font-hand)' }}
           >
-            config.yaml
+            {isProjectMode ? '.skillshare/config.yaml' : 'config.yaml'}
           </span>
         </div>
         <div className="min-w-0 -mx-4 -mb-4">

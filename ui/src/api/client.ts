@@ -150,6 +150,8 @@ export interface Overview {
   mode: string;
   version: string;
   trackedRepos: TrackedRepo[];
+  isProjectMode: boolean;
+  projectRoot?: string;
 }
 
 export interface VersionCheck {

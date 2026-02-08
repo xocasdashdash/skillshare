@@ -25,12 +25,57 @@ docker compose -f "$COMPOSE_FILE" --profile playground exec --user "$(id -u):$(i
     touch /sandbox-home/.bashrc
     grep -qxF "alias ss='"'"'skillshare'"'"'" /sandbox-home/.bashrc || echo "alias ss='"'"'skillshare'"'"'" >> /sandbox-home/.bashrc
     grep -qxF "alias skillshare-ui='"'"'skillshare ui --host 0.0.0.0 --no-open'"'"'" /sandbox-home/.bashrc || echo "alias skillshare-ui='"'"'skillshare ui --host 0.0.0.0 --no-open'"'"'" >> /sandbox-home/.bashrc
+    grep -qxF "alias skillshare-ui-p='"'"'cd /sandbox-home/demo-project && skillshare ui -p --host 0.0.0.0 --no-open'"'"'" /sandbox-home/.bashrc || echo "alias skillshare-ui-p='"'"'cd /sandbox-home/demo-project && skillshare ui -p --host 0.0.0.0 --no-open'"'"'" >> /sandbox-home/.bashrc
+  '
+
+# Set up a demo project for project mode.
+docker compose -f "$COMPOSE_FILE" --profile playground exec --user "$(id -u):$(id -g)" "$SERVICE" \
+  bash -c '
+    DEMO=/sandbox-home/demo-project
+    if [ ! -f "$DEMO/.skillshare/config.yaml" ]; then
+      mkdir -p "$DEMO"
+      cd "$DEMO"
+
+      # Initialize project mode with claude target (non-interactive)
+      skillshare init -p --targets claude
+
+      # Create a sample skill
+      mkdir -p .skillshare/skills/hello-world
+      cat > .skillshare/skills/hello-world/SKILL.md << '\''SKILL_EOF'\''
+---
+name: hello-world
+description: A sample project skill for the playground demo
+---
+
+# Hello World
+
+This is a sample project-level skill created by the playground setup.
+
+## When to Use
+
+Use this skill when greeting a user or starting a new conversation.
+
+## Instructions
+
+1. Greet the user warmly
+2. Ask what they need help with
+3. Offer relevant suggestions based on the project context
+SKILL_EOF
+
+      # Sync skill to target
+      skillshare sync
+    fi
   '
 
 echo "Playground is running."
 echo "Enter it with: ./scripts/sandbox_playground_shell.sh or run make sandbox-shell"
 echo "Inside playground you can directly run: skillshare  (and alias: ss)"
 echo ""
-echo "Quick start:"
+echo "Quick start (global mode):"
 echo "  skillshare init         # required before first use"
 echo "  skillshare-ui           # start web dashboard (port 19420)"
+echo ""
+echo "Quick start (project mode — ready to use):"
+echo "  cd ~/demo-project       # pre-configured demo project"
+echo "  skillshare status       # auto-detects project mode"
+echo "  skillshare-ui-p         # project mode web dashboard (port 19420)"

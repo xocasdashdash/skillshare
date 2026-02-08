@@ -11,15 +11,19 @@ import (
 )
 
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	// Read raw YAML
-	raw, err := os.ReadFile(config.ConfigPath())
+	raw, err := os.ReadFile(s.configPath())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to read config: "+err.Error())
 		return
 	}
 
+	cfgObj := any(s.cfg)
+	if s.IsProjectMode() {
+		cfgObj = s.projectCfg
+	}
+
 	writeJSON(w, map[string]any{
-		"config": s.cfg,
+		"config": cfgObj,
 		"raw":    string(raw),
 	})
 }
@@ -37,30 +41,40 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate YAML before saving
-	var testCfg config.Config
-	if err := yaml.Unmarshal([]byte(body.Raw), &testCfg); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid YAML: "+err.Error())
-		return
+	if s.IsProjectMode() {
+		var testCfg config.ProjectConfig
+		if err := yaml.Unmarshal([]byte(body.Raw), &testCfg); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid YAML: "+err.Error())
+			return
+		}
+	} else {
+		var testCfg config.Config
+		if err := yaml.Unmarshal([]byte(body.Raw), &testCfg); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid YAML: "+err.Error())
+			return
+		}
 	}
 
-	if err := os.WriteFile(config.ConfigPath(), []byte(body.Raw), 0644); err != nil {
+	if err := os.WriteFile(s.configPath(), []byte(body.Raw), 0644); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to write config: "+err.Error())
 		return
 	}
 
-	// Reload config
-	newCfg, err := config.Load()
-	if err != nil {
+	if err := s.reloadConfig(); err != nil {
 		writeError(w, http.StatusInternalServerError, "config saved but failed to reload: "+err.Error())
 		return
 	}
-	s.cfg = newCfg
 
 	writeJSON(w, map[string]any{"success": true})
 }
 
 func (s *Server) handleAvailableTargets(w http.ResponseWriter, r *http.Request) {
-	defaults := config.DefaultTargets()
+	var defaults map[string]config.TargetConfig
+	if s.IsProjectMode() {
+		defaults = config.ProjectTargets()
+	} else {
+		defaults = config.DefaultTargets()
+	}
 
 	type availTarget struct {
 		Name      string `json:"name"`
