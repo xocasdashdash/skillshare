@@ -49,6 +49,9 @@ func cmdUpgrade(args []string) error {
 	// Default: upgrade both
 	upgradeCLI := !skillOnly
 	upgradeSkill := !cliOnly
+	// `upgrade --skill` is an explicit refresh request:
+	// always re-download and overwrite the installed skill.
+	skillForce := force || skillOnly
 
 	if dryRun {
 		ui.Warning("Dry run mode - no changes will be made")
@@ -67,7 +70,7 @@ func cmdUpgrade(args []string) error {
 		if upgradeCLI {
 			fmt.Println()
 		}
-		skillErr = upgradeSkillshareSkill(dryRun, force)
+		skillErr = upgradeSkillshareSkill(dryRun, skillForce)
 	}
 
 	// Return first error
@@ -393,7 +396,7 @@ func printUpgradeHelp() {
 Upgrade the CLI binary and/or built-in skillshare skill.
 
 Options:
-  --skill       Upgrade skill only
+  --skill       Upgrade skill only (always re-download and overwrite)
   --cli         Upgrade CLI only
   --force, -f   Skip confirmation prompts
   --dry-run, -n Preview without making changes
