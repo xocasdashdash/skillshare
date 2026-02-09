@@ -67,6 +67,7 @@ For each target:
 
 - Skills without `SKILL.md` files
 - Last backup timestamp
+- Trash status (item count, total size, oldest item age)
 - Broken symlinks in targets
 
 ## Common Issues
@@ -135,6 +136,7 @@ Version
     Run: skillshare upgrade --skill && skillshare sync
 
 Backups: last backup 2026-01-18_09-00-00 (3 days ago)
+ℹ Trash: 2 item(s) (45.2 KB), oldest 3 day(s)
 
 ℹ Update available: 1.2.0 -> 1.3.0
   brew upgrade skillshare  OR  curl -fsSL .../install.sh | sh

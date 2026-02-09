@@ -6,6 +6,10 @@ sidebar_position: 2
 
 Push skills from source to all targets.
 
+:::info Why is sync a separate command?
+Operations like `install` and `uninstall` only modify source — sync propagates to targets. This lets you batch changes, preview with `--dry-run`, and control when targets update. See [Why Sync is a Separate Step](/docs/concepts/source-and-targets#why-sync-is-a-separate-step).
+:::
+
 ## Command Overview
 
 | Type | Command | Direction |

@@ -33,6 +33,7 @@ var commands = map[string]func([]string) error{
 	"check":     cmdCheck,
 	"new":       cmdNew,
 	"search":    cmdSearch,
+	"trash":     cmdTrash,
 	"ui":        cmdUI,
 }
 
@@ -160,6 +161,8 @@ func printUsage() {
 	cmd("collect", "[target]", "Collect local skills from target(s) to source")
 	cmd("backup", "", "Create backup of target(s)")
 	cmd("restore", "<target>", "Restore target from latest backup")
+	cmd("trash", "list", "List trashed skills")
+	cmd("trash", "restore <name>", "Restore a skill from trash")
 	fmt.Println()
 
 	// Git Remote

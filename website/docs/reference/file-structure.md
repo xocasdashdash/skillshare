@@ -25,12 +25,17 @@ Directory layout and file locations for skillshare.
 │       └── backend/
 │           └── api/
 │               └── SKILL.md
-└── backups/                 # Backup directory
-    ├── 2026-01-20_15-30-00/
-    │   ├── claude/
-    │   └── cursor/
-    └── 2026-01-19_10-00-00/
-        └── claude/
+├── backups/                 # Backup directory
+│   ├── 2026-01-20_15-30-00/
+│   │   ├── claude/
+│   │   └── cursor/
+│   └── 2026-01-19_10-00-00/
+│       └── claude/
+└── trash/                   # Uninstalled skills (7-day retention)
+    ├── my-skill_2026-01-20_15-30-00/
+    │   └── SKILL.md
+    └── old-skill_2026-01-19_10-00-00/
+        └── SKILL.md
 ```
 
 ---
@@ -155,6 +160,35 @@ Backups are created:
 
 ---
 
+## Trash Directory
+
+### Location
+
+```
+~/.config/skillshare/trash/
+```
+
+**Project mode:**
+```
+<project>/.skillshare/trash/
+```
+
+### Structure
+
+```
+trash/
+└── <skill-name>_<timestamp>/    # skill-name_YYYY-MM-DD_HH-MM-SS
+    ├── SKILL.md
+    └── ...                      # All original files preserved
+```
+
+Trashed skills are:
+- Created by `skillshare uninstall`
+- Retained for 7 days, then automatically cleaned up
+- Named with the original skill name and a timestamp
+
+---
+
 ## Target Directories
 
 Targets are AI CLI skill directories. After sync, they contain symlinks to source:
@@ -223,6 +257,7 @@ _team-skills__frontend__ui/SKILL.md
 | Config | `~/.config/skillshare/config.yaml` |
 | Source | `~/.config/skillshare/skills/` |
 | Backups | `~/.config/skillshare/backups/` |
+| Trash | `~/.config/skillshare/trash/` |
 | Link type | Symlinks |
 
 ### Windows
@@ -232,6 +267,7 @@ _team-skills__frontend__ui/SKILL.md
 | Config | `%USERPROFILE%\.config\skillshare\config.yaml` |
 | Source | `%USERPROFILE%\.config\skillshare\skills\` |
 | Backups | `%USERPROFILE%\.config\skillshare\backups\` |
+| Trash | `%USERPROFILE%\.config\skillshare\trash\` |
 | Link type | NTFS Junctions |
 
 ---

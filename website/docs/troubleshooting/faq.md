@@ -60,6 +60,19 @@ skillshare init --remote git@github.com:you/private-skills.git
 
 ## Sync
 
+### Why do I need to run `sync` after every install/update?
+
+Sync is intentionally a separate step. Operations like `install`, `update`, and `uninstall` only modify the **source** directory — `sync` propagates those changes to all targets.
+
+This lets you:
+- **Batch changes** — Install 5 skills, then sync once instead of 5 times
+- **Preview first** — Run `sync --dry-run` before applying
+- **Stay in control** — You decide when targets update
+
+**Note:** `pull` is the only command that auto-syncs, because its intent is "bring everything up to date."
+
+See [Why Sync is a Separate Step](/docs/concepts/source-and-targets#why-sync-is-a-separate-step) for the full design rationale.
+
 ### How do I sync across multiple machines?
 
 Use git-based cross-machine sync:
@@ -87,6 +100,39 @@ Or restore from backup:
 ```bash
 skillshare restore claude
 ```
+
+### What if I accidentally uninstall a skill?
+
+Uninstalled skills are moved to trash and kept for 7 days. Restore with:
+
+```bash
+skillshare trash list                  # See what's in trash
+skillshare trash restore my-skill      # Restore to source
+skillshare sync                        # Sync back to targets
+```
+
+If the skill was installed from a remote source, you can also reinstall:
+
+```bash
+skillshare install github.com/user/repo/my-skill
+skillshare sync
+```
+
+For project mode, trash is at `.skillshare/trash/` within the project directory. Use `-p` flag with trash commands.
+
+Run `skillshare doctor` to see current trash status (item count, size, age).
+
+### What's the difference between backup and trash?
+
+| | backup | trash |
+|---|---|---|
+| **Protects** | target directories (sync snapshots) | source skills (uninstall) |
+| **Location** | `~/.config/skillshare/backups/` | `~/.config/skillshare/trash/` |
+| **Triggered by** | `sync`, `target remove` | `uninstall` |
+| **Restore with** | `skillshare restore <target>` | `skillshare trash restore <name>` |
+| **Auto-cleanup** | manual (`backup --cleanup`) | 7 days |
+
+They are complementary — backup protects targets from sync changes, trash protects source skills from accidental deletion.
 
 ---
 

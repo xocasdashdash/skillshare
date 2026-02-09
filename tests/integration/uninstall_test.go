@@ -61,7 +61,7 @@ targets: {}
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "dry-run")
-	result.AssertOutputContains(t, "would remove")
+	result.AssertOutputContains(t, "would move to trash")
 
 	// Verify skill was NOT removed
 	skillPath := filepath.Join(sb.SourcePath, "dry-run-skill")

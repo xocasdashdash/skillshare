@@ -14,6 +14,7 @@ import (
 
 	"skillshare/internal/config"
 	"skillshare/internal/sync"
+	"skillshare/internal/trash"
 	"skillshare/internal/ui"
 	"skillshare/internal/utils"
 )
@@ -74,6 +75,9 @@ func cmdDoctor(args []string) error {
 
 	// Check backup status
 	checkBackupStatus()
+
+	// Check trash status
+	checkTrashStatus()
 
 	// Check CLI and skill version
 	checkVersionDoctor(cfg)
@@ -440,6 +444,50 @@ func checkBackupStatus() {
 			ageStr = fmt.Sprintf("%d days ago", int(age.Hours()/24))
 		}
 		ui.Info("Backups: last backup %s (%s)", latest, ageStr)
+	}
+}
+
+// checkTrashStatus shows trash directory status
+func checkTrashStatus() {
+	trashBase := trash.TrashDir()
+	if trashBase == "" {
+		return
+	}
+
+	items := trash.List(trashBase)
+	if len(items) == 0 {
+		ui.Info("Trash: empty")
+		return
+	}
+
+	totalSize := trash.TotalSize(trashBase)
+	sizeStr := formatBytes(totalSize)
+
+	// Find oldest item age
+	oldest := items[len(items)-1] // List is sorted newest-first
+	age := time.Since(oldest.Date)
+	days := int(age.Hours() / 24)
+
+	if days > 0 {
+		ui.Info("Trash: %d item(s) (%s), oldest %d day(s)", len(items), sizeStr, days)
+	} else {
+		ui.Info("Trash: %d item(s) (%s), oldest <1 day", len(items), sizeStr)
+	}
+}
+
+// formatBytes formats bytes into a human-readable string.
+func formatBytes(b int64) string {
+	const (
+		kb = 1024
+		mb = 1024 * kb
+	)
+	switch {
+	case b >= mb:
+		return fmt.Sprintf("%.1f MB", float64(b)/float64(mb))
+	case b >= kb:
+		return fmt.Sprintf("%.1f KB", float64(b)/float64(kb))
+	default:
+		return fmt.Sprintf("%d B", b)
 	}
 }
 

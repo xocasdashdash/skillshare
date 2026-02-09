@@ -50,14 +50,18 @@ Because targets are symlinked, this edits the source file directly.
 
 After editing, sync is **usually not needed** because of symlinks. However, run sync when:
 
-- You've added new skills
+- You've installed or removed skills
 - You've changed sync mode
-- You've added new targets
+- You've added or removed targets
 - You see "out of sync" in status
 
 ```bash
 skillshare sync
 ```
+
+:::tip Why is sync a separate step?
+Sync is intentionally decoupled from install/update/uninstall. This lets you batch multiple changes (e.g., install 3 skills → sync once), preview with `--dry-run` before propagating, and keep full control of when targets update. See [Source & Targets: Why Sync is a Separate Step](/docs/concepts/source-and-targets#why-sync-is-a-separate-step) for details.
+:::
 
 ### Preview first
 

@@ -10,6 +10,7 @@ import (
 
 	"skillshare/internal/config"
 	"skillshare/internal/install"
+	"skillshare/internal/trash"
 	"skillshare/internal/ui"
 )
 
@@ -146,8 +147,11 @@ func confirmUninstall(target *uninstallTarget) (bool, error) {
 	return input == "y" || input == "yes", nil
 }
 
-// performUninstall removes the skill and cleans up
+// performUninstall moves the skill to trash and cleans up
 func performUninstall(target *uninstallTarget, cfg *config.Config) error {
+	// Read metadata before moving (for reinstall hint)
+	meta, _ := install.ReadMeta(target.path)
+
 	// For tracked repos, clean up .gitignore
 	if target.isTrackedRepo {
 		if removed, err := install.RemoveFromGitIgnore(cfg.Source, target.name); err != nil {
@@ -157,8 +161,9 @@ func performUninstall(target *uninstallTarget, cfg *config.Config) error {
 		}
 	}
 
-	if err := os.RemoveAll(target.path); err != nil {
-		return fmt.Errorf("failed to remove: %w", err)
+	trashPath, err := trash.MoveToTrash(target.path, target.name, trash.TrashDir())
+	if err != nil {
+		return fmt.Errorf("failed to move to trash: %w", err)
 	}
 
 	if target.isTrackedRepo {
@@ -166,8 +171,17 @@ func performUninstall(target *uninstallTarget, cfg *config.Config) error {
 	} else {
 		ui.Success("Uninstalled: %s", target.name)
 	}
+	ui.Info("Moved to trash (7 days): %s", trashPath)
+	if meta != nil && meta.Source != "" {
+		ui.Info("Reinstall: skillshare install %s", meta.Source)
+	}
 	fmt.Println()
 	ui.Info("Run 'skillshare sync' to update all targets")
+
+	// Opportunistic cleanup of expired trash items
+	if n, _ := trash.Cleanup(trash.TrashDir(), 0); n > 0 {
+		ui.Info("Cleaned up %d expired trash item(s)", n)
+	}
 
 	return nil
 }
@@ -227,9 +241,12 @@ func cmdUninstall(args []string) error {
 
 	// Handle dry-run
 	if opts.dryRun {
-		ui.Warning("[dry-run] would remove %s", target.path)
+		ui.Warning("[dry-run] would move to trash: %s", target.path)
 		if target.isTrackedRepo {
 			ui.Warning("[dry-run] would remove %s from .gitignore", target.name)
+		}
+		if meta, err := install.ReadMeta(target.path); err == nil && meta != nil && meta.Source != "" {
+			ui.Info("[dry-run] Reinstall: skillshare install %s", meta.Source)
 		}
 		return nil
 	}
@@ -264,6 +281,8 @@ func printUninstallHelp() {
 	fmt.Println(`Usage: skillshare uninstall <name> [options]
 
 Remove a skill or tracked repository from the source directory.
+Skills are moved to trash and kept for 7 days before automatic cleanup.
+If the skill was installed from a remote source, a reinstall command is shown.
 
 For tracked repositories (_repo-name):
   - Checks for uncommitted changes (requires --force to override)
@@ -278,7 +297,7 @@ Options:
   --help, -h      Show this help
 
 Examples:
-  skillshare uninstall my-skill              # Remove a skill
+  skillshare uninstall my-skill              # Remove a skill (moved to trash)
   skillshare uninstall my-skill --force      # Skip confirmation
   skillshare uninstall _team-repo            # Remove tracked repository
   skillshare uninstall team-repo             # _ prefix is optional

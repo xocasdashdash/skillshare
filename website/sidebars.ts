@@ -95,6 +95,7 @@ const sidebars: SidebarsConfig = {
             'commands/collect',
             'commands/backup',
             'commands/restore',
+            'commands/trash',
             'commands/push',
             'commands/pull',
           ],

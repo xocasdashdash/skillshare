@@ -9,6 +9,7 @@ import (
 
 	"skillshare/internal/config"
 	"skillshare/internal/install"
+	"skillshare/internal/trash"
 	"skillshare/internal/ui"
 )
 
@@ -46,8 +47,11 @@ func cmdUninstallProject(args []string, root string) error {
 	isTracked := install.IsGitRepo(skillPath)
 
 	if opts.dryRun {
-		ui.Warning("[dry-run] would remove %s", skillPath)
+		ui.Warning("[dry-run] would move to trash: %s", skillPath)
 		ui.Warning("[dry-run] would update .skillshare/config.yaml and .skillshare/.gitignore")
+		if meta, err := install.ReadMeta(skillPath); err == nil && meta != nil && meta.Source != "" {
+			ui.Info("[dry-run] Reinstall: skillshare install %s --project", meta.Source)
+		}
 		return nil
 	}
 
@@ -71,8 +75,12 @@ func cmdUninstallProject(args []string, root string) error {
 		}
 	}
 
-	if err := os.RemoveAll(skillPath); err != nil {
-		return fmt.Errorf("failed to remove: %w", err)
+	// Read metadata before moving (for reinstall hint)
+	meta, _ := install.ReadMeta(skillPath)
+
+	trashPath, err := trash.MoveToTrash(skillPath, skillName, trash.ProjectTrashDir(root))
+	if err != nil {
+		return fmt.Errorf("failed to move to trash: %w", err)
 	}
 
 	cfg, err := config.LoadProject(root)
@@ -100,7 +108,17 @@ func cmdUninstallProject(args []string, root string) error {
 	} else {
 		ui.Success("Uninstalled: %s", skillName)
 	}
+	ui.Info("Moved to trash (7 days): %s", trashPath)
+	if meta != nil && meta.Source != "" {
+		ui.Info("Reinstall: skillshare install %s --project", meta.Source)
+	}
 	ui.Info("Run 'skillshare sync' to clean up symlinks")
+
+	// Opportunistic cleanup of expired trash items
+	if n, _ := trash.Cleanup(trash.ProjectTrashDir(root), 0); n > 0 {
+		ui.Info("Cleaned up %d expired trash item(s)", n)
+	}
+
 	return nil
 }
 

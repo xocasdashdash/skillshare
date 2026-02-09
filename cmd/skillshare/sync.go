@@ -7,6 +7,7 @@ import (
 	"skillshare/internal/backup"
 	"skillshare/internal/config"
 	"skillshare/internal/sync"
+	"skillshare/internal/trash"
 	"skillshare/internal/ui"
 	"skillshare/internal/utils"
 )
@@ -96,6 +97,13 @@ func cmdSync(args []string) error {
 
 	if hasError {
 		return fmt.Errorf("some targets failed to sync")
+	}
+
+	// Opportunistic cleanup of expired trash items
+	if !dryRun {
+		if n, _ := trash.Cleanup(trash.TrashDir(), 0); n > 0 {
+			ui.Info("Cleaned up %d expired trash item(s)", n)
+		}
 	}
 
 	return nil
