@@ -47,8 +47,8 @@ type Source struct {
 // GitHub URL pattern: github.com/owner/repo[/path/to/subdir]
 var githubPattern = regexp.MustCompile(`^(?:https?://)?github\.com/([^/]+)/([^/]+)(?:/(.+))?$`)
 
-// Git SSH pattern: git@host:owner/repo.git
-var gitSSHPattern = regexp.MustCompile(`^git@([^:]+):([^/]+)/(.+?)(?:\.git)?$`)
+// Git SSH pattern: git@host:owner/repo[.git][//subdir]
+var gitSSHPattern = regexp.MustCompile(`^git@([^:]+):([^/]+)/(.+?)(?:\.git)?(?://(.+))?$`)
 
 // Git HTTPS pattern: https://host/owner/repo[.git]
 var gitHTTPSPattern = regexp.MustCompile(`^https?://([^/]+)/([^/]+)/([^/]+?)(?:\.git)?(?:/(.+))?$`)
@@ -212,14 +212,24 @@ func stripGitHubBranchPrefix(subdir string) string {
 }
 
 func parseGitSSH(matches []string, source *Source) (*Source, error) {
-	// matches: [full, host, owner, repo]
+	// matches: [full, host, owner, repo, subdir]
 	host := matches[1]
 	owner := matches[2]
 	repo := strings.TrimSuffix(matches[3], ".git")
+	subdir := ""
+	if len(matches) > 4 {
+		subdir = matches[4]
+	}
 
 	source.Type = SourceTypeGitSSH
 	source.CloneURL = fmt.Sprintf("git@%s:%s/%s.git", host, owner, repo)
-	source.Name = repo
+
+	if subdir != "" {
+		source.Subdir = subdir
+		source.Name = filepath.Base(subdir)
+	} else {
+		source.Name = repo
+	}
 
 	return source, nil
 }

@@ -160,6 +160,7 @@ func TestParseSource_GitSSH(t *testing.T) {
 		name         string
 		input        string
 		wantCloneURL string
+		wantSubdir   string
 		wantName     string
 	}{
 		{
@@ -180,6 +181,34 @@ func TestParseSource_GitSSH(t *testing.T) {
 			wantCloneURL: "git@github.com:user/my-skill.git",
 			wantName:     "my-skill",
 		},
+		{
+			name:         "ssh with subpath using //",
+			input:        "git@github.com:owner/repo.git//path/to/skill",
+			wantCloneURL: "git@github.com:owner/repo.git",
+			wantSubdir:   "path/to/skill",
+			wantName:     "skill",
+		},
+		{
+			name:         "ssh with subpath no .git",
+			input:        "git@github.com:owner/repo//skills/react",
+			wantCloneURL: "git@github.com:owner/repo.git",
+			wantSubdir:   "skills/react",
+			wantName:     "react",
+		},
+		{
+			name:         "ssh gitlab with subpath",
+			input:        "git@gitlab.com:team/monorepo.git//frontend/ui-skill",
+			wantCloneURL: "git@gitlab.com:team/monorepo.git",
+			wantSubdir:   "frontend/ui-skill",
+			wantName:     "ui-skill",
+		},
+		{
+			name:         "ssh with single-level subpath",
+			input:        "git@github.com:owner/skills.git//pdf",
+			wantCloneURL: "git@github.com:owner/skills.git",
+			wantSubdir:   "pdf",
+			wantName:     "pdf",
+		},
 	}
 
 	for _, tt := range tests {
@@ -193,6 +222,9 @@ func TestParseSource_GitSSH(t *testing.T) {
 			}
 			if source.CloneURL != tt.wantCloneURL {
 				t.Errorf("CloneURL = %v, want %v", source.CloneURL, tt.wantCloneURL)
+			}
+			if source.Subdir != tt.wantSubdir {
+				t.Errorf("Subdir = %v, want %v", source.Subdir, tt.wantSubdir)
 			}
 			if source.Name != tt.wantName {
 				t.Errorf("Name = %v, want %v", source.Name, tt.wantName)

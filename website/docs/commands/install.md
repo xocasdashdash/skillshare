@@ -120,6 +120,9 @@ skillshare install github.com/user/repo/path/to/skill
 # SSH URL
 skillshare install git@github.com:user/repo.git
 
+# SSH URL with subdirectory (use // separator)
+skillshare install git@github.com:user/repo.git//path/to/skill
+
 # Local path
 skillshare install ~/Downloads/my-skill
 skillshare install /absolute/path/to/skill
@@ -229,6 +232,9 @@ For private repos, use **SSH URL** format to avoid authentication issues:
 skillshare install git@bitbucket.org:team/skills.git
 skillshare install git@github.com:team/private-skills.git
 skillshare install git@gitlab.com:team/skills.git
+
+# ✅ SSH URL with subdirectory
+skillshare install git@bitbucket.org:team/skills.git//frontend-react
 
 # ✅ SSH URL with --track
 skillshare install git@bitbucket.org:team/skills.git --track
