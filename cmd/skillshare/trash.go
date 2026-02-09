@@ -45,6 +45,10 @@ func cmdTrash(args []string) error {
 		return trashList(mode, cwd)
 	case "restore":
 		return trashRestore(mode, cwd, subArgs)
+	case "delete", "rm":
+		return trashDelete(mode, cwd, subArgs)
+	case "empty":
+		return trashEmpty(mode, cwd)
 	case "--help", "-h", "help":
 		printTrashHelp()
 		return nil
@@ -124,6 +128,73 @@ func trashRestore(mode runMode, cwd string, args []string) error {
 	return nil
 }
 
+func trashDelete(mode runMode, cwd string, args []string) error {
+	var name string
+	for _, arg := range args {
+		switch {
+		case arg == "--help" || arg == "-h":
+			printTrashHelp()
+			return nil
+		case strings.HasPrefix(arg, "-"):
+			return fmt.Errorf("unknown option: %s", arg)
+		default:
+			if name != "" {
+				return fmt.Errorf("unexpected argument: %s", arg)
+			}
+			name = arg
+		}
+	}
+
+	if name == "" {
+		printTrashHelp()
+		return fmt.Errorf("skill name is required")
+	}
+
+	trashBase := resolveTrashBase(mode, cwd)
+	entry := trash.FindByName(trashBase, name)
+	if entry == nil {
+		return fmt.Errorf("'%s' not found in trash", name)
+	}
+
+	if err := os.RemoveAll(entry.Path); err != nil {
+		return fmt.Errorf("failed to delete '%s': %w", name, err)
+	}
+
+	ui.Success("Permanently deleted: %s", name)
+	return nil
+}
+
+func trashEmpty(mode runMode, cwd string) error {
+	trashBase := resolveTrashBase(mode, cwd)
+	items := trash.List(trashBase)
+
+	if len(items) == 0 {
+		ui.Info("Trash is already empty")
+		return nil
+	}
+
+	ui.Warning("This will permanently delete %d item(s) from trash", len(items))
+	fmt.Print("Continue? [y/N]: ")
+	var input string
+	fmt.Scanln(&input)
+	input = strings.ToLower(strings.TrimSpace(input))
+	if input != "y" && input != "yes" {
+		ui.Info("Cancelled")
+		return nil
+	}
+
+	removed := 0
+	for _, item := range items {
+		if err := os.RemoveAll(item.Path); err != nil {
+			return fmt.Errorf("failed to delete '%s': %w", item.Name, err)
+		}
+		removed++
+	}
+
+	ui.Success("Emptied trash: %d item(s) permanently deleted", removed)
+	return nil
+}
+
 func resolveTrashBase(mode runMode, cwd string) string {
 	if mode == modeProject {
 		return trash.ProjectTrashDir(cwd)
@@ -161,6 +232,8 @@ Manage uninstalled skills in the trash.
 Commands:
   list, ls              List trashed skills
   restore <name>        Restore most recent trashed version to source
+  delete, rm <name>     Permanently delete a single item from trash
+  empty                 Permanently delete all items from trash
 
 Options:
   --project, -p         Use project-level trash
@@ -170,5 +243,7 @@ Options:
 Examples:
   skillshare trash list                    # List trashed skills
   skillshare trash restore my-skill        # Restore from trash
-  skillshare trash restore my-skill -p     # Restore in project mode`)
+  skillshare trash restore my-skill -p     # Restore in project mode
+  skillshare trash delete my-skill         # Permanently delete from trash
+  skillshare trash empty                   # Empty the trash`)
 }

@@ -342,37 +342,35 @@ export default function SkillDetailPage() {
               )}
             </dl>
 
-            {/* Actions — only for installed (non-local) skills */}
-            {(skill.isInRepo || skill.type || skill.source) && (
-              <div className="flex gap-2 mt-4 pt-4 border-t-2 border-dashed border-pencil-light/30">
-                {(skill.isInRepo || skill.source) && (
-                  <HandButton
-                    onClick={handleUpdate}
-                    disabled={updating}
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <RefreshCw size={14} strokeWidth={2.5} className={updating ? 'animate-spin' : ''} />
-                    {updating ? 'Updating...' : 'Update'}
-                  </HandButton>
-                )}
+            {/* Actions */}
+            <div className="flex gap-2 mt-4 pt-4 border-t-2 border-dashed border-pencil-light/30">
+              {(skill.isInRepo || skill.source) && (
                 <HandButton
-                  onClick={() => setConfirmDelete(true)}
-                  disabled={deleting}
-                  variant="danger"
+                  onClick={handleUpdate}
+                  disabled={updating}
+                  variant="secondary"
                   size="sm"
                   className="flex-1"
                 >
-                  <Trash2 size={14} strokeWidth={2.5} />
-                  {deleting
-                    ? 'Uninstalling...'
-                    : skill.isInRepo
-                      ? 'Uninstall Repo'
-                      : 'Uninstall'}
+                  <RefreshCw size={14} strokeWidth={2.5} className={updating ? 'animate-spin' : ''} />
+                  {updating ? 'Updating...' : 'Update'}
                 </HandButton>
-              </div>
-            )}
+              )}
+              <HandButton
+                onClick={() => setConfirmDelete(true)}
+                disabled={deleting}
+                variant="danger"
+                size="sm"
+                className="flex-1"
+              >
+                <Trash2 size={14} strokeWidth={2.5} />
+                {deleting
+                  ? 'Uninstalling...'
+                  : skill.isInRepo
+                    ? 'Uninstall Repo'
+                    : 'Uninstall'}
+              </HandButton>
+            </div>
           </Card>
 
           <Card>
@@ -449,8 +447,8 @@ export default function SkillDetailPage() {
         title={skill.isInRepo ? 'Uninstall Repository' : 'Uninstall Skill'}
         message={
           skill.isInRepo
-            ? `Remove repository "${skill.relPath.split('/')[0]}"? This will delete all skills in the repo. This cannot be undone.`
-            : `Delete skill "${skill.name}"? This cannot be undone.`
+            ? `Remove repository "${skill.relPath.split('/')[0]}"? This will move all skills in the repo to trash.`
+            : `Uninstall skill "${skill.name}"? It will be moved to trash and can be restored within 7 days.`
         }
         confirmText="Uninstall"
         variant="danger"

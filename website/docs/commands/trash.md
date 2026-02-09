@@ -10,6 +10,8 @@ Manage uninstalled skills in the trash directory.
 skillshare trash list                    # List trashed skills
 skillshare trash restore my-skill        # Restore from trash
 skillshare trash restore my-skill -p     # Restore in project mode
+skillshare trash delete my-skill         # Permanently delete from trash
+skillshare trash empty                   # Empty the trash
 ```
 
 ## Subcommands
@@ -46,6 +48,32 @@ skillshare trash restore my-skill
 ```
 
 If a skill with the same name already exists in source, restore will fail. Uninstall the existing skill first or use a different name.
+
+### delete
+
+Permanently delete a single item from the trash:
+
+```bash
+skillshare trash delete my-skill
+```
+
+```
+✓ Permanently deleted: my-skill
+```
+
+### empty
+
+Permanently delete all items from the trash (with confirmation prompt):
+
+```bash
+skillshare trash empty
+```
+
+```
+⚠ This will permanently delete 3 item(s) from trash
+Continue? [y/N]: y
+✓ Emptied trash: 3 item(s) permanently deleted
+```
 
 ## Backup vs Trash
 

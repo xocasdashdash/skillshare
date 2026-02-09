@@ -8,6 +8,7 @@ import (
 
 	"skillshare/internal/install"
 	"skillshare/internal/sync"
+	"skillshare/internal/trash"
 	"skillshare/internal/utils"
 )
 
@@ -209,13 +210,13 @@ func (s *Server) handleUninstallRepo(w http.ResponseWriter, r *http.Request) {
 	// Remove from .gitignore
 	install.RemoveFromGitIgnore(s.cfg.Source, repoName)
 
-	// Remove directory
-	if err := os.RemoveAll(repoPath); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to remove repo: "+err.Error())
+	// Move to trash instead of permanent delete
+	if _, err := trash.MoveToTrash(repoPath, repoName, s.trashBase()); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to trash repo: "+err.Error())
 		return
 	}
 
-	writeJSON(w, map[string]any{"success": true, "name": repoName})
+	writeJSON(w, map[string]any{"success": true, "name": repoName, "movedToTrash": true})
 }
 
 func (s *Server) handleUninstallSkill(w http.ResponseWriter, r *http.Request) {
@@ -243,12 +244,12 @@ func (s *Server) handleUninstallSkill(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := os.RemoveAll(d.SourcePath); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to remove skill: "+err.Error())
+		if _, err := trash.MoveToTrash(d.SourcePath, baseName, s.trashBase()); err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to trash skill: "+err.Error())
 			return
 		}
 
-		writeJSON(w, map[string]any{"success": true, "name": name})
+		writeJSON(w, map[string]any{"success": true, "name": name, "movedToTrash": true})
 		return
 	}
 

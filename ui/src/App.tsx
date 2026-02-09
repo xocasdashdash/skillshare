@@ -15,6 +15,7 @@ const BackupPage = lazy(() => import('./pages/BackupPage'));
 const GitSyncPage = lazy(() => import('./pages/GitSyncPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const InstallPage = lazy(() => import('./pages/InstallPage'));
+const TrashPage = lazy(() => import('./pages/TrashPage'));
 const ConfigPage = lazy(() => import('./pages/ConfigPage'));
 
 function Lazy({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,7 @@ export default function App() {
               <Route path="sync" element={<Lazy><SyncPage /></Lazy>} />
               <Route path="collect" element={<Lazy><CollectPage /></Lazy>} />
               <Route path="backup" element={<Lazy><BackupPage /></Lazy>} />
+              <Route path="trash" element={<Lazy><TrashPage /></Lazy>} />
               <Route path="git" element={<Lazy><GitSyncPage /></Lazy>} />
               <Route path="search" element={<Lazy><SearchPage /></Lazy>} />
               <Route path="install" element={<Lazy><InstallPage /></Lazy>} />

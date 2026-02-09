@@ -122,6 +122,15 @@ export const api = {
       body: JSON.stringify(opts),
     }),
 
+  // Trash
+  listTrash: () => apiFetch<TrashListResponse>('/trash'),
+  restoreTrash: (name: string) =>
+    apiFetch<{ success: boolean }>(`/trash/${encodeURIComponent(name)}/restore`, { method: 'POST' }),
+  deleteTrash: (name: string) =>
+    apiFetch<{ success: boolean }>(`/trash/${encodeURIComponent(name)}`, { method: 'DELETE' }),
+  emptyTrash: () =>
+    apiFetch<{ success: boolean; removed: number }>('/trash/empty', { method: 'POST' }),
+
   // Git
   gitStatus: () => apiFetch<GitStatus>('/git/status'),
   push: (opts: { message?: string; dryRun?: boolean }) =>
@@ -281,6 +290,20 @@ export interface CollectResult {
   pulled: string[];
   skipped: string[];
   failed: Record<string, string>;
+}
+
+// Trash types
+export interface TrashedSkill {
+  name: string;
+  timestamp: string;
+  date: string;
+  size: number;
+  path: string;
+}
+
+export interface TrashListResponse {
+  items: TrashedSkill[];
+  totalSize: number;
 }
 
 // Backup types

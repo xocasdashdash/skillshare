@@ -143,6 +143,12 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("POST /api/backup/cleanup", s.handleCleanupBackups)
 	s.mux.HandleFunc("POST /api/restore", s.handleRestore)
 
+	// Trash
+	s.mux.HandleFunc("GET /api/trash", s.handleListTrash)
+	s.mux.HandleFunc("POST /api/trash/{name}/restore", s.handleRestoreTrash)
+	s.mux.HandleFunc("DELETE /api/trash/{name}", s.handleDeleteTrash)
+	s.mux.HandleFunc("POST /api/trash/empty", s.handleEmptyTrash)
+
 	// Git
 	s.mux.HandleFunc("GET /api/git/status", s.handleGitStatus)
 	s.mux.HandleFunc("POST /api/push", s.handlePush)

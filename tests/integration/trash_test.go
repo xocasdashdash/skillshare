@@ -108,6 +108,82 @@ targets: {}
 	result.AssertAnyOutputContains(t, "already exists")
 }
 
+func TestTrash_Delete_Success(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.CreateSkill("del-me", map[string]string{"SKILL.md": "# Delete"})
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	// Uninstall to populate trash
+	sb.RunCLI("uninstall", "del-me", "--force")
+
+	// Verify in trash
+	listResult := sb.RunCLI("trash", "list")
+	listResult.AssertAnyOutputContains(t, "del-me")
+
+	// Delete permanently
+	result := sb.RunCLI("trash", "delete", "del-me")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "Permanently deleted")
+
+	// Trash should be empty
+	listResult2 := sb.RunCLI("trash", "list")
+	listResult2.AssertAnyOutputContains(t, "empty")
+}
+
+func TestTrash_Delete_NotFound(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	result := sb.RunCLI("trash", "delete", "nonexistent")
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "not found in trash")
+}
+
+func TestTrash_Empty_WithItems(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.CreateSkill("empty-a", map[string]string{"SKILL.md": "# A"})
+	sb.CreateSkill("empty-b", map[string]string{"SKILL.md": "# B"})
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	sb.RunCLI("uninstall", "empty-a", "--force")
+	sb.RunCLI("uninstall", "empty-b", "--force")
+
+	// Pipe "y" to confirm
+	result := sb.RunCLIWithInput("y\n", "trash", "empty")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "Emptied trash")
+	result.AssertAnyOutputContains(t, "2 item")
+
+	// Trash should be empty
+	listResult := sb.RunCLI("trash", "list")
+	listResult.AssertAnyOutputContains(t, "empty")
+}
+
+func TestTrash_Empty_AlreadyEmpty(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	result := sb.RunCLI("trash", "empty")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "already empty")
+}
+
 func TestTrash_Help(t *testing.T) {
 	sb := testutil.NewSandbox(t)
 	defer sb.Cleanup()
@@ -116,4 +192,6 @@ func TestTrash_Help(t *testing.T) {
 	result.AssertSuccess(t)
 	result.AssertAnyOutputContains(t, "restore")
 	result.AssertAnyOutputContains(t, "list")
+	result.AssertAnyOutputContains(t, "delete")
+	result.AssertAnyOutputContains(t, "empty")
 }
