@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Target, ArrowDownToLine, Search, CircleDot, PenLine } from 'lucide-react';
+import { Trash2, Plus, Target, ArrowDownToLine, Search, CircleDot, PenLine, AlertTriangle } from 'lucide-react';
 import Card from '../components/Card';
 import StatusBadge from '../components/StatusBadge';
 import HandButton from '../components/HandButton';
@@ -52,6 +52,7 @@ export default function TargetsPage() {
   }
 
   const targets = data?.targets ?? [];
+  const sourceSkillCount = data?.sourceSkillCount ?? 0;
 
   const handleAdd = async () => {
     if (!newTarget.name) return;
@@ -377,11 +378,21 @@ export default function TargetsPage() {
                   >
                     {shortenHome(target.path)}
                   </p>
-                  {target.mode === 'merge' && (
-                    <p className="text-sm text-muted-dark mt-1">
-                      {target.linkedCount} shared, {target.localCount} local
-                    </p>
-                  )}
+                  {target.mode === 'merge' && (() => {
+                    const hasDrift = target.status === 'merged' && target.linkedCount < sourceSkillCount;
+                    return (
+                      <p className={`text-sm mt-1 ${hasDrift ? 'text-warning' : 'text-muted-dark'}`}>
+                        {hasDrift ? (
+                          <span className="flex items-center gap-1">
+                            <AlertTriangle size={12} strokeWidth={2.5} />
+                            {target.linkedCount}/{sourceSkillCount} shared, {target.localCount} local
+                          </span>
+                        ) : (
+                          <>{target.linkedCount} shared, {target.localCount} local</>
+                        )}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {target.mode === 'merge' && target.localCount > 0 && (

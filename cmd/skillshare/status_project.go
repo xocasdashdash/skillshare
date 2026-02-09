@@ -24,9 +24,11 @@ func cmdStatusProject(root string) error {
 		return err
 	}
 
+	sourceSkillCount := countSourceSkills(runtime.sourcePath)
+
 	printProjectSourceStatus(runtime.sourcePath)
 	printProjectTrackedReposStatus(runtime.sourcePath)
-	printProjectTargetsStatus(runtime)
+	printProjectTargetsStatus(runtime, sourceSkillCount)
 
 	return nil
 }
@@ -78,8 +80,9 @@ func printProjectTrackedReposStatus(sourcePath string) {
 	}
 }
 
-func printProjectTargetsStatus(runtime *projectRuntime) {
+func printProjectTargetsStatus(runtime *projectRuntime, sourceSkillCount int) {
 	ui.Header("Targets (project)")
+	driftTotal := 0
 	for _, entry := range runtime.config.Targets {
 		target, ok := runtime.targets[entry.Name]
 		if !ok {
@@ -94,5 +97,18 @@ func printProjectTargetsStatus(runtime *projectRuntime) {
 
 		statusStr, detail := getTargetStatusDetail(target, runtime.sourcePath, mode)
 		ui.Status(entry.Name, statusStr, detail)
+
+		if mode == "merge" {
+			_, linkedCount, _ := sync.CheckStatusMerge(target.Path, runtime.sourcePath)
+			if linkedCount < sourceSkillCount {
+				drift := sourceSkillCount - linkedCount
+				if drift > driftTotal {
+					driftTotal = drift
+				}
+			}
+		}
+	}
+	if driftTotal > 0 {
+		ui.Warning("%d skill(s) not synced — run 'skillshare sync'", driftTotal)
 	}
 }

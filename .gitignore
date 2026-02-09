@@ -21,6 +21,7 @@ CLAUDE.md
 docs/plans/
 .skillshare/
 /specs/
+.pnpm-store/
 
 # Worktrees
 .worktrees/

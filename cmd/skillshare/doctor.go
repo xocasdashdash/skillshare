@@ -67,6 +67,9 @@ func cmdDoctor(args []string) error {
 	// Check each target
 	checkTargets(cfg, result)
 
+	// Check sync drift
+	checkSyncDrift(cfg, result)
+
 	// Check broken symlinks
 	checkBrokenSymlinks(cfg, result)
 
@@ -234,6 +237,40 @@ func displayTargetStatus(name string, target config.TargetConfig, source, mode s
 		ui.Warning("%s [%s]: %s", name, mode, statusStr)
 	} else {
 		ui.Success("%s [%s]: %s", name, mode, statusStr)
+	}
+}
+
+func checkSyncDrift(cfg *config.Config, result *doctorResult) {
+	discovered, err := sync.DiscoverSourceSkills(cfg.Source)
+	if err != nil {
+		return
+	}
+	sourceCount := len(discovered)
+	if sourceCount == 0 {
+		return
+	}
+
+	for name, target := range cfg.Targets {
+		mode := target.Mode
+		if mode == "" {
+			mode = cfg.Mode
+		}
+		if mode == "" {
+			mode = "merge"
+		}
+		if mode != "merge" {
+			continue
+		}
+
+		status, linkedCount, _ := sync.CheckStatusMerge(target.Path, cfg.Source)
+		if status != sync.StatusMerged {
+			continue
+		}
+		if linkedCount < sourceCount {
+			drift := sourceCount - linkedCount
+			ui.Warning("%s: %d skill(s) not synced (%d/%d linked)", name, drift, linkedCount, sourceCount)
+			result.addWarning()
+		}
 	}
 }
 

@@ -33,7 +33,7 @@ export const api = {
     apiFetch<{ success: boolean }>(`/skills/${encodeURIComponent(name)}`, { method: 'DELETE' }),
 
   // Targets
-  listTargets: () => apiFetch<{ targets: Target[] }>('/targets'),
+  listTargets: () => apiFetch<{ targets: Target[]; sourceSkillCount: number }>('/targets'),
   addTarget: (name: string, path: string) =>
     apiFetch<{ success: boolean }>('/targets', {
       method: 'POST',

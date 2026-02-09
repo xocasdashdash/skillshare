@@ -26,6 +26,7 @@ Targets
   ✓ claude    [merge] ~/.claude/skills (8 shared, 2 local)
   ✓ cursor    [merge] ~/.cursor/skills (8 shared, 0 local)
   ! codex     [merge->needs sync] ~/.openai-codex/skills
+  ⚠ 2 skill(s) not synced — run 'skillshare sync'
 
 Version
   ✓ CLI: 1.2.0
@@ -57,6 +58,7 @@ Shows each configured target with:
 | `linked` | Entire directory is symlinked |
 | `unlinked` | Not yet synced |
 | `needs sync` | Mode changed, run `sync` to apply |
+| `not synced` | Some skills missing from target — run `sync` |
 
 ### Version
 

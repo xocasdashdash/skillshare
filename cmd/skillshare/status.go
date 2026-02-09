@@ -50,9 +50,11 @@ func cmdStatus(args []string) error {
 		return err
 	}
 
+	sourceSkillCount := countSourceSkills(cfg.Source)
+
 	printSourceStatus(cfg)
 	printTrackedReposStatus(cfg)
-	printTargetsStatus(cfg)
+	printTargetsStatus(cfg, sourceSkillCount)
 	checkSkillVersion(cfg)
 
 	return nil
@@ -118,13 +120,35 @@ func checkRepoDirty(repoPath string) (bool, error) {
 	return len(strings.TrimSpace(string(output))) > 0, nil
 }
 
-func printTargetsStatus(cfg *config.Config) {
+func printTargetsStatus(cfg *config.Config, sourceSkillCount int) {
 	ui.Header("Targets")
+	driftTotal := 0
 	for name, target := range cfg.Targets {
 		mode := getTargetMode(target.Mode, cfg.Mode)
 		statusStr, detail := getTargetStatusDetail(target, cfg.Source, mode)
 		ui.Status(name, statusStr, detail)
+
+		if mode == "merge" {
+			_, linkedCount, _ := sync.CheckStatusMerge(target.Path, cfg.Source)
+			if linkedCount < sourceSkillCount {
+				drift := sourceSkillCount - linkedCount
+				if drift > driftTotal {
+					driftTotal = drift
+				}
+			}
+		}
 	}
+	if driftTotal > 0 {
+		ui.Warning("%d skill(s) not synced — run 'skillshare sync'", driftTotal)
+	}
+}
+
+func countSourceSkills(source string) int {
+	discovered, err := sync.DiscoverSourceSkills(source)
+	if err != nil {
+		return 0
+	}
+	return len(discovered)
 }
 
 func getTargetMode(targetMode, globalMode string) string {

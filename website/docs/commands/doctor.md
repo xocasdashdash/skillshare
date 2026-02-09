@@ -54,6 +54,7 @@ Summary
 For each target:
 - Path exists and is writable
 - Sync mode matches actual state
+- Sync drift (linked count vs source count)
 - No broken symlinks
 - No duplicate skills (symlink mode)
 
@@ -75,6 +76,14 @@ For each target:
 ### "Needs sync"
 
 Target mode was changed but not applied:
+
+```bash
+skillshare sync
+```
+
+### "Not synced"
+
+Target has fewer linked skills than source (e.g. after installing new skills):
 
 ```bash
 skillshare sync
@@ -127,6 +136,7 @@ Checking targets
   ✓ claude    [merge]: merged (8 shared, 2 local)
   ✗ cursor    [merge]: 2 broken symlink(s): old-skill, removed-skill
   ⚠ codex     [merge->needs sync]: linked (needs sync to apply merge mode)
+  ⚠ claude: 2 skill(s) not synced (10/12 linked)
 
 ⚠ Skills without SKILL.md: test-dir, temp
 

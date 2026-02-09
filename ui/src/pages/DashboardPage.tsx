@@ -506,6 +506,15 @@ function SkillUpdatesSection() {
 function TargetsHealthSection() {
   const { data, loading } = useApi(() => api.listTargets());
 
+  const sourceSkillCount = data?.sourceSkillCount ?? 0;
+  const driftTargets = (data?.targets ?? []).filter(
+    (t) => t.mode === 'merge' && t.status === 'merged' && t.linkedCount < sourceSkillCount
+  );
+  const maxDrift = driftTargets.reduce(
+    (max, t) => Math.max(max, sourceSkillCount - t.linkedCount),
+    0
+  );
+
   return (
     <Card className="mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -517,6 +526,9 @@ function TargetsHealthSection() {
           >
             Targets Health
           </h3>
+          {maxDrift > 0 && (
+            <Badge variant="warning">{maxDrift} not synced</Badge>
+          )}
         </div>
         <Link to="/targets" className="text-sm text-blue hover:underline" style={{ fontFamily: 'var(--font-hand)' }}>
           View all
@@ -529,32 +541,45 @@ function TargetsHealthSection() {
           <Skeleton className="w-3/4 h-10" />
         </div>
       ) : data?.targets && data.targets.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {data.targets.map((t: TargetType) => (
-            <Link key={t.name} to="/targets">
-              <div
-                className="flex items-center justify-between py-2 px-3 bg-paper-warm border border-muted hover:border-pencil-light transition-colors"
-                style={{ borderRadius: wobbly.sm }}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Target size={14} className="text-pencil-light shrink-0" />
-                  <span
-                    className="font-medium text-pencil truncate"
-                    style={{ fontFamily: 'var(--font-hand)' }}
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {data.targets.map((t: TargetType) => {
+              const hasDrift = t.mode === 'merge' && t.status === 'merged' && t.linkedCount < sourceSkillCount;
+              return (
+                <Link key={t.name} to="/targets">
+                  <div
+                    className={`flex items-center justify-between py-2 px-3 bg-paper-warm border ${hasDrift ? 'border-warning' : 'border-muted'} hover:border-pencil-light transition-colors`}
+                    style={{ borderRadius: wobbly.sm }}
                   >
-                    {t.name}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 ml-2">
-                  <StatusBadge status={t.status} />
-                  {t.linkedCount > 0 && (
-                    <span className="text-xs text-muted-dark">{t.linkedCount} linked</span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Target size={14} className="text-pencil-light shrink-0" />
+                      <span
+                        className="font-medium text-pencil truncate"
+                        style={{ fontFamily: 'var(--font-hand)' }}
+                      >
+                        {t.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <StatusBadge status={t.status} />
+                      {hasDrift ? (
+                        <Badge variant="warning">{t.linkedCount}/{sourceSkillCount} synced</Badge>
+                      ) : t.linkedCount > 0 ? (
+                        <span className="text-xs text-muted-dark">{t.linkedCount} linked</span>
+                      ) : null}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          {maxDrift > 0 && (
+            <div className="mt-3 flex items-center gap-2 text-warning text-sm" style={{ fontFamily: 'var(--font-hand)' }}>
+              <AlertTriangle size={14} strokeWidth={2.5} />
+              <span>{maxDrift} skill(s) not synced — <Link to="/sync" className="underline hover:text-pencil">go to Sync page</Link></span>
+            </div>
+          )}
+        </>
       ) : (
         <p className="text-pencil-light text-sm">No targets configured.</p>
       )}

@@ -51,7 +51,13 @@ func (s *Server) handleListTargets(w http.ResponseWriter, r *http.Request) {
 		items = append(items, item)
 	}
 
-	writeJSON(w, map[string]any{"targets": items})
+	// Count source skills for drift detection
+	sourceSkillCount := 0
+	if discovered, err := ssync.DiscoverSourceSkills(s.cfg.Source); err == nil {
+		sourceSkillCount = len(discovered)
+	}
+
+	writeJSON(w, map[string]any{"targets": items, "sourceSkillCount": sourceSkillCount})
 }
 
 func (s *Server) handleAddTarget(w http.ResponseWriter, r *http.Request) {
