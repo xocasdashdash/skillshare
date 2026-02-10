@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,6 +22,9 @@ func TestAudit_CleanSkill(t *testing.T) {
 	result.AssertSuccess(t)
 	result.AssertAnyOutputContains(t, "clean-skill")
 	result.AssertAnyOutputContains(t, "Passed")
+	result.AssertAnyOutputContains(t, "mode: global")
+	result.AssertAnyOutputContains(t, "path: ")
+	result.AssertAnyOutputContains(t, ".config/skillshare/skills")
 }
 
 func TestAudit_PromptInjection(t *testing.T) {
@@ -132,6 +136,64 @@ func TestInstall_Malicious_Force(t *testing.T) {
 	}
 }
 
+func TestAudit_BuiltinSkill_NoFindings(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	// Copy the real built-in skillshare skill from the repo into the sandbox.
+	// Test file lives at tests/integration/, so repo root is ../../
+	repoRoot := filepath.Join(filepath.Dir(testSourceFile()), "..", "..")
+	builtinSkill := filepath.Join(repoRoot, "skills", "skillshare")
+	destSkill := filepath.Join(sb.SourcePath, "skillshare")
+
+	copyDirRecursive(t, builtinSkill, destSkill)
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + "\ntargets: {}\n")
+
+	result := sb.RunCLI("audit", "skillshare")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "No issues found")
+}
+
+// testSourceFile returns the path of this test file via runtime.Caller.
+func testSourceFile() string {
+	// We can't import runtime in the var block, so use a trick:
+	// filepath.Abs on a relative path from the test working directory.
+	// Go tests run with cwd = package directory (tests/integration/).
+	wd, _ := os.Getwd()
+	return filepath.Join(wd, "audit_test.go")
+}
+
+// copyDirRecursive copies src directory to dst recursively.
+func copyDirRecursive(t *testing.T, src, dst string) {
+	t.Helper()
+	err := filepath.Walk(src, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		rel, _ := filepath.Rel(src, path)
+		target := filepath.Join(dst, rel)
+		if info.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		in, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+		out, err := os.Create(target)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+		_, err = io.Copy(out, in)
+		return err
+	})
+	if err != nil {
+		t.Fatalf("copyDirRecursive(%s, %s): %v", src, dst, err)
+	}
+}
+
 func TestAudit_Project(t *testing.T) {
 	sb := testutil.NewSandbox(t)
 	defer sb.Cleanup()
@@ -147,4 +209,7 @@ func TestAudit_Project(t *testing.T) {
 	result := sb.RunCLIInDir(projectRoot, "audit", "-p")
 	result.AssertSuccess(t)
 	result.AssertAnyOutputContains(t, "project-skill")
+	result.AssertAnyOutputContains(t, "mode: project")
+	result.AssertAnyOutputContains(t, "path: ")
+	result.AssertAnyOutputContains(t, ".skillshare/skills")
 }

@@ -10,8 +10,7 @@ description: |
   "how do I do X with skills", "skillshare init", "skillshare upgrade", "skill not syncing",
   "diagnose skillshare", "doctor", "project skills", "init project", "project setup",
   "scope skills to repo", "share skills via git", "web dashboard", "skillshare ui",
-  "launch dashboard", "open ui", "visual skill management",
-  "audit skills", "security scan", "scan for injection", "check skill safety",
+  "audit skills", "security scan", "check skill safety",
   "trash", "restore deleted skill", "undo uninstall", "empty trash",
   "operation log", "show history", "what changed", "check for updates",
   or any skill/target management across AI tools.
