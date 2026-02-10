@@ -121,7 +121,15 @@ If you run `skillshare init` on an already-initialized setup without `--discover
 | `--source <path>` | Custom source directory |
 | `--remote <url>` | Set git remote (implies git init) |
 | `--project, -p` | Initialize project-level skills in current directory |
-| `--targets <list>` | Comma-separated target names (project mode) |
+| `--copy-from <name\|path>` | Copy skills from a specific CLI or path |
+| `--no-copy` | Start with empty source (skip copy prompt) |
+| `--targets <list>` | Comma-separated target names |
+| `--all-targets` | Add all detected targets |
+| `--no-targets` | Skip target selection |
+| `--git` | Initialize git without prompting |
+| `--no-git` | Skip git initialization |
+| `--skill` | Install built-in skillshare skill without prompting |
+| `--no-skill` | Skip built-in skill installation |
 | `--discover, -d` | Detect and add new AI CLI targets to existing config |
 | `--select <list>` | Comma-separated targets to add (requires `--discover`) |
 | `--dry-run` | Preview without changes |
@@ -141,6 +149,9 @@ skillshare init --source ~/.config/skillshare/skills
 # Project-level setup
 skillshare init -p
 skillshare init -p --targets claude-code,cursor
+
+# Fully non-interactive setup
+skillshare init --no-copy --all-targets --git --skill
 
 # Add newly installed CLIs to existing config
 skillshare init --discover

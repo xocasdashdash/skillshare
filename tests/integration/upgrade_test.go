@@ -38,8 +38,7 @@ targets: {}
 	os.WriteFile(skillPath, []byte("# Old Content"), 0644)
 
 	// Test skill upgrade only (CLI upgrade hits GitHub API rate limits in CI)
-	// `upgrade --skill` should trigger overwrite flow without requiring --force.
-	result := sb.RunCLI("upgrade", "--skill", "--dry-run")
+	result := sb.RunCLI("upgrade", "--skill", "--force", "--dry-run")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "Would upgrade")
@@ -92,8 +91,8 @@ targets: {}
 	// Ensure skill doesn't exist
 	os.RemoveAll(filepath.Dir(skillPath))
 
-	// Upgrade skill only (don't upgrade CLI during tests!)
-	result := sb.RunCLI("upgrade", "--skill")
+	// Upgrade skill only with --force to skip prompt (don't upgrade CLI during tests!)
+	result := sb.RunCLI("upgrade", "--skill", "--force")
 
 	// Should either succeed or fail with download error
 	// But should create directory
@@ -113,9 +112,35 @@ func TestUpgrade_ShowsSourceURL(t *testing.T) {
 targets: {}
 `)
 
-	result := sb.RunCLI("upgrade", "--skill", "--dry-run")
+	result := sb.RunCLI("upgrade", "--skill", "--force", "--dry-run")
 
 	result.AssertSuccess(t)
-	// Source is github.com/runkids/skillshare/skills/skillshare
+	// Source URL appears in the logo banner
 	result.AssertOutputContains(t, "github.com/runkids/skillshare")
+}
+
+func TestUpgrade_NoSkill_PromptDeclined(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	// Create config
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets: {}
+`)
+
+	skillPath := filepath.Join(sb.SourcePath, "skillshare", "SKILL.md")
+
+	// Ensure skill doesn't exist
+	os.RemoveAll(filepath.Dir(skillPath))
+
+	// Upgrade skill only without --force → prompt defaults to N (no stdin)
+	result := sb.RunCLI("upgrade", "--skill")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "skipped")
+
+	// Verify skill was NOT created
+	if sb.FileExists(skillPath) {
+		t.Error("skill should NOT be created when prompt is declined")
+	}
 }

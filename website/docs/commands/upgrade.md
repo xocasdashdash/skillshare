@@ -38,6 +38,7 @@ skillshare upgrade --skill      # Skill only
 │ Skill                                                           │
 │   skillshare                                                    │
 │   └── Not installed                                             │
+│       Install built-in skillshare skill? [y/N]: y               │
 │       └── Downloading from GitHub...                            │
 │           └── ✓ Upgraded                                        │
 └─────────────────────────────────────────────────────────────────┘
@@ -48,7 +49,7 @@ skillshare upgrade --skill      # Skill only
 | Flag | Description |
 |------|-------------|
 | `--cli` | Upgrade CLI only |
-| `--skill` | Upgrade skill only |
+| `--skill` | Upgrade skill only (prompts if not installed) |
 | `--force, -f` | Skip confirmation prompts |
 | `--dry-run, -n` | Preview without making changes |
 | `--help, -h` | Show help |

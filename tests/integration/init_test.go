@@ -18,8 +18,8 @@ func TestInit_Fresh_CreatesConfigAndSource(t *testing.T) {
 	os.Remove(sb.ConfigPath)
 
 	// Run init with input to skip interactive prompts
-	// Input: "2" to start fresh, "n" to skip adding other targets, "n" to skip git
-	result := sb.RunCLIWithInput("2\nn\nn\n", "init")
+	// Input: "2" to start fresh, "n" to skip adding other targets, "n" to skip git, "n" to skip skill
+	result := sb.RunCLIWithInput("2\nn\nn\nn\n", "init")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "Initialized successfully")
@@ -44,8 +44,8 @@ func TestInit_WithSourceFlag_UsesCustomPath(t *testing.T) {
 
 	customSource := filepath.Join(sb.Home, "my-skills")
 
-	// Input: "1" to start fresh (no skills detected), "n" to skip git
-	result := sb.RunCLIWithInput("1\nn\n", "init", "--source", customSource)
+	// Input: "1" to start fresh (no skills detected), "n" to skip git, "n" to skip skill
+	result := sb.RunCLIWithInput("1\nn\nn\n", "init", "--source", customSource)
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, customSource)
@@ -104,8 +104,8 @@ func TestInit_CreatesDefaultSkill(t *testing.T) {
 	// Remove config file
 	os.Remove(sb.ConfigPath)
 
-	// Input: "1" to start fresh, "n" to skip git
-	result := sb.RunCLIWithInput("1\nn\n", "init")
+	// Use flags for reliability (survey MultiSelect doesn't work well in non-TTY stdin)
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git", "--skill")
 
 	result.AssertSuccess(t)
 
@@ -130,8 +130,8 @@ func TestInit_DetectsCLI_OffersImport(t *testing.T) {
 	os.MkdirAll(testSkillPath, 0755)
 	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Test"), 0644)
 
-	// Input: "2" to start fresh (not copy), "y" to add claude as target, "n" to skip git
-	result := sb.RunCLIWithInput("2\ny\nn\n", "init")
+	// Input: "2" to start fresh (not copy), "y" to add claude as target, "n" to skip git, "n" to skip skill
+	result := sb.RunCLIWithInput("2\ny\nn\nn\n", "init")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "claude")
@@ -151,8 +151,8 @@ func TestInit_WithSkills_CopiesOnConfirm(t *testing.T) {
 	os.MkdirAll(testSkillPath, 0755)
 	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# My Test Skill"), 0644)
 
-	// Input: "1" to copy from claude, "n" to skip git
-	result := sb.RunCLIWithInput("1\nn\n", "init")
+	// Input: "1" to copy from claude, "n" to skip git, "n" to skip skill
+	result := sb.RunCLIWithInput("1\nn\nn\n", "init")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "Copy")
@@ -298,7 +298,7 @@ func TestInit_NoCopy_StartsEmpty(t *testing.T) {
 	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Test"), 0644)
 
 	// Run init with --no-copy and --no-targets to skip prompts
-	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git")
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git", "--no-skill")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "--no-copy")
@@ -324,7 +324,7 @@ func TestInit_CopyFromByName(t *testing.T) {
 	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Copy Test"), 0644)
 
 	// Run init with --copy-from claude
-	result := sb.RunCLI("init", "--copy-from", "claude", "--no-targets", "--no-git")
+	result := sb.RunCLI("init", "--copy-from", "claude", "--no-targets", "--no-git", "--no-skill")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "matched by name")
@@ -350,7 +350,7 @@ func TestInit_CopyFromByPath(t *testing.T) {
 	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Path Test"), 0644)
 
 	// Run init with --copy-from as a path
-	result := sb.RunCLI("init", "--copy-from", customPath, "--no-targets", "--no-git")
+	result := sb.RunCLI("init", "--copy-from", customPath, "--no-targets", "--no-git", "--no-skill")
 
 	result.AssertSuccess(t)
 
@@ -374,7 +374,7 @@ func TestInit_TargetsCSV(t *testing.T) {
 	os.MkdirAll(cursorSkillsPath, 0755)
 
 	// Run init with --targets specifying both
-	result := sb.RunCLI("init", "--no-copy", "--targets", "claude,cursor", "--no-git")
+	result := sb.RunCLI("init", "--no-copy", "--targets", "claude,cursor", "--no-git", "--no-skill")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "Added 2 targets")
@@ -402,7 +402,7 @@ func TestInit_AllTargets(t *testing.T) {
 	os.MkdirAll(cursorSkillsPath, 0755)
 
 	// Run init with --all-targets
-	result := sb.RunCLI("init", "--no-copy", "--all-targets", "--no-git")
+	result := sb.RunCLI("init", "--no-copy", "--all-targets", "--no-git", "--no-skill")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "--all-targets")
@@ -425,7 +425,7 @@ func TestInit_NoTargets(t *testing.T) {
 	os.MkdirAll(claudeSkillsPath, 0755)
 
 	// Run init with --no-targets
-	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git")
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git", "--no-skill")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "--no-targets")
@@ -444,7 +444,7 @@ func TestInit_NoGit_SkipsGitInit(t *testing.T) {
 	os.Remove(sb.ConfigPath)
 
 	// Run init with --no-git
-	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git")
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git", "--no-skill")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "--no-git")
@@ -463,7 +463,7 @@ func TestInit_GitFlag_InitializesGit(t *testing.T) {
 	os.Remove(sb.ConfigPath)
 
 	// Run init with --git
-	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--git")
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--git", "--no-skill")
 
 	result.AssertSuccess(t)
 
@@ -507,7 +507,7 @@ func TestInit_MutualExclusion_GitFlags(t *testing.T) {
 	os.Remove(sb.ConfigPath)
 
 	// Run init with both --git and --no-git
-	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--git", "--no-git")
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--git", "--no-git", "--no-skill")
 
 	result.AssertFailure(t)
 	result.AssertAnyOutputContains(t, "mutually exclusive")
@@ -526,8 +526,8 @@ func TestInit_FullNonInteractive(t *testing.T) {
 	os.MkdirAll(testSkillPath, 0755)
 	os.WriteFile(filepath.Join(testSkillPath, "SKILL.md"), []byte("# Full Test"), 0644)
 
-	// Full non-interactive: copy from claude, all targets, with git
-	result := sb.RunCLI("init", "--copy-from", "claude", "--all-targets", "--git")
+	// Full non-interactive: copy from claude, all targets, with git, no skill
+	result := sb.RunCLI("init", "--copy-from", "claude", "--all-targets", "--git", "--no-skill")
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "Initialized successfully")
@@ -735,4 +735,55 @@ targets: {}
 
 	result.AssertSuccess(t)
 	result.AssertOutputContains(t, "Unknown agent")
+}
+
+// ============================================
+// Skill flag tests
+// ============================================
+
+func TestInit_NoSkill_SkipsInstall(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git", "--no-skill")
+
+	result.AssertSuccess(t)
+	result.AssertOutputContains(t, "--no-skill")
+
+	// Verify skill was NOT installed
+	skillPath := filepath.Join(sb.SourcePath, "skillshare", "SKILL.md")
+	if sb.FileExists(skillPath) {
+		t.Error("skill should NOT be installed when using --no-skill")
+	}
+}
+
+func TestInit_SkillFlag_InstallsSkill(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git", "--skill")
+
+	result.AssertSuccess(t)
+
+	// Verify skill was installed (either downloaded or fallback)
+	skillPath := filepath.Join(sb.SourcePath, "skillshare", "SKILL.md")
+	if !sb.FileExists(skillPath) {
+		t.Error("skill should be installed when using --skill")
+	}
+}
+
+func TestInit_MutualExclusion_SkillFlags(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git", "--skill", "--no-skill")
+
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "mutually exclusive")
 }

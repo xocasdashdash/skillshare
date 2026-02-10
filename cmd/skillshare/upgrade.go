@@ -50,9 +50,7 @@ func cmdUpgrade(args []string) error {
 	// Default: upgrade both
 	upgradeCLI := !skillOnly
 	upgradeSkill := !cliOnly
-	// `upgrade --skill` is an explicit refresh request:
-	// always re-download and overwrite the installed skill.
-	skillForce := force || skillOnly
+	skillForce := force
 
 	if dryRun {
 		ui.Warning("Dry run mode - no changes will be made")
@@ -188,28 +186,59 @@ func upgradeSkillshareSkill(dryRun, force bool) error {
 		exists = true
 	}
 
-	// If exists and not forced, just show status and return
+	// Exists and not forced → already up to date
 	if exists && !force {
 		ui.StepEnd("Status", "Already up to date ✓")
 		return nil
 	}
 
-	status := "Not installed"
+	// Exists and forced → re-download
 	if exists {
-		status = "Will upgrade"
+		ui.StepContinue("Status", "Will upgrade")
+
+		if dryRun {
+			ui.StepEnd("Action", "Would upgrade")
+			return nil
+		}
+
+		return doSkillDownload(skillshareSkillDir)
 	}
-	ui.StepContinue("Status", status)
+
+	// Not installed + force → install without asking
+	if force {
+		ui.StepContinue("Status", "Not installed")
+
+		if dryRun {
+			ui.StepEnd("Action", "Would download")
+			return nil
+		}
+
+		return doSkillDownload(skillshareSkillDir)
+	}
+
+	// Not installed + no force → prompt
+	ui.StepContinue("Status", "Not installed")
 
 	if dryRun {
-		action := "Would download"
-		if exists {
-			action = "Would upgrade"
-		}
-		ui.StepEnd("Action", action)
+		ui.StepEnd("Action", "Would prompt to install")
 		return nil
 	}
 
-	// Install using install package
+	fmt.Println()
+	fmt.Print("  Install built-in skillshare skill? [y/N]: ")
+	var input string
+	fmt.Scanln(&input)
+	input = strings.ToLower(strings.TrimSpace(input))
+
+	if input != "y" && input != "yes" {
+		ui.StepEnd("Status", "Not installed (skipped)")
+		return nil
+	}
+
+	return doSkillDownload(skillshareSkillDir)
+}
+
+func doSkillDownload(skillshareSkillDir string) error {
 	treeSpinner := ui.StartTreeSpinner("Downloading from GitHub...", true)
 
 	source, err := install.ParseSource(skillshareSkillSource)
@@ -400,7 +429,7 @@ func printUpgradeHelp() {
 Upgrade the CLI binary and/or built-in skillshare skill.
 
 Options:
-  --skill       Upgrade skill only (always re-download and overwrite)
+  --skill       Upgrade skill only
   --cli         Upgrade CLI only
   --force, -f   Skip confirmation prompts
   --dry-run, -n Preview without making changes

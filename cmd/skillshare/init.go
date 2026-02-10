@@ -19,19 +19,22 @@ const skillshareSkillURL = "https://raw.githubusercontent.com/runkids/skillshare
 
 // initOptions holds all parsed arguments for the init command
 type initOptions struct {
-	sourcePath string
-	remoteURL  string
-	dryRun     bool
-	copyFrom   string
-	noCopy     bool
-	targetsArg string
-	allTargets bool
-	noTargets  bool
-	initGit    bool
-	noGit      bool
-	gitFlagSet bool
-	discover   bool
-	selectArg  string
+	sourcePath   string
+	remoteURL    string
+	dryRun       bool
+	copyFrom     string
+	noCopy       bool
+	targetsArg   string
+	allTargets   bool
+	noTargets    bool
+	initGit      bool
+	noGit        bool
+	gitFlagSet   bool
+	initSkill    bool
+	noSkill      bool
+	skillFlagSet bool
+	discover     bool
+	selectArg    string
 }
 
 // parseInitArgs parses command line arguments into initOptions
@@ -77,6 +80,11 @@ func parseInitArgs(args []string) (*initOptions, error) {
 			opts.gitFlagSet = true
 		case "--no-git":
 			opts.noGit = true
+		case "--skill":
+			opts.initSkill = true
+			opts.skillFlagSet = true
+		case "--no-skill":
+			opts.noSkill = true
 		case "--discover", "-d":
 			opts.discover = true
 		case "--select":
@@ -113,6 +121,10 @@ func validateInitOptions(opts *initOptions, home string) error {
 
 	if opts.gitFlagSet && opts.noGit {
 		return fmt.Errorf("--git and --no-git are mutually exclusive")
+	}
+
+	if opts.skillFlagSet && opts.noSkill {
+		return fmt.Errorf("--skill and --no-skill are mutually exclusive")
 	}
 
 	if opts.selectArg != "" && !opts.discover {
@@ -224,8 +236,8 @@ func performFreshInit(opts *initOptions, home string) error {
 	// Set up git remote for cross-machine sync
 	setupGitRemote(sourcePath, opts.remoteURL, opts.dryRun)
 
-	// Create default skillshare skill
-	createDefaultSkill(sourcePath, opts.dryRun)
+	// Install built-in skillshare skill (opt-in)
+	installSkillIfNeeded(sourcePath, opts.dryRun, opts.initSkill, opts.noSkill)
 
 	// Print completion message
 	printInitSuccess(sourcePath, opts.dryRun)
@@ -788,6 +800,43 @@ Run ` + "`skillshare update`" + ` to download the full skill with AI integration
 - ` + "`skillshare pull <target>`" + ` - Pull from target
 - ` + "`skillshare update`" + ` - Update this skill
 `
+
+func installSkillIfNeeded(sourcePath string, dryRun, initSkill, noSkill bool) {
+	// Non-interactive: --no-skill
+	if noSkill {
+		ui.Info("Skipped built-in skill (--no-skill)")
+		return
+	}
+
+	skillshareSkillFile := filepath.Join(sourcePath, "skillshare", "SKILL.md")
+	if _, err := os.Stat(skillshareSkillFile); err == nil {
+		ui.Info("Built-in skill already installed")
+		return
+	}
+
+	// Non-interactive: --skill flag was set, proceed without prompting
+	if initSkill {
+		createDefaultSkill(sourcePath, dryRun)
+		return
+	}
+
+	// Interactive mode
+	ui.Header("Built-in skill")
+	fmt.Println("  Install the skillshare skill for AI integration?")
+	fmt.Println()
+	fmt.Print("  Install built-in skillshare skill? [y/N]: ")
+	var input string
+	fmt.Scanln(&input)
+	input = strings.ToLower(strings.TrimSpace(input))
+
+	if input == "y" || input == "yes" {
+		createDefaultSkill(sourcePath, dryRun)
+		return
+	}
+
+	ui.Info("Skipped built-in skill")
+	ui.Info("Install later: skillshare upgrade --skill")
+}
 
 func createDefaultSkill(sourcePath string, dryRun bool) {
 	skillshareSkillDir := filepath.Join(sourcePath, "skillshare")
