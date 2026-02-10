@@ -7,7 +7,7 @@ SERVICE="sandbox-online"
 
 SKIP_BUILD=false
 CUSTOM_CMD=""
-DEFAULT_ONLINE_CMD="mkdir -p bin && go build -o bin/skillshare ./cmd/skillshare && SKILLSHARE_TEST_BINARY=/workspace/bin/skillshare go test -v -tags online ./tests/integration/... -run 'TestInstall_Remote'"
+DEFAULT_ONLINE_CMD="mkdir -p bin && go build -o bin/skillshare ./cmd/skillshare && SKILLSHARE_TEST_BINARY=/workspace/bin/skillshare go test -v -tags online ./tests/integration/... -timeout 120s"
 
 usage() {
   cat <<'EOF'

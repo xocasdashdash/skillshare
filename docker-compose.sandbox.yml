@@ -31,6 +31,7 @@ services:
     environment:
       HOME: /tmp
       GOCACHE: /go/build-cache
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
 
   sandbox-playground:
     <<: *sandbox-common
