@@ -109,12 +109,108 @@ The audit scans text-based files in skill directories:
 
 Binary files (images, `.wasm`, etc.) and hidden directories (`.git`) are skipped.
 
+## Custom Rules
+
+You can add, override, or disable audit rules using YAML files. Rules are merged in order: **built-in → global user → project user**.
+
+Use `--init-rules` to create a starter file with commented examples:
+
+```bash
+skillshare audit --init-rules         # Create global rules file
+skillshare audit -p --init-rules      # Create project rules file
+```
+
+### File Locations
+
+| Scope | Path |
+|-------|------|
+| Global | `~/.config/skillshare/audit-rules.yaml` |
+| Project | `.skillshare/audit-rules.yaml` |
+
+### Format
+
+```yaml
+rules:
+  # Add a new rule
+  - id: my-custom-rule
+    severity: HIGH
+    pattern: custom-check
+    message: "Custom pattern detected"
+    regex: 'DANGEROUS_PATTERN'
+
+  # Add a rule with an exclude (suppress matches on certain lines)
+  - id: url-check
+    severity: MEDIUM
+    pattern: url-usage
+    message: "External URL detected"
+    regex: 'https?://\S+'
+    exclude: 'https?://(localhost|127\.0\.0\.1)'
+
+  # Override an existing built-in rule (match by id)
+  - id: destructive-commands-2
+    severity: MEDIUM
+    pattern: destructive-commands
+    message: "Sudo usage (downgraded to MEDIUM)"
+    regex: '(?i)\bsudo\s+'
+
+  # Disable a built-in rule
+  - id: system-writes-0
+    enabled: false
+```
+
+### Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | Yes | Stable identifier. Matching IDs override built-in rules. |
+| `severity` | Yes* | `CRITICAL`, `HIGH`, or `MEDIUM` |
+| `pattern` | Yes* | Rule category name (e.g., `prompt-injection`) |
+| `message` | Yes* | Human-readable description shown in findings |
+| `regex` | Yes* | Regular expression to match against each line |
+| `exclude` | No | If a line matches both `regex` and `exclude`, the finding is suppressed |
+| `enabled` | No | Set to `false` to disable a rule. Only `id` is required when disabling. |
+
+*Required unless `enabled: false`.
+
+### Merge Semantics
+
+Each layer (global, then project) is applied on top of the previous:
+
+- **Same `id`** + `enabled: false` → disables the rule
+- **Same `id`** + other fields → replaces the entire rule
+- **New `id`** → appends as a custom rule
+
+### Built-in Rule IDs
+
+Use `id` values to override or disable specific built-in rules:
+
+| ID | Pattern | Severity |
+|----|---------|----------|
+| `prompt-injection-0` | prompt-injection | CRITICAL |
+| `prompt-injection-1` | prompt-injection | CRITICAL |
+| `data-exfiltration-0` | data-exfiltration | CRITICAL |
+| `data-exfiltration-1` | data-exfiltration | CRITICAL |
+| `credential-access-0` | credential-access | CRITICAL |
+| `credential-access-1` | credential-access | CRITICAL |
+| `credential-access-2` | credential-access | CRITICAL |
+| `hidden-unicode-0` | hidden-unicode | HIGH |
+| `destructive-commands-0` | destructive-commands | HIGH |
+| `destructive-commands-1` | destructive-commands | HIGH |
+| `destructive-commands-2` | destructive-commands | HIGH |
+| `destructive-commands-3` | destructive-commands | HIGH |
+| `destructive-commands-4` | destructive-commands | HIGH |
+| `obfuscation-0` | obfuscation | HIGH |
+| `obfuscation-1` | obfuscation | HIGH |
+| `suspicious-fetch-0` | suspicious-fetch | MEDIUM |
+| `system-writes-0` | system-writes | MEDIUM |
+
 ## Options
 
 | Flag | Description |
 |------|------------|
 | `-p`, `--project` | Scan project-level skills |
 | `-g`, `--global` | Scan global skills |
+| `--init-rules` | Create a starter `audit-rules.yaml` (respects `-p`/`-g`) |
 | `-h`, `--help` | Show help |
 
 ## Related

@@ -4,14 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"skillshare/internal/utils"
 )
-
-// localhostURL matches URLs pointing to localhost/127.0.0.1 (local API examples).
-var localhostURL = regexp.MustCompile(`(?i)https?://(localhost|127\.0\.0\.1)`)
 
 // Finding represents a single security issue detected in a skill.
 type Finding struct {
@@ -82,8 +78,24 @@ func (r *Result) CountBySeverity() (critical, high, medium int) {
 	return
 }
 
-// ScanSkill scans all scannable files in a skill directory.
+// ScanSkill scans all scannable files in a skill directory using global rules.
 func ScanSkill(skillPath string) (*Result, error) {
+	return ScanSkillWithRules(skillPath, nil)
+}
+
+// ScanSkillForProject scans a skill using project-mode rules
+// (builtin + global user + project user overrides).
+func ScanSkillForProject(skillPath, projectRoot string) (*Result, error) {
+	rules, err := RulesWithProject(projectRoot)
+	if err != nil {
+		return nil, fmt.Errorf("load project rules: %w", err)
+	}
+	return ScanSkillWithRules(skillPath, rules)
+}
+
+// ScanSkillWithRules scans all scannable files using the given rules.
+// If activeRules is nil, the default global rules are used.
+func ScanSkillWithRules(skillPath string, activeRules []rule) (*Result, error) {
 	info, err := os.Stat(skillPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot access skill path: %w", err)
@@ -119,7 +131,7 @@ func ScanSkill(skillPath string) (*Result, error) {
 		}
 
 		relPath, _ := filepath.Rel(skillPath, path)
-		findings := ScanContent(data, relPath)
+		findings := ScanContentWithRules(data, relPath, activeRules)
 		result.Findings = append(result.Findings, findings...)
 
 		return nil
@@ -134,14 +146,27 @@ func ScanSkill(skillPath string) (*Result, error) {
 // ScanContent scans raw content for security issues and returns findings.
 // filename is used for reporting (e.g. "SKILL.md").
 func ScanContent(content []byte, filename string) []Finding {
+	return ScanContentWithRules(content, filename, nil)
+}
+
+// ScanContentWithRules scans content using the given rules.
+// If rules is nil, the default global rules are used.
+func ScanContentWithRules(content []byte, filename string, activeRules []rule) []Finding {
+	if activeRules == nil {
+		var err error
+		activeRules, err = Rules()
+		if err != nil {
+			return nil
+		}
+	}
+
 	var findings []Finding
 	lines := strings.Split(string(content), "\n")
 
 	for lineNum, line := range lines {
-		for _, r := range rules {
+		for _, r := range activeRules {
 			if r.Regex.MatchString(line) {
-				// Skip localhost URLs for suspicious-fetch (local API examples)
-				if r.Pattern == "suspicious-fetch" && localhostURL.MatchString(line) {
+				if r.Exclude != nil && r.Exclude.MatchString(line) {
 					continue
 				}
 				findings = append(findings, Finding{

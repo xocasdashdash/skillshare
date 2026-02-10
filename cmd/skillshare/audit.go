@@ -54,14 +54,26 @@ func cmdAudit(args []string) error {
 	applyModeLabel(mode)
 
 	specificSkill := ""
+	initRules := false
 	for _, a := range rest {
 		if a == "--help" || a == "-h" {
 			printAuditHelp()
 			return nil
 		}
+		if a == "--init-rules" {
+			initRules = true
+			continue
+		}
 		if specificSkill == "" {
 			specificSkill = a
 		}
+	}
+
+	if initRules {
+		if mode == modeProject {
+			return initAuditRules(audit.ProjectAuditRulesPath(cwd))
+		}
+		return initAuditRules(audit.GlobalAuditRulesPath())
 	}
 
 	var (
@@ -93,9 +105,9 @@ func cmdAudit(args []string) error {
 
 func runAudit(sourcePath, specificSkill, mode string) (auditRunSummary, bool, error) {
 	if specificSkill != "" {
-		return auditSingleSkill(sourcePath, specificSkill, mode)
+		return auditSingleSkill(sourcePath, specificSkill, mode, "")
 	}
-	return auditAllSkills(sourcePath, mode)
+	return auditAllSkills(sourcePath, mode, "")
 }
 
 func auditHeaderSubtitle(scanLine, mode, sourcePath string) string {
@@ -156,7 +168,7 @@ func logAuditOp(cfgPath string, args []string, summary auditRunSummary, start ti
 	oplog.Write(cfgPath, oplog.AuditFile, e) //nolint:errcheck
 }
 
-func auditSingleSkill(sourcePath, name, mode string) (auditRunSummary, bool, error) {
+func auditSingleSkill(sourcePath, name, mode, projectRoot string) (auditRunSummary, bool, error) {
 	summary := auditRunSummary{
 		Scope: "single",
 		Skill: name,
@@ -171,7 +183,13 @@ func auditSingleSkill(sourcePath, name, mode string) (auditRunSummary, bool, err
 	ui.HeaderBox("skillshare audit", auditHeaderSubtitle(fmt.Sprintf("Scanning skill: %s", name), mode, sourcePath))
 
 	start := time.Now()
-	result, err := audit.ScanSkill(skillPath)
+	var result *audit.Result
+	var err error
+	if projectRoot != "" {
+		result, err = audit.ScanSkillForProject(skillPath, projectRoot)
+	} else {
+		result, err = audit.ScanSkill(skillPath)
+	}
 	if err != nil {
 		return summary, false, fmt.Errorf("scan error: %w", err)
 	}
@@ -187,7 +205,7 @@ func auditSingleSkill(sourcePath, name, mode string) (auditRunSummary, bool, err
 	return summary, result.HasCritical(), nil
 }
 
-func auditAllSkills(sourcePath, mode string) (auditRunSummary, bool, error) {
+func auditAllSkills(sourcePath, mode, projectRoot string) (auditRunSummary, bool, error) {
 	baseSummary := auditRunSummary{Scope: "all", Mode: mode}
 
 	// Discover all skills
@@ -241,7 +259,12 @@ func auditAllSkills(sourcePath, mode string) (auditRunSummary, bool, error) {
 	scanErrors := 0
 	for i, sp := range skillPaths {
 		start := time.Now()
-		result, err := audit.ScanSkill(sp.path)
+		var result *audit.Result
+		if projectRoot != "" {
+			result, err = audit.ScanSkillForProject(sp.path, projectRoot)
+		} else {
+			result, err = audit.ScanSkill(sp.path)
+		}
 		elapsed := time.Since(start)
 
 		if err != nil {
@@ -428,6 +451,50 @@ func joinParts(parts []string) string {
 	return result
 }
 
+func initAuditRules(path string) error {
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("file already exists: %s", path)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("create directory: %w", err)
+	}
+
+	const template = `# Custom audit rules for skillshare.
+# Rules are merged on top of built-in rules in order:
+#   built-in → global (~/.config/skillshare/audit-rules.yaml) → project (.skillshare/audit-rules.yaml)
+#
+# Each rule needs: id, severity (CRITICAL/HIGH/MEDIUM), pattern, message, regex.
+# Optional: exclude (suppress match when line also matches), enabled (false to disable).
+
+rules:
+  # Example: flag TODO comments as informational
+  # - id: flag-todo
+  #   severity: MEDIUM
+  #   pattern: todo-comment
+  #   message: "TODO comment found"
+  #   regex: '(?i)\bTODO\b'
+
+  # Example: disable a built-in rule by id
+  # - id: system-writes-0
+  #   enabled: false
+
+  # Example: override a built-in rule (match by id, change severity)
+  # - id: destructive-commands-2
+  #   severity: MEDIUM
+  #   pattern: destructive-commands
+  #   message: "Sudo usage (downgraded)"
+  #   regex: '(?i)\bsudo\s+'
+`
+
+	if err := os.WriteFile(path, []byte(template), 0644); err != nil {
+		return fmt.Errorf("write file: %w", err)
+	}
+
+	ui.Success("Created %s", path)
+	return nil
+}
+
 func printAuditHelp() {
 	fmt.Println("Usage: skillshare audit [name] [options]")
 	fmt.Println()
@@ -439,10 +506,13 @@ func printAuditHelp() {
 	fmt.Println("Options:")
 	fmt.Println("  -p, --project     Use project-level skills")
 	fmt.Println("  -g, --global      Use global skills")
+	fmt.Println("  --init-rules      Create a starter audit-rules.yaml")
 	fmt.Println("  -h, --help        Show this help")
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  skillshare audit                  Scan all installed skills")
 	fmt.Println("  skillshare audit react-patterns    Scan a specific skill")
 	fmt.Println("  skillshare audit -p                Scan project skills")
+	fmt.Println("  skillshare audit --init-rules      Create global custom rules file")
+	fmt.Println("  skillshare audit -p --init-rules   Create project custom rules file")
 }

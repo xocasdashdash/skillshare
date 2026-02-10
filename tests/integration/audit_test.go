@@ -215,3 +215,125 @@ func TestAudit_Project(t *testing.T) {
 	result.AssertAnyOutputContains(t, "path: ")
 	result.AssertAnyOutputContains(t, ".skillshare/skills")
 }
+
+func TestAudit_CustomGlobalRules(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	// Create a clean skill that contains "TODO" — normally not flagged
+	sb.CreateSkill("todo-skill", map[string]string{
+		"SKILL.md": "---\nname: todo-skill\n---\n# Todo\nTODO: implement this feature",
+	})
+	sb.WriteConfig(`source: ` + sb.SourcePath + "\ntargets: {}\n")
+
+	// Without custom rules, should pass
+	result := sb.RunCLI("audit", "todo-skill")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "No issues found")
+
+	// Add global custom rule that flags TODO
+	configDir := filepath.Dir(sb.ConfigPath)
+	os.WriteFile(filepath.Join(configDir, "audit-rules.yaml"), []byte(`rules:
+  - id: custom-todo
+    severity: MEDIUM
+    pattern: custom-todo
+    message: "TODO found in skill"
+    regex: 'TODO'
+`), 0644)
+
+	// Now should detect the custom rule
+	result = sb.RunCLI("audit", "todo-skill")
+	result.AssertSuccess(t) // MEDIUM doesn't exit 1
+	result.AssertAnyOutputContains(t, "TODO found")
+}
+
+func TestAudit_CustomRules_DisableBuiltin(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	// Create a skill with sudo (normally HIGH)
+	sb.CreateSkill("sudo-skill", map[string]string{
+		"SKILL.md": "---\nname: sudo-skill\n---\n# Install\nsudo apt install something",
+	})
+	sb.WriteConfig(`source: ` + sb.SourcePath + "\ntargets: {}\n")
+
+	// Without custom rules, sudo should be flagged
+	result := sb.RunCLI("audit", "sudo-skill")
+	result.AssertAnyOutputContains(t, "Sudo")
+
+	// Disable the sudo rule via global custom rules
+	configDir := filepath.Dir(sb.ConfigPath)
+	os.WriteFile(filepath.Join(configDir, "audit-rules.yaml"), []byte(`rules:
+  - id: destructive-commands-2
+    enabled: false
+`), 0644)
+
+	// Now sudo should NOT be flagged
+	result = sb.RunCLI("audit", "sudo-skill")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "No issues found")
+}
+
+func TestAudit_ProjectCustomRules(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	projectRoot := sb.SetupProjectDir("claude-code")
+
+	// Create a skill with "FIXME"
+	projectSkills := filepath.Join(projectRoot, ".skillshare", "skills")
+	skillDir := filepath.Join(projectSkills, "fixme-skill")
+	os.MkdirAll(skillDir, 0755)
+	os.WriteFile(filepath.Join(skillDir, "SKILL.md"),
+		[]byte("---\nname: fixme-skill\n---\n# Fixme\nFIXME: broken feature"), 0644)
+
+	// Add project-level custom rule
+	os.WriteFile(filepath.Join(projectRoot, ".skillshare", "audit-rules.yaml"), []byte(`rules:
+  - id: project-fixme
+    severity: MEDIUM
+    pattern: project-fixme
+    message: "FIXME found in project skill"
+    regex: 'FIXME'
+`), 0644)
+
+	result := sb.RunCLIInDir(projectRoot, "audit", "-p", "fixme-skill")
+	result.AssertSuccess(t) // MEDIUM doesn't exit 1
+	result.AssertAnyOutputContains(t, "FIXME found")
+}
+
+func TestAudit_InitRules_Global(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + "\ntargets: {}\n")
+
+	// Init should create the file
+	result := sb.RunCLI("audit", "--init-rules")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "Created")
+
+	// File should exist next to config.yaml
+	rulesPath := filepath.Join(filepath.Dir(sb.ConfigPath), "audit-rules.yaml")
+	if !sb.FileExists(rulesPath) {
+		t.Fatal("audit-rules.yaml should be created")
+	}
+
+	// Running again should fail (already exists)
+	result = sb.RunCLI("audit", "--init-rules")
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "already exists")
+}
+
+func TestAudit_InitRules_Project(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	projectRoot := sb.SetupProjectDir("claude-code")
+
+	result := sb.RunCLIInDir(projectRoot, "audit", "-p", "--init-rules")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "Created")
+
+	rulesPath := filepath.Join(projectRoot, ".skillshare", "audit-rules.yaml")
+	if !sb.FileExists(rulesPath) {
+		t.Fatal("project audit-rules.yaml should be created")
+	}
+}

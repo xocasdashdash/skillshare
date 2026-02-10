@@ -81,7 +81,12 @@ func (s *Server) handleAuditAll(w http.ResponseWriter, r *http.Request) {
 	scanErrors := 0
 
 	for _, sk := range skills {
-		result, err := audit.ScanSkill(sk.path)
+		var result *audit.Result
+		if s.IsProjectMode() {
+			result, err = audit.ScanSkillForProject(sk.path, s.projectRoot)
+		} else {
+			result, err = audit.ScanSkill(sk.path)
+		}
 		if err != nil {
 			scanErrors++
 			continue
@@ -149,7 +154,15 @@ func (s *Server) handleAuditSkill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := audit.ScanSkill(skillPath)
+	var (
+		result *audit.Result
+		err    error
+	)
+	if s.IsProjectMode() {
+		result, err = audit.ScanSkillForProject(skillPath, s.projectRoot)
+	} else {
+		result, err = audit.ScanSkill(skillPath)
+	}
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

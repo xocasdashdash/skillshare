@@ -15,10 +15,10 @@ func cmdAuditProject(root, specificSkill string) (auditRunSummary, bool, error) 
 	}
 
 	if specificSkill != "" {
-		summary, blocked, err := auditSingleSkill(rt.sourcePath, specificSkill, "project")
+		summary, blocked, err := auditSingleSkill(rt.sourcePath, specificSkill, "project", root)
 		return summary, blocked, err
 	}
 
-	summary, blocked, err := auditAllSkills(rt.sourcePath, "project")
+	summary, blocked, err := auditAllSkills(rt.sourcePath, "project", root)
 	return summary, blocked, err
 }

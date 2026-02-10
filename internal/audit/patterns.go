@@ -1,6 +1,15 @@
 package audit
 
-import "regexp"
+import (
+	_ "embed"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sync"
+
+	"gopkg.in/yaml.v3"
+)
 
 // Severity levels for audit findings.
 const (
@@ -9,65 +18,260 @@ const (
 	SeverityMedium   = "MEDIUM"
 )
 
-// rule defines a single scanning pattern.
+// validSeverities is the set of accepted severity values.
+var validSeverities = map[string]bool{
+	SeverityCritical: true,
+	SeverityHigh:     true,
+	SeverityMedium:   true,
+}
+
+// rule defines a single compiled scanning pattern.
 type rule struct {
+	ID       string
 	Severity string
 	Pattern  string // rule name
 	Message  string
 	Regex    *regexp.Regexp
+	Exclude  *regexp.Regexp // if non-nil, suppress match when this also matches
 }
 
-// rules is the ordered list of all scanning patterns.
-// CRITICAL rules can block installation; HIGH warns strongly; MEDIUM is informational.
-var rules = []rule{
-	// ── CRITICAL: prompt injection ──
-	{SeverityCritical, "prompt-injection", "Prompt injection attempt detected",
-		regexp.MustCompile(`(?i)(ignore\s+(all\s+)?previous\s+instructions|disregard\s+(all\s+)?rules|you\s+are\s+now\b|forget\s+everything|override\s+safety)`)},
-	{SeverityCritical, "prompt-injection", "SYSTEM: prompt override detected",
-		regexp.MustCompile(`(?m)^SYSTEM:`)},
+// yamlRule is the YAML deserialization type for a single rule.
+type yamlRule struct {
+	ID       string `yaml:"id"`
+	Severity string `yaml:"severity"`
+	Pattern  string `yaml:"pattern"`
+	Message  string `yaml:"message"`
+	Regex    string `yaml:"regex"`
+	Exclude  string `yaml:"exclude,omitempty"`
+	Enabled  *bool  `yaml:"enabled,omitempty"` // nil = true; false = disable
+}
 
-	// ── CRITICAL: data exfiltration (curl/wget + secrets) ──
-	{SeverityCritical, "data-exfiltration", "Command may exfiltrate sensitive data",
-		regexp.MustCompile(`(?i)(curl|wget)\s+.*(\$SECRET|\$TOKEN|\$API_KEY|\$OPENAI_API_KEY|\$ANTHROPIC_API_KEY|\$AWS_SECRET)`)},
-	{SeverityCritical, "data-exfiltration", "Command sends environment variables externally",
-		regexp.MustCompile(`(?i)(curl|wget)\s+.*\$\{?(HOME|USER|PATH|SSH|GPG|AWS|GITHUB_TOKEN|OPENAI|ANTHROPIC)`)},
+type rulesFile struct {
+	Rules []yamlRule `yaml:"rules"`
+}
 
-	// ── CRITICAL: credential access ──
-	{SeverityCritical, "credential-access", "Accessing SSH private keys",
-		regexp.MustCompile(`cat\s+~/?\.\s*ssh/(id_|known_hosts|authorized_keys|config)`)},
-	{SeverityCritical, "credential-access", "Accessing .env secrets file",
-		regexp.MustCompile(`cat\s+\.env\b`)},
-	{SeverityCritical, "credential-access", "Accessing AWS credentials",
-		regexp.MustCompile(`cat\s+~/?\.\s*aws/(credentials|config)`)},
+//go:embed rules.yaml
+var defaultRulesData []byte
 
-	// ── HIGH: hidden unicode (zero-width characters) ──
-	{SeverityHigh, "hidden-unicode", "Hidden zero-width Unicode characters detected",
-		regexp.MustCompile("[\u200B\u200C\u200D\u2060\uFEFF]")},
+var (
+	builtinRules    []rule
+	builtinRulesErr error
+	builtinOnce     sync.Once
 
-	// ── HIGH: destructive commands ──
-	{SeverityHigh, "destructive-commands", "Potentially destructive command",
-		regexp.MustCompile(`(?i)\brm\s+-rf\s+(/(\s|$|\*)|\*|\./)`)},
-	{SeverityHigh, "destructive-commands", "Unsafe permission change",
-		regexp.MustCompile(`(?i)\bchmod\s+777\b`)},
-	{SeverityHigh, "destructive-commands", "Sudo escalation",
-		regexp.MustCompile(`(?i)\bsudo\s+`)},
-	{SeverityHigh, "destructive-commands", "Disk overwrite command",
-		regexp.MustCompile(`(?i)\bdd\s+if=`)},
-	{SeverityHigh, "destructive-commands", "Filesystem format command",
-		regexp.MustCompile(`(?i)\bmkfs\.`)},
+	globalRules    []rule
+	globalRulesErr error
+	globalOnce     sync.Once
+)
 
-	// ── HIGH: obfuscation ──
-	{SeverityHigh, "obfuscation", "Base64 decode pipe may hide malicious content",
-		regexp.MustCompile(`(?i)(base64\s+(-d|--decode)|\bbase64\b.*\|\s*(sh|bash|zsh|eval))`)},
-	{SeverityHigh, "obfuscation", "Long base64-encoded string detected",
-		regexp.MustCompile(`[A-Za-z0-9+/]{100,}={0,2}`)},
+// loadBuiltinRules parses and compiles the embedded rules.yaml.
+func loadBuiltinRules() ([]rule, error) {
+	builtinOnce.Do(func() {
+		yr, err := parseRulesYAML(defaultRulesData)
+		if err != nil {
+			builtinRulesErr = fmt.Errorf("builtin rules: %w", err)
+			return
+		}
+		builtinRules, builtinRulesErr = compileRules(yr)
+	})
+	return builtinRules, builtinRulesErr
+}
 
-	// ── MEDIUM: suspicious URL usage (command + URL, not mere documentation links) ──
-	// "fetch" excluded (too common in English). Localhost filtered in ScanContent.
-	{SeverityMedium, "suspicious-fetch", "URL used in command context",
-		regexp.MustCompile(`(?i)(curl|wget|invoke-webrequest|iwr)\s+['"]?https?://`)},
+// Rules returns the compiled rules for global mode (builtin + global user overrides).
+func Rules() ([]rule, error) {
+	globalOnce.Do(func() {
+		builtin, err := loadBuiltinRules()
+		if err != nil {
+			globalRulesErr = err
+			return
+		}
 
-	// ── MEDIUM: system path writes ──
-	{SeverityMedium, "system-writes", "References to system directories",
-		regexp.MustCompile(`(?i)(write|copy|cp|mv|install)\s+.*/?(usr|etc|var|opt)/`)},
+		userYAML, err := loadUserRules(globalAuditRulesPath())
+		if err != nil {
+			globalRulesErr = fmt.Errorf("global user rules: %w", err)
+			return
+		}
+
+		if userYAML == nil {
+			globalRules = builtin
+			return
+		}
+
+		merged := mergeYAMLRules(builtinYAML(), userYAML)
+		globalRules, globalRulesErr = compileRules(merged)
+	})
+	return globalRules, globalRulesErr
+}
+
+// RulesWithProject returns compiled rules for project mode
+// (builtin + global user + project user overrides).
+func RulesWithProject(projectRoot string) ([]rule, error) {
+	// Start from global rules' YAML (builtin + global user merged)
+	builtin, err := loadBuiltinRules()
+	if err != nil {
+		return nil, err
+	}
+
+	globalUserYAML, err := loadUserRules(globalAuditRulesPath())
+	if err != nil {
+		return nil, fmt.Errorf("global user rules: %w", err)
+	}
+
+	baseYAML := builtinYAML()
+	if globalUserYAML != nil {
+		baseYAML = mergeYAMLRules(baseYAML, globalUserYAML)
+	}
+
+	projectPath := filepath.Join(projectRoot, ".skillshare", "audit-rules.yaml")
+	projectYAML, err := loadUserRules(projectPath)
+	if err != nil {
+		return nil, fmt.Errorf("project user rules: %w", err)
+	}
+
+	if projectYAML == nil && globalUserYAML == nil {
+		return builtin, nil
+	}
+	if projectYAML == nil {
+		// Only global overrides, no project overrides
+		rules, err := Rules()
+		if err != nil {
+			return nil, err
+		}
+		return rules, nil
+	}
+
+	merged := mergeYAMLRules(baseYAML, projectYAML)
+	return compileRules(merged)
+}
+
+// builtinYAML returns the parsed (not compiled) builtin rules for merging.
+func builtinYAML() []yamlRule {
+	var f rulesFile
+	// Already validated in loadBuiltinRules, safe to ignore error
+	yaml.Unmarshal(defaultRulesData, &f) //nolint:errcheck
+	return f.Rules
+}
+
+// parseRulesYAML parses YAML bytes into yamlRule slice.
+func parseRulesYAML(data []byte) ([]yamlRule, error) {
+	var f rulesFile
+	if err := yaml.Unmarshal(data, &f); err != nil {
+		return nil, fmt.Errorf("parse YAML: %w", err)
+	}
+	return f.Rules, nil
+}
+
+// compileRules validates and compiles yamlRule slice into rule slice.
+func compileRules(yr []yamlRule) ([]rule, error) {
+	var rules []rule
+	for _, y := range yr {
+		if y.Enabled != nil && !*y.Enabled {
+			continue // disabled rule
+		}
+		if !validSeverities[y.Severity] {
+			return nil, fmt.Errorf("rule %q: invalid severity %q", y.ID, y.Severity)
+		}
+		if y.Regex == "" {
+			return nil, fmt.Errorf("rule %q: empty regex", y.ID)
+		}
+		re, err := regexp.Compile(y.Regex)
+		if err != nil {
+			return nil, fmt.Errorf("rule %q: invalid regex: %w", y.ID, err)
+		}
+
+		r := rule{
+			ID:       y.ID,
+			Severity: y.Severity,
+			Pattern:  y.Pattern,
+			Message:  y.Message,
+			Regex:    re,
+		}
+		if y.Exclude != "" {
+			excl, err := regexp.Compile(y.Exclude)
+			if err != nil {
+				return nil, fmt.Errorf("rule %q: invalid exclude regex: %w", y.ID, err)
+			}
+			r.Exclude = excl
+		}
+		rules = append(rules, r)
+	}
+	return rules, nil
+}
+
+// loadUserRules reads an optional user audit-rules.yaml file.
+// Returns nil, nil if the file does not exist.
+func loadUserRules(path string) ([]yamlRule, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	return parseRulesYAML(data)
+}
+
+// mergeYAMLRules merges overlay rules into base rules.
+// - Same ID + enabled:false → remove from result
+// - Same ID + other fields → replace entire rule
+// - New ID → append
+func mergeYAMLRules(base, overlay []yamlRule) []yamlRule {
+	// Index base rules by ID for fast lookup
+	idx := make(map[string]int, len(base))
+	result := make([]yamlRule, len(base))
+	copy(result, base)
+	for i, r := range result {
+		idx[r.ID] = i
+	}
+
+	for _, o := range overlay {
+		if pos, exists := idx[o.ID]; exists {
+			if o.Enabled != nil && !*o.Enabled {
+				// Mark for removal by setting empty regex
+				result[pos].Enabled = o.Enabled
+			} else {
+				result[pos] = o
+			}
+		} else {
+			// New rule — append
+			result = append(result, o)
+		}
+	}
+
+	return result
+}
+
+// globalAuditRulesPath returns the path to the global user audit-rules.yaml,
+// next to config.yaml, respecting SKILLSHARE_CONFIG.
+func globalAuditRulesPath() string {
+	return GlobalAuditRulesPath()
+}
+
+// GlobalAuditRulesPath returns the path to the global user audit-rules.yaml.
+func GlobalAuditRulesPath() string {
+	return filepath.Join(configDir(), "audit-rules.yaml")
+}
+
+// ProjectAuditRulesPath returns the path to a project's audit-rules.yaml.
+func ProjectAuditRulesPath(projectRoot string) string {
+	return filepath.Join(projectRoot, ".skillshare", "audit-rules.yaml")
+}
+
+// configDir returns the skillshare config directory without importing
+// internal/config (which would create an import cycle).
+func configDir() string {
+	if envPath := os.Getenv("SKILLSHARE_CONFIG"); envPath != "" {
+		return filepath.Dir(envPath)
+	}
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".config", "skillshare")
+}
+
+// resetForTest resets cached state for testing.
+func resetForTest() {
+	builtinOnce = sync.Once{}
+	builtinRules = nil
+	builtinRulesErr = nil
+	globalOnce = sync.Once{}
+	globalRules = nil
+	globalRulesErr = nil
 }
