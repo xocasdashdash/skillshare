@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.11.4] - 2026-02-11
+
+### Added
+- **Customizable audit rules** — `audit-rules.yaml` externalizes security rules for user overrides
+  - Three-layer merge: built-in → global (`~/.config/skillshare/audit-rules.yaml`) → project (`.skillshare/audit-rules.yaml`)
+  - Add custom rules, override severity, or disable built-in rules per-project
+  - `skillshare audit-rules` CLI for view/edit/init
+- **Web UI Audit Rules page** — create, edit, toggle, and delete rules from the dashboard
+- **Log filtering** — filter operation/audit logs by status, command, or keyword; custom dropdown component
+- **Docker playground audit demo** — pre-loaded demo skills and custom rules for hands-on audit exploration
+
+### Changed
+- **Built-in skill is now opt-in** — `init` and `upgrade` no longer install the built-in skill by default; use `--skill` to include it
+- **HIGH findings reclassified as warnings** — only CRITICAL findings block `install`; HIGH/MEDIUM are shown as warnings
+- Integration tests split into offline (`!online`) and online (`online`) build tags for faster local runs
+
 ## [0.11.0] - 2026-02-10
 
 ### Added
