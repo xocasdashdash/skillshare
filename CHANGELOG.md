@@ -6,7 +6,7 @@
 - **Customizable audit rules** — `audit-rules.yaml` externalizes security rules for user overrides
   - Three-layer merge: built-in → global (`~/.config/skillshare/audit-rules.yaml`) → project (`.skillshare/audit-rules.yaml`)
   - Add custom rules, override severity, or disable built-in rules per-project
-  - `skillshare audit-rules` CLI for view/edit/init
+  - `skillshare audit --init-rules` to scaffold a starter rules file
 - **Web UI Audit Rules page** — create, edit, toggle, and delete rules from the dashboard
 - **Log filtering** — filter operation/audit logs by status, command, or keyword; custom dropdown component
 - **Docker playground audit demo** — pre-loaded demo skills and custom rules for hands-on audit exploration
