@@ -128,7 +128,7 @@ targets:
   - global_name: opencode
     project_name: opencode
     global_path: "~/.config/opencode/skills"
-    project_path: ".agents/skills"
+    project_path: ".opencode/skills"
   - global_name: openhands
     project_name: openhands
     global_path: "~/.openhands/skills"
