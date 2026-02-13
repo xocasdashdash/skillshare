@@ -309,7 +309,7 @@ docker run --rm -v ./my-skills:/skills skillshare-ci audit /skills
 
 ### Automated publishing
 
-On tag push (`v*`), the `docker-publish` GitHub Actions workflow builds and pushes both production and CI images to GHCR with multi-arch support.
+On tag push (`v*`), the `docker-publish` GitHub Actions workflow builds and pushes both production and CI images to GHCR with multi-arch support. Browse published versions at [GitHub Packages](https://github.com/runkids/skillshare/pkgs/container/skillshare).
 
 ---
 

@@ -363,6 +363,8 @@ make docker-build              # build production image
 make docker-build-multiarch    # build for amd64 + arm64
 ```
 
+Pre-built images are published to [GitHub Packages](https://github.com/runkids/skillshare/pkgs/container/skillshare) on each release.
+
 ## Development
 
 ```bash
