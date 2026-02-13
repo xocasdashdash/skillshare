@@ -70,11 +70,11 @@ These are auto-detected during `skillshare init`:
 | commandcode | `~/.commandcode/skills` | `.commandcode/skills` |
 | continue | `~/.continue/skills` | `.continue/skills` |
 | cortex | `~/.snowflake/cortex/skills` | `.cortex/skills` |
-| copilot | `~/.copilot/skills` | `.agents/skills` |
+| copilot | `~/.copilot/skills` | `.github/skills` |
 | crush | `~/.config/crush/skills` | `.crush/skills` |
 | cursor | `~/.cursor/skills` | `.cursor/skills` |
 | deepagents | `~/.deepagents/agent/skills` | `.deepagents/skills` |
-| droid | `~/.agents/skills` | `.agents/skills` |
+| droid | `~/.factory/skills` | `.factory/skills` |
 | gemini | `~/.gemini/skills` | `.gemini/skills` |
 | goose | `~/.config/goose/skills` | `.agents/skills` |
 | iflow | `~/.iflow/skills` | `.iflow/skills` |

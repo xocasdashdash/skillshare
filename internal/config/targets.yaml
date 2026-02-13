@@ -58,7 +58,7 @@ targets:
   - global_name: copilot
     project_name: github-copilot
     global_path: "~/.copilot/skills"
-    project_path: ".agents/skills"
+    project_path: ".github/skills"
   - global_name: crush
     project_name: crush
     global_path: "~/.config/crush/skills"
@@ -73,8 +73,8 @@ targets:
     project_path: ".deepagents/skills"
   - global_name: droid
     project_name: droid
-    global_path: "~/.agents/skills"
-    project_path: ".agents/skills"
+    global_path: "~/.factory/skills"
+    project_path: ".factory/skills"
   - global_name: gemini
     project_name: gemini-cli
     global_path: "~/.gemini/skills"
