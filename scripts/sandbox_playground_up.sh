@@ -27,7 +27,7 @@ export SKILLSHARE_PLAYGROUND_GITHUB_TOKEN
 docker compose -f "$COMPOSE_FILE" --profile playground build "$SERVICE"
 
 # Prepare shared volumes for host UID/GID access.
-docker compose -f "$COMPOSE_FILE" --profile playground run --rm --user "0:0" "$SERVICE" \
+docker compose -f "$COMPOSE_FILE" --profile playground run --rm --user "0:0" --cap-add ALL "$SERVICE" \
   bash -c "mkdir -p /go/pkg/mod /go/build-cache /sandbox-home /tmp && chmod -R 0777 /go/pkg/mod /go/build-cache /sandbox-home /tmp"
 
 docker compose -f "$COMPOSE_FILE" --profile playground up -d "$SERVICE"

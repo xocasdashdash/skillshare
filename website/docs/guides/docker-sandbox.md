@@ -243,20 +243,31 @@ spec:
 
 ## Dev Profile
 
-Run the Go API server inside Docker while keeping Vite HMR on your host for fast frontend iteration:
+Two ways to develop the frontend with Vite HMR:
+
+**With Go installed locally** (single command):
 
 ```bash
-# Terminal 1: Go API server in Docker
-make dev-docker-up
+make ui-dev              # starts Go API server + Vite dev server together
+# Open http://localhost:5173
+```
 
-# Terminal 2: Vite dev server on host
-make ui-dev
+**Without Go** (Go API runs in Docker):
+
+```bash
+# Terminal 1
+make dev-docker-up       # Go API server in Docker (localhost:19420)
+
+# Terminal 2
+cd ui && pnpm run dev    # Vite dev server (localhost:5173, proxies /api → :19420)
 
 # When done
 make dev-docker-down
 ```
 
-The dev profile reuses the sandbox image and mounts the source directory, so Go code changes are picked up on restart.
+Both approaches give you instant HMR for `ui/` changes. The Docker variant pins the Go toolchain so backend behavior is consistent across contributors.
+
+**Note:** Go code changes require restarting the server — `Ctrl+C` and re-run for `make ui-dev`, or `make dev-docker-down && make dev-docker-up` for Docker.
 
 ---
 
@@ -267,11 +278,25 @@ The dev profile reuses the sandbox image and mounts the source directory, so Go 
 Build a lightweight production image with the embedded Web UI:
 
 ```bash
-make docker-build                          # single platform
-make docker-build-multiarch                # linux/amd64 + linux/arm64
+make docker-build                          # current platform only (fast, for local testing)
+make docker-build-multiarch                # linux/amd64 + linux/arm64 (slow, for registry push)
 ```
 
+`docker-build` only produces an image for your machine's architecture — an arm64 image from Apple Silicon won't run on x86 servers. Use `docker-build-multiarch` when pushing to a registry so any platform gets the right image automatically.
+
 The production image uses `tini` as PID 1, runs as a non-root user (UID 10001), includes a healthcheck, and auto-initialises config on first run. Default command: `skillshare ui -g --host 0.0.0.0 --no-open`.
+
+Published images are available on GHCR (pushed automatically on tag):
+
+```bash
+# Pull and run (auto-selects amd64 or arm64)
+docker run -d -p 19420:19420 ghcr.io/runkids/skillshare
+
+# With persistent skill data
+docker run -d -p 19420:19420 \
+  -v skillshare-data:/home/skillshare/.config/skillshare \
+  ghcr.io/runkids/skillshare
+```
 
 ### CI image
 
@@ -290,6 +315,7 @@ On tag push (`v*`), the `docker-publish` GitHub Actions workflow builds and push
 
 ## Limits and Expectations
 
+- **Playground and dev profile share port 19420** — run only one at a time. Stop the other first (`make sandbox-down` or `make dev-docker-down`).
 - Offline sandbox cannot validate network-dependent features (for example remote `install` from GitHub).
 - Playground uses container-local `HOME`, so it does not directly modify your real host home config.
 - Go code changes are picked up automatically (`go build` runs inside the container from mounted source). **Frontend (`ui/`) changes** require running `make ui-build` on the host first, since the container does not have Node.js.

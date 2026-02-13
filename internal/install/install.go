@@ -632,7 +632,8 @@ func isGitRepo(path string) bool {
 }
 
 // gitCommandTimeout is the maximum time for a git network operation.
-const gitCommandTimeout = 60 * time.Second
+// Remote tracked-repo clones can take longer in constrained CI/Docker networks.
+const gitCommandTimeout = 180 * time.Second
 
 // gitCommand creates an exec.Cmd for git with GIT_TERMINAL_PROMPT=0
 // to prevent interactive credential prompts that hang CLI spinners and web UI.

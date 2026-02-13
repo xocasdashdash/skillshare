@@ -81,6 +81,7 @@ services:
       - -c
       - >-
         cd /workspace &&
+        go run -tags dev ./cmd/skillshare init -g --no-copy --no-git --skill 2>/dev/null;
         go run -tags dev ./cmd/skillshare ui -g --no-open --host 0.0.0.0
     ports:
       - "19420:19420"

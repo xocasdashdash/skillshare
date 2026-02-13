@@ -346,11 +346,13 @@ skillshare-ui-p          # project mode dashboard on port 19420
 
 ### Dev profile
 
-Run the Go API server in Docker while using Vite HMR on the host:
-
 ```bash
-make dev-docker-up             # start Go API server in Docker
-make ui-dev                    # start Vite dev server on host (:5173)
+# With Go installed locally (single command):
+make ui-dev                    # Go API server + Vite HMR together
+
+# Without Go (API in Docker):
+make dev-docker-up             # Go API server in Docker (:19420)
+cd ui && pnpm run dev          # Vite dev server on host (:5173)
 make dev-docker-down           # stop when done
 ```
 
