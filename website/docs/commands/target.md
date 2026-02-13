@@ -130,7 +130,7 @@ Skillshare auto-detects these during `init`:
 | Codex | `~/.openai-codex/skills` |
 | Gemini CLI | `~/.gemini/skills` |
 | Amp | `~/.amp/skills` |
-| ... and 40+ more | See [supported targets](/docs/targets/supported-targets) |
+| ... and 45+ more | See [supported targets](/docs/targets/supported-targets) |
 
 ## Examples
 
