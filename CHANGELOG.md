@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.5] - 2026-02-13
+
+### Fixed
+- **`target remove` merge mode symlink cleanup** — CLI now correctly detects and removes all skillshare-managed symlinks using path prefix matching instead of exact name matching; fixes nested/orphaned symlinks being left behind
+- **`target remove` in Web UI** — server API now handles merge mode targets (previously only cleaned up symlink mode)
+
 ## [0.12.4] - 2026-02-13
 
 ### Added

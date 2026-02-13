@@ -41,7 +41,9 @@ skillshare target remove cursor --dry-run # Preview
 
 **What happens:**
 1. Creates backup of target
-2. Removes symlinks, copies skills back
+2. Detects sync mode:
+   - **Symlink mode:** Removes the directory symlink, copies source contents back as a real directory
+   - **Merge mode:** Removes only symlinks pointing to source (by path prefix), copies each skill back as real files. Local (non-symlink) skills are preserved.
 3. Removes target from config
 
 ### target list
@@ -85,6 +87,16 @@ skillshare sync  # Apply change
 skillshare target claude --mode symlink
 skillshare sync  # Apply the change
 ```
+
+## Target Filters (include/exclude)
+
+`target` command currently manages path and mode.  
+Per-target `include` / `exclude` filters are configured in YAML:
+
+- Global: `~/.config/skillshare/config.yaml`
+- Project: `.skillshare/config.yaml`
+
+See [Configuration](/docs/targets/configuration#include--exclude-target-filters).
 
 ## Options
 

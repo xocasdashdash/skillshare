@@ -2,12 +2,15 @@ package server
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"skillshare/internal/config"
 	ssync "skillshare/internal/sync"
+	"skillshare/internal/utils"
 )
 
 type targetItem struct {
@@ -135,10 +138,16 @@ func (s *Server) handleRemoveTarget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Remove symlinks from the target before deleting from config
+	// Clean up symlinks from the target before deleting from config
 	info, err := os.Lstat(target.Path)
-	if err == nil && info.Mode()&os.ModeSymlink != 0 {
-		os.Remove(target.Path)
+	if err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			// Symlink mode: entire directory is a symlink
+			os.Remove(target.Path)
+		} else if info.IsDir() {
+			// Merge mode: remove individual skill symlinks pointing to source
+			s.unlinkMergeSymlinks(target.Path)
+		}
 	}
 
 	delete(s.cfg.Targets, name)
@@ -167,4 +176,73 @@ func (s *Server) handleRemoveTarget(w http.ResponseWriter, r *http.Request) {
 	}, "")
 
 	writeJSON(w, map[string]any{"success": true, "name": name})
+}
+
+// unlinkMergeSymlinks removes symlinks in targetPath that point under the
+// source directory and copies the skill contents back as real files.
+func (s *Server) unlinkMergeSymlinks(targetPath string) {
+	entries, err := os.ReadDir(targetPath)
+	if err != nil {
+		return
+	}
+
+	absSource, err := filepath.Abs(s.cfg.Source)
+	if err != nil {
+		return
+	}
+	absSourcePrefix := absSource + string(filepath.Separator)
+
+	for _, entry := range entries {
+		skillPath := filepath.Join(targetPath, entry.Name())
+
+		if !utils.IsSymlinkOrJunction(skillPath) {
+			continue
+		}
+
+		absLink, err := utils.ResolveLinkTarget(skillPath)
+		if err != nil {
+			continue
+		}
+
+		if !utils.PathHasPrefix(absLink, absSourcePrefix) {
+			continue
+		}
+
+		// Remove symlink and copy the skill back if source still exists
+		os.Remove(skillPath)
+		if _, statErr := os.Stat(absLink); statErr == nil {
+			_ = copySkillDir(absLink, skillPath)
+		}
+	}
+}
+
+// copySkillDir copies a directory tree from src to dst.
+func copySkillDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, _ := filepath.Rel(src, path)
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		dstFile, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, info.Mode())
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+
+		_, err = io.Copy(dstFile, srcFile)
+		return err
+	})
 }

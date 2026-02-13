@@ -144,7 +144,7 @@ Yes, it's safe:
 
 1. **Backup** — Creates backup of the target
 2. **Detect mode** — Checks if symlink or merge mode
-3. **Unlink** — Removes symlinks, copies source content back
+3. **Unlink** — Removes all skillshare-managed symlinks, copies source content back as real files. In merge mode, only symlinks pointing to the source directory are removed; local (non-symlink) skills are preserved.
 4. **Update config** — Removes target from config.yaml
 
 This is why `skillshare target remove` is safe, while `rm -rf ~/.claude/skills` would delete your source files.

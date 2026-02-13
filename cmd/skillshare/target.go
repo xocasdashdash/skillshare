@@ -323,35 +323,42 @@ func unlinkSymlinkMode(targetPath, sourcePath string) error {
 	return nil
 }
 
-// unlinkMergeMode removes individual skill symlinks and copies them back.
+// unlinkMergeMode removes individual skill symlinks pointing to source and
+// copies the skill contents back so the target retains real files.
 func unlinkMergeMode(targetPath, sourcePath string) error {
 	entries, err := os.ReadDir(targetPath)
 	if err != nil {
 		return err
 	}
 
+	absSource, err := filepath.Abs(sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve source path: %w", err)
+	}
+	absSourcePrefix := absSource + string(filepath.Separator)
+
 	for _, entry := range entries {
 		skillPath := filepath.Join(targetPath, entry.Name())
-		info, err := os.Lstat(skillPath)
-		if err != nil {
-			continue
+
+		if !utils.IsSymlinkOrJunction(skillPath) {
+			continue // Not a symlink — preserve local skills
 		}
 
-		// Check if it's a symlink pointing to source
-		if info.Mode()&os.ModeSymlink != 0 {
-			link, _ := os.Readlink(skillPath)
-			sourceSkillPath := filepath.Join(sourcePath, entry.Name())
+		absLink, err := utils.ResolveLinkTarget(skillPath)
+		if err != nil {
+			continue // Can't resolve — skip
+		}
 
-			// Check if symlink points to our source
-			absLink, _ := filepath.Abs(link)
-			absSource, _ := filepath.Abs(sourceSkillPath)
+		// Check if symlink points to anywhere under source directory
+		if !utils.PathHasPrefix(absLink, absSourcePrefix) {
+			continue // Not managed by skillshare — skip
+		}
 
-			if utils.PathsEqual(absLink, absSource) {
-				// Remove symlink and copy the skill back
-				os.Remove(skillPath)
-				if err := copyDir(sourceSkillPath, skillPath); err != nil {
-					return fmt.Errorf("failed to copy %s: %w", entry.Name(), err)
-				}
+		// Remove symlink and copy the skill back if source still exists
+		os.Remove(skillPath)
+		if _, statErr := os.Stat(absLink); statErr == nil {
+			if err := copyDir(absLink, skillPath); err != nil {
+				return fmt.Errorf("failed to copy %s: %w", entry.Name(), err)
 			}
 		}
 	}

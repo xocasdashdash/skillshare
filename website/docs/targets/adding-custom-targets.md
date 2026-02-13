@@ -130,7 +130,7 @@ skillshare target remove myapp
 
 This:
 1. Creates a backup
-2. Replaces symlinks with real files
+2. Replaces symlinks with real files (in merge mode, only source-managed symlinks are removed; local skills are preserved)
 3. Removes from config
 
 ---

@@ -166,6 +166,88 @@ targets:
 	}
 }
 
+func TestTargetRemove_MergeMode_RemovesSymlinks(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.CreateSkill("skill1", map[string]string{"SKILL.md": "# Skill 1"})
+	sb.CreateSkill("skill2", map[string]string{"SKILL.md": "# Skill 2"})
+	targetPath := sb.CreateTarget("claude")
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets:
+  claude:
+    path: ` + targetPath + `
+`)
+
+	// Sync to create symlinks
+	syncResult := sb.RunCLI("sync")
+	syncResult.AssertSuccess(t)
+
+	// Verify symlinks exist
+	for _, name := range []string{"skill1", "skill2"} {
+		link := filepath.Join(targetPath, name)
+		info, err := os.Lstat(link)
+		if err != nil || info.Mode()&os.ModeSymlink == 0 {
+			t.Fatalf("expected symlink for %s after sync", name)
+		}
+	}
+
+	// Remove target
+	result := sb.RunCLI("target", "remove", "claude")
+	result.AssertSuccess(t)
+
+	// Verify symlinks are gone (replaced with real copies or removed)
+	for _, name := range []string{"skill1", "skill2"} {
+		link := filepath.Join(targetPath, name)
+		info, err := os.Lstat(link)
+		if err != nil {
+			continue // removed entirely is also OK
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			t.Errorf("symlink for %s should be removed after target remove", name)
+		}
+	}
+
+	// Verify config updated
+	configContent := sb.ReadFile(sb.ConfigPath)
+	if strings.Contains(configContent, "claude") {
+		t.Error("target should be removed from config")
+	}
+}
+
+func TestTargetRemove_MergeMode_PreservesLocalSkills(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	sb.CreateSkill("managed", map[string]string{"SKILL.md": "# Managed"})
+	targetPath := sb.CreateTarget("claude")
+
+	// Add a local (non-symlink) skill in the target
+	localSkillPath := filepath.Join(targetPath, "local-skill")
+	os.MkdirAll(localSkillPath, 0755)
+	os.WriteFile(filepath.Join(localSkillPath, "SKILL.md"), []byte("# Local"), 0644)
+
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+targets:
+  claude:
+    path: ` + targetPath + `
+`)
+
+	// Sync to create managed symlink
+	syncResult := sb.RunCLI("sync")
+	syncResult.AssertSuccess(t)
+
+	// Remove target
+	result := sb.RunCLI("target", "remove", "claude")
+	result.AssertSuccess(t)
+
+	// Local skill should still exist
+	if !sb.FileExists(filepath.Join(localSkillPath, "SKILL.md")) {
+		t.Error("local (non-symlink) skill should be preserved after target remove")
+	}
+}
+
 func TestTargetRemove_NotFound_ReturnsError(t *testing.T) {
 	sb := testutil.NewSandbox(t)
 	defer sb.Cleanup()
