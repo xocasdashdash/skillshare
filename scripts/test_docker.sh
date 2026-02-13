@@ -1,26 +1,32 @@
 #!/usr/bin/env bash
-# Run Go test pipeline inside the offline Docker sandbox.
+# Run Go test pipeline inside the Docker sandbox.
+# Supports both offline (default) and online modes.
 set -euo pipefail
 
 source "$(dirname "$0")/_sandbox_common.sh"
-SERVICE="sandbox-offline"
 
 SKIP_BUILD=false
 CUSTOM_CMD=""
+ONLINE=false
 
 usage() {
   cat <<'EOF'
 Usage: ./scripts/test_docker.sh [options]
 
 Options:
-  --skip-build         Skip docker compose build
-  --cmd "<command>"    Override default service command
-  -h, --help           Show this help
+  --online               Run network-dependent tests (online profile)
+  --skip-build           Skip docker compose build
+  --cmd "<command>"      Override default service command
+  -h, --help             Show this help
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --online)
+      ONLINE=true
+      shift
+      ;;
     --skip-build)
       SKIP_BUILD=true
       shift
@@ -49,18 +55,29 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$ONLINE" == "true" ]]; then
+  PROFILE="online"
+  SERVICE="sandbox-online"
+  DEFAULT_ONLINE_CMD="mkdir -p bin && go build -o bin/skillshare ./cmd/skillshare && SKILLSHARE_TEST_BINARY=/workspace/bin/skillshare go test -v -tags online ./tests/integration/... -timeout 120s"
+else
+  PROFILE="offline"
+  SERVICE="sandbox-offline"
+fi
+
 require_docker
 cd "$PROJECT_ROOT"
 
 if [[ "$SKIP_BUILD" != "true" ]]; then
-  docker compose -f "$COMPOSE_FILE" --profile offline build "$SERVICE"
+  docker compose -f "$COMPOSE_FILE" --profile "$PROFILE" build "$SERVICE"
 fi
 
 # Ensure named cache volumes are writable when running as host UID/GID.
-docker compose -f "$COMPOSE_FILE" --profile offline run --rm --user "0:0" "$SERVICE" bash -c "mkdir -p /go/pkg/mod /go/build-cache && chmod -R 0777 /go/pkg/mod /go/build-cache /tmp"
+docker compose -f "$COMPOSE_FILE" --profile "$PROFILE" run --rm --user "0:0" "$SERVICE" bash -c "mkdir -p /go/pkg/mod /go/build-cache && chmod -R 0777 /go/pkg/mod /go/build-cache /tmp"
 
 if [[ -n "$CUSTOM_CMD" ]]; then
-  docker compose -f "$COMPOSE_FILE" --profile offline run --rm --user "$(id -u):$(id -g)" "$SERVICE" bash -c "$CUSTOM_CMD"
+  docker compose -f "$COMPOSE_FILE" --profile "$PROFILE" run --rm --user "$(id -u):$(id -g)" "$SERVICE" bash -c "$CUSTOM_CMD"
+elif [[ "$ONLINE" == "true" ]]; then
+  docker compose -f "$COMPOSE_FILE" --profile "$PROFILE" run --rm --user "$(id -u):$(id -g)" "$SERVICE" bash -c "$DEFAULT_ONLINE_CMD"
 else
-  docker compose -f "$COMPOSE_FILE" --profile offline run --rm --user "$(id -u):$(id -g)" "$SERVICE"
+  docker compose -f "$COMPOSE_FILE" --profile "$PROFILE" run --rm --user "$(id -u):$(id -g)" "$SERVICE"
 fi

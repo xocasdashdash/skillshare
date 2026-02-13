@@ -1,11 +1,17 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
+	"time"
 
 	"skillshare/internal/config"
+	"skillshare/internal/version"
 )
 
 // Server holds the HTTP server state
@@ -14,6 +20,8 @@ type Server struct {
 	addr string
 	mux  *http.ServeMux
 	mu   sync.Mutex // protects write operations (sync, install, uninstall, config)
+
+	startTime time.Time // for uptime reporting in health check
 
 	// Project mode fields (empty/nil for global mode)
 	projectRoot string
@@ -88,10 +96,47 @@ func (s *Server) reloadConfig() error {
 	return nil
 }
 
-// Start starts the HTTP server (blocking)
+// Start starts the HTTP server with graceful shutdown on SIGTERM/SIGINT.
 func (s *Server) Start() error {
-	fmt.Printf("Skillshare UI running at http://%s\n", s.addr)
-	return http.ListenAndServe(s.addr, s.mux)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return s.StartWithContext(ctx)
+}
+
+// StartWithContext starts the HTTP server and shuts down gracefully when ctx is cancelled.
+func (s *Server) StartWithContext(ctx context.Context) error {
+	s.startTime = time.Now()
+
+	srv := &http.Server{
+		Addr:              s.addr,
+		Handler:           s.mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		fmt.Printf("Skillshare UI running at http://%s\n", s.addr)
+		errCh <- srv.ListenAndServe()
+	}()
+
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+	}
+
+	fmt.Println("\nShutting down server...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("server shutdown: %w", err)
+	}
+	fmt.Println("Server stopped gracefully")
+	return nil
 }
 
 // registerRoutes sets up all API and static file routes
@@ -181,7 +226,15 @@ func (s *Server) registerRoutes() {
 	s.mux.Handle("/", spaHandler())
 }
 
-// handleHealth responds with a simple OK
+// handleHealth responds with status, version, and uptime
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, map[string]string{"status": "ok"})
+	uptime := int64(0)
+	if !s.startTime.IsZero() {
+		uptime = int64(time.Since(s.startTime).Seconds())
+	}
+	writeJSON(w, map[string]any{
+		"status":         "ok",
+		"version":        version.Version,
+		"uptime_seconds": uptime,
+	})
 }

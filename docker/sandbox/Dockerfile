@@ -11,7 +11,7 @@ RUN pnpm run build
 FROM golang:1.25.5-bookworm
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends bash git ca-certificates \
+    && apt-get install -y --no-install-recommends bash git ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy pre-built frontend for go:embed at build time

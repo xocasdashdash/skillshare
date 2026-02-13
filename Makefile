@@ -1,4 +1,4 @@
-.PHONY: help build build-meta run test test-unit test-int test-cover test-install test-docker test-docker-online sandbox-up sandbox-bare sandbox-shell sandbox-down sandbox-reset lint fmt fmt-check check install clean ui-install ui-build ui-dev build-all
+.PHONY: help build build-meta run test test-unit test-int test-cover test-install test-docker test-docker-online sandbox-up sandbox-bare sandbox-shell sandbox-down sandbox-reset sandbox-status dev-docker-up dev-docker-down docker-build docker-build-multiarch lint fmt fmt-check check install clean ui-install ui-build ui-dev build-all
 
 help:
 	@echo "Common tasks:"
@@ -16,6 +16,11 @@ help:
 	@echo "  make sandbox-shell       # enter docker playground shell"
 	@echo "  make sandbox-down        # stop and remove docker playground"
 	@echo "  make sandbox-reset       # stop + remove playground volume (full reset)"
+	@echo "  make sandbox-status      # show playground container status"
+	@echo "  make dev-docker-up       # start Go API server in Docker (dev profile)"
+	@echo "  make dev-docker-down     # stop dev profile container"
+	@echo "  make docker-build        # build production Docker image"
+	@echo "  make docker-build-multiarch  # build multi-arch production image"
 	@echo "  make lint                # go vet"
 	@echo "  make fmt                 # format Go files"
 	@echo "  make fmt-check           # verify formatting only"
@@ -74,6 +79,21 @@ sandbox-down:
 
 sandbox-reset:
 	./scripts/sandbox_playground_down.sh --volumes
+
+sandbox-status:
+	docker compose -f docker-compose.sandbox.yml --profile playground ps
+
+dev-docker-up:
+	docker compose -f docker-compose.sandbox.yml --profile dev up -d sandbox-dev
+
+dev-docker-down:
+	docker compose -f docker-compose.sandbox.yml --profile dev down
+
+docker-build:
+	docker build -f docker/production/Dockerfile -t skillshare .
+
+docker-build-multiarch:
+	docker buildx build --platform linux/amd64,linux/arm64 -f docker/production/Dockerfile -t skillshare .
 
 lint:
 	go vet ./...

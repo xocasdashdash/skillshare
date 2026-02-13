@@ -1,8 +1,24 @@
-.git
+# Build artifacts
 bin
 dist
 coverage.out
+
+# Git and CI
+.git
+.github/
+
+# IDE and editor
 .claude
+.editorconfig
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation site (not needed in Docker image)
+website/
 docs/plans
-website/node_modules
+
+# Frontend dependencies (rebuilt inside Docker)
+ui/node_modules
 video/node_modules

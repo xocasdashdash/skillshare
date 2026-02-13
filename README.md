@@ -311,32 +311,24 @@ Skills are also scanned automatically during `skillshare install`.
 > [!TIP]
 > See the [audit command reference](https://skillshare.runkids.cc/docs/commands/audit) for the full list of detection patterns.
 
-## Docker Sandbox
+## Docker
 
-Use Docker for reproducible offline testing and an interactive playground.
+Use Docker for reproducible testing, interactive playgrounds, and production deployment.
 
-### Offline test pipeline
-
-```bash
-make test-docker
-# or
-./scripts/test_docker.sh
-```
-
-### Optional online install/update checks
+### Test pipeline
 
 ```bash
-make test-docker-online
-# or
-./scripts/test_docker_online.sh
+make test-docker               # offline sandbox (build + unit + integration)
+make test-docker-online        # optional network-dependent tests
 ```
 
 ### Interactive playground
 
 ```bash
-make sandbox-up
-make sandbox-shell
-make sandbox-down
+make sandbox-up                # start persistent playground
+make sandbox-shell             # enter playground shell
+make sandbox-status            # check container status
+make sandbox-down              # stop and remove
 ```
 
 Inside the playground:
@@ -350,6 +342,23 @@ skillshare ui --host 0.0.0.0 --no-open
 cd ~/demo-project
 skillshare status
 skillshare-ui-p          # project mode dashboard on port 19420
+```
+
+### Dev profile
+
+Run the Go API server in Docker while using Vite HMR on the host:
+
+```bash
+make dev-docker-up             # start Go API server in Docker
+make ui-dev                    # start Vite dev server on host (:5173)
+make dev-docker-down           # stop when done
+```
+
+### Production image
+
+```bash
+make docker-build              # build production image
+make docker-build-multiarch    # build for amd64 + arm64
 ```
 
 ## Development

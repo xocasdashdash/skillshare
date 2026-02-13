@@ -2,28 +2,37 @@
 sidebar_position: 8
 ---
 
-# Docker Sandbox: Test and Playground
+# Docker: Test, Develop, and Deploy
 
-Use Docker sandbox when you want repeatable verification and a safe place to try commands without touching your host setup.
+Use Docker for repeatable testing, frontend development without Go, production deployment, and automated skill validation in CI.
 
 ## Mode Selection Diagram
 
 ```mermaid
 %%{init: {'flowchart': {'htmlLabels': false}}}%%
 flowchart TD
-A["Need Docker sandbox"] --> B{"Primary goal"}
-B --> C["Stable local regression checks"]
-B --> D["Validate remote-source behavior"]
-B --> E["Hands-on command exploration"]
+A["Need Docker"] --> B{"Primary goal"}
+B --> C["Regression checks"]
+B --> D["Remote-source validation"]
+B --> E["Command exploration"]
+B --> F["Frontend development"]
+B --> G["Deployment / CI"]
 
 C --> C1["Offline test sandbox"]
-C1 --> C2["Run test-docker"]
+C1 --> C2["make test-docker"]
 
 D --> D1["Online test sandbox"]
-D1 --> D2["Run test-docker-online"]
+D1 --> D2["make test-docker-online"]
 
 E --> E1["Persistent playground"]
-E1 --> E2["sandbox-up -> sandbox-shell -> sandbox-down"]
+E1 --> E2["sandbox-up -> sandbox-shell"]
+
+F --> F1["Dev profile"]
+F1 --> F2["dev-docker-up + ui-dev"]
+
+G --> G1{"Production or CI?"}
+G1 --> G2["docker-build"]
+G1 --> G3["docker/ci/Dockerfile"]
 ```
 
 Command mapping:
@@ -35,6 +44,11 @@ Command mapping:
 | `sandbox-up` | `mise run sandbox:up` | `make sandbox-up` |
 | `sandbox-shell` | `mise run sandbox:shell` | `make sandbox-shell` |
 | `sandbox-down` | `mise run sandbox:down` | `make sandbox-down` |
+| `sandbox-status` | `mise run sandbox:status` | `make sandbox-status` |
+| `dev-docker-up` | `mise run dev:docker:up` | `make dev-docker-up` |
+| `dev-docker-down` | `mise run dev:docker:down` | `make dev-docker-down` |
+| `docker-build` | `mise run docker:build` | `make docker-build` |
+| `docker-build-multiarch` | `mise run docker:build:multiarch` | `make docker-build-multiarch` |
 
 ## What You Can Use It For
 
@@ -43,6 +57,9 @@ Command mapping:
 | Offline test sandbox | Stable regression checks (`build + unit + integration`) | Disabled | One-shot |
 | Online test sandbox | Optional remote install/update checks | Enabled | One-shot |
 | Interactive playground | Manual command exploration and demos | Enabled | Persistent |
+| Dev profile | Go API server in Docker + Vite HMR on host | Enabled | Persistent |
+| Production image | Lightweight deployment (`docker/production/`) | Enabled | Persistent |
+| CI image | Skill validation in pipelines (`docker/ci/`) | Enabled | One-shot |
 
 ---
 
@@ -141,22 +158,133 @@ make sandbox-down
 
 ---
 
-## Why This Is Useful
+## Use Cases by Role
 
-- **Reproducible**: same base image, same toolchain, fewer machine-specific surprises.
-- **Safe isolation**: test and experiment without polluting host-level paths.
-- **Fast iteration**: separate offline/online modes let you keep default checks stable.
-- **Team onboarding**: a shared command set (`mise run ...`) avoids setup drift.
-- **Tooling flexibility**: use either `mise` or `make`, depending on team preference.
+### Individual developers
+
+| Scenario | What to use | What it replaces |
+|----------|-------------|-----------------|
+| Try skillshare without installing Go/Node | `docker run ghcr.io/runkids/skillshare` | Install Go + Node + pnpm, then build from source |
+| Run full test suite before opening a PR | `make test-docker` | Depend on local toolchain (Go version mismatch = flaky results) |
+| Frontend work without Go installed | `make dev-docker-up` + `make ui-dev` | Must install Go 1.25+ locally to run the API server |
+| Demo skillshare to a colleague | `make sandbox-up` → Web UI on `:19420` | Walk them through a full local install |
+| Verify Linux behavior on Apple Silicon | `make docker-build` | Push to CI and wait |
+
+### Teams and open-source contributors
+
+| Scenario | What to use | What it solves |
+|----------|-------------|---------------|
+| New contributor onboarding | `make sandbox-up` — one command, ready to go | No more "install Go, set PATH, clone, build" setup guide |
+| Automated skill quality gate in CI | `docker run ghcr.io/.../skillshare-ci audit /skills` | Previously required installing Go + building from source in every workflow |
+| "Works on my machine" across contributors | Docker pins Go 1.25.5 + all dependencies | Different local Go versions causing test flakes |
+| PR reviewer reproducing an issue | `make test-docker --cmd "go test -run TestXxx ..."` | Must clone + full local setup to reproduce |
+
+### Enterprise and self-hosted deployment
+
+| Scenario | What to use | Value |
+|----------|-------------|-------|
+| Internal skill management dashboard | Production image + volume mount for skills | One container, no Go/Node on the server |
+| Kubernetes deployment | Production image (healthcheck + graceful shutdown + non-root) | Ready for readiness/liveness probes, passes PodSecurityPolicy |
+| Automated skill PR review | CI image + `skillshare audit` in GitHub Actions | Block unsafe skills from merging — one line in your workflow |
+| Container security compliance | `read_only` + `cap_drop: ALL` + `no-new-privileges` | Passes CIS Docker Benchmark, Trivy, and Aqua scans |
+| ARM servers (AWS Graviton) for cost savings | `make docker-build-multiarch` | Native arm64 image, no emulation overhead |
+
+### Quick examples
+
+**Self-hosted dashboard with persistent skills:**
+
+```bash
+docker run -d \
+  -p 19420:19420 \
+  -v skillshare-data:/home/skillshare/.config/skillshare \
+  ghcr.io/runkids/skillshare
+```
+
+**CI skill audit in GitHub Actions:**
+
+```yaml
+- name: Audit skills
+  run: |
+    docker run --rm \
+      -v ${{ github.workspace }}/skills:/skills \
+      ghcr.io/runkids/skillshare-ci audit /skills
+```
+
+**Kubernetes deployment (minimal):**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skillshare
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: skillshare
+          image: ghcr.io/runkids/skillshare:latest
+          ports:
+            - containerPort: 19420
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 19420
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 19420
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+```
 
 ---
 
-## Practical Benefits by Role
+## Dev Profile
 
-- **Maintainers**: faster confidence for command-level changes.
-- **Contributors**: one command to run the expected test gate.
-- **Power users**: a disposable environment for trying risky workflows.
-- **Demo/training**: predictable environment for live walkthroughs.
+Run the Go API server inside Docker while keeping Vite HMR on your host for fast frontend iteration:
+
+```bash
+# Terminal 1: Go API server in Docker
+make dev-docker-up
+
+# Terminal 2: Vite dev server on host
+make ui-dev
+
+# When done
+make dev-docker-down
+```
+
+The dev profile reuses the sandbox image and mounts the source directory, so Go code changes are picked up on restart.
+
+---
+
+## Production and CI Images
+
+### Production image
+
+Build a lightweight production image with the embedded Web UI:
+
+```bash
+make docker-build                          # single platform
+make docker-build-multiarch                # linux/amd64 + linux/arm64
+```
+
+The production image uses `tini` as PID 1, runs as a non-root user (UID 10001), includes a healthcheck, and auto-initialises config on first run. Default command: `skillshare ui -g --host 0.0.0.0 --no-open`.
+
+### CI image
+
+A minimal image for validating skills in CI pipelines:
+
+```bash
+docker build -f docker/ci/Dockerfile -t skillshare-ci .
+docker run --rm -v ./my-skills:/skills skillshare-ci audit /skills
+```
+
+### Automated publishing
+
+On tag push (`v*`), the `docker-publish` GitHub Actions workflow builds and pushes both production and CI images to GHCR with multi-arch support.
 
 ---
 

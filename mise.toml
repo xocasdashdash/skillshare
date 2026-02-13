@@ -20,6 +20,11 @@ echo "  mise run sandbox:bare   # start playground without auto-init"
 echo "  mise run sandbox:shell  # enter docker playground shell"
 echo "  mise run sandbox:down   # stop and remove docker playground"
 echo "  mise run sandbox:reset  # stop + remove playground volume (full reset)"
+echo "  mise run sandbox:status # show playground container status"
+echo "  mise run dev:docker:up  # start Go API server in Docker (dev profile)"
+echo "  mise run dev:docker:down  # stop dev profile container"
+echo "  mise run docker:build   # build production Docker image"
+echo "  mise run docker:build:multiarch  # build multi-arch production image"
 echo "  mise run lint           # go vet"
 echo "  mise run fmt            # format Go files"
 echo "  mise run fmt:check      # verify formatting only"
@@ -97,6 +102,26 @@ run = "./scripts/sandbox_playground_down.sh"
 [tasks."sandbox:reset"]
 description = "Stop playground and remove home volume (full reset)"
 run = "./scripts/sandbox_playground_down.sh --volumes"
+
+[tasks."sandbox:status"]
+description = "Show playground container status"
+run = "docker compose -f docker-compose.sandbox.yml --profile playground ps"
+
+[tasks."dev:docker:up"]
+description = "Start Go API server in Docker (dev profile)"
+run = "docker compose -f docker-compose.sandbox.yml --profile dev up -d sandbox-dev"
+
+[tasks."dev:docker:down"]
+description = "Stop dev profile container"
+run = "docker compose -f docker-compose.sandbox.yml --profile dev down"
+
+[tasks."docker:build"]
+description = "Build production Docker image"
+run = "docker build -f docker/production/Dockerfile -t skillshare ."
+
+[tasks."docker:build:multiarch"]
+description = "Build multi-arch production Docker image (amd64 + arm64)"
+run = "docker buildx build --platform linux/amd64,linux/arm64 -f docker/production/Dockerfile -t skillshare ."
 
 [tasks.lint]
 description = "Run go vet"
