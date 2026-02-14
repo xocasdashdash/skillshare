@@ -607,6 +607,46 @@ func CheckNameCollisions(skills []DiscoveredSkill) []NameCollision {
 	return collisions
 }
 
+// TargetCollision holds name collisions that affect a specific target after filtering.
+type TargetCollision struct {
+	TargetName string
+	Collisions []NameCollision
+}
+
+// CheckNameCollisionsForTargets checks name collisions both globally and per-target.
+// Global collisions are computed on the unfiltered skill set.
+// Per-target collisions apply each target's include/exclude filters first, then check.
+// Symlink-mode targets are skipped (filters don't apply).
+func CheckNameCollisionsForTargets(
+	skills []DiscoveredSkill,
+	targets map[string]config.TargetConfig,
+) (global []NameCollision, perTarget []TargetCollision) {
+	global = CheckNameCollisions(skills)
+
+	for name, target := range targets {
+		mode := target.Mode
+		if mode == "symlink" {
+			continue
+		}
+		if len(target.Include) == 0 && len(target.Exclude) == 0 {
+			continue // no filters — same as global
+		}
+		filtered, err := FilterSkills(skills, target.Include, target.Exclude)
+		if err != nil {
+			continue
+		}
+		collisions := CheckNameCollisions(filtered)
+		if len(collisions) > 0 {
+			perTarget = append(perTarget, TargetCollision{
+				TargetName: name,
+				Collisions: collisions,
+			})
+		}
+	}
+
+	return global, perTarget
+}
+
 // CheckStatusMerge checks the status of a target in merge mode
 func CheckStatusMerge(targetPath, sourcePath string) (TargetStatus, int, int) {
 	// Returns: status, linked count, local count

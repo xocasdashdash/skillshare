@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"skillshare/internal/backup"
@@ -69,22 +70,10 @@ func cmdSync(args []string) error {
 		backupTargetsBeforeSync(cfg)
 	}
 
-	// Check for name collisions before syncing
+	// Check for name collisions before syncing (per-target aware)
 	discoveredSkills, discoverErr := sync.DiscoverSourceSkills(cfg.Source)
 	if discoverErr == nil {
-		collisions := sync.CheckNameCollisions(discoveredSkills)
-		if len(collisions) > 0 {
-			ui.Header("Name conflicts detected")
-			for _, collision := range collisions {
-				ui.Warning("Skill name '%s' is defined in multiple places:", collision.Name)
-				for _, path := range collision.Paths {
-					ui.Info("  - %s", path)
-				}
-			}
-			ui.Info("CLI tools may not distinguish between them.")
-			ui.Info("Suggestion: Rename one in SKILL.md (e.g., 'repo:skillname')")
-			fmt.Println()
-		}
+		reportCollisions(discoveredSkills, cfg.Targets)
 	}
 
 	ui.Header("Syncing skills")
@@ -214,6 +203,14 @@ func syncMergeMode(name string, target config.TargetConfig, source string, dryRu
 		ui.Success("%s: merged (no skills)", name)
 	}
 
+	// Show filter summary (omit empty, human-readable)
+	if len(target.Include) > 0 {
+		ui.Info("  include: %s", strings.Join(target.Include, ", "))
+	}
+	if len(target.Exclude) > 0 {
+		ui.Info("  exclude: %s", strings.Join(target.Exclude, ", "))
+	}
+
 	// Show prune warnings
 	if pruneResult != nil {
 		for _, warn := range pruneResult.Warnings {
@@ -222,6 +219,35 @@ func syncMergeMode(name string, target config.TargetConfig, source string, dryRu
 	}
 
 	return nil
+}
+
+func reportCollisions(skills []sync.DiscoveredSkill, targets map[string]config.TargetConfig) {
+	global, perTarget := sync.CheckNameCollisionsForTargets(skills, targets)
+	if len(global) == 0 {
+		return
+	}
+
+	if len(perTarget) > 0 {
+		// Real per-target collisions — actionable warning
+		ui.Header("Name conflicts detected")
+		for _, tc := range perTarget {
+			for _, c := range tc.Collisions {
+				ui.Warning("Target '%s': skill name '%s' is defined in multiple places:", tc.TargetName, c.Name)
+				for _, p := range c.Paths {
+					ui.Info("  - %s", p)
+				}
+			}
+		}
+		ui.Info("Rename one in SKILL.md or adjust include/exclude filters")
+		fmt.Println()
+	} else {
+		// Global collision exists but filters isolate them — informational
+		ui.Info("Duplicate skill names exist but are isolated by target filters:")
+		for _, c := range global {
+			ui.Info("  '%s' (%d definitions)", c.Name, len(c.Paths))
+		}
+		fmt.Println()
+	}
 }
 
 func syncSymlinkMode(name string, target config.TargetConfig, source string, dryRun, force bool) error {

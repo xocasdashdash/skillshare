@@ -35,19 +35,7 @@ func cmdSyncProject(root string, dryRun, force bool) (syncLogStats, error) {
 
 	discoveredSkills, discoverErr := sync.DiscoverSourceSkills(runtime.sourcePath)
 	if discoverErr == nil {
-		collisions := sync.CheckNameCollisions(discoveredSkills)
-		if len(collisions) > 0 {
-			ui.Header("Name conflicts detected")
-			for _, collision := range collisions {
-				ui.Warning("Skill name '%s' is defined in multiple places:", collision.Name)
-				for _, path := range collision.Paths {
-					ui.Info("  - %s", path)
-				}
-			}
-			ui.Info("CLI tools may not distinguish between them.")
-			ui.Info("Suggestion: Rename one in SKILL.md (e.g., 'repo:skillname')")
-			fmt.Println()
-		}
+		reportCollisions(discoveredSkills, runtime.targets)
 	}
 
 	ui.Header("Syncing skills (project)")

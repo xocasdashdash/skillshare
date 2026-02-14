@@ -153,23 +153,38 @@ See [Tracked Repositories](/docs/concepts/tracked-repositories#nested-skills--au
 
 ## Collision Detection
 
-When multiple skills have the same `name` field, sync warns you:
+When multiple skills share the same `name` field, sync checks whether they actually land on the same target after `include`/`exclude` filters are applied.
+
+**Filters isolate the collision** — informational only:
 
 ```
-Warning: skill name collision detected
-  "ui" defined in:
-    - _team-a/frontend/ui/SKILL.md
-    - _team-b/components/ui/SKILL.md
+ℹ Duplicate skill names exist but are isolated by target filters:
+  'ui' (2 definitions)
 ```
 
-**Solution:** Use namespaced names:
+**Collision reaches the same target** — actionable warning:
+
+```
+⚠ Target 'claude': skill name 'ui' is defined in multiple places:
+  - _team-a/frontend/ui
+  - _team-b/components/ui
+Rename one in SKILL.md or adjust include/exclude filters
+```
+
+**Solution:** Use namespaced names or route with filters:
 
 ```yaml
-# In _team-a/frontend/ui/SKILL.md
+# Option 1: Namespace in SKILL.md
 name: team-a:ui
 
-# In _team-b/components/ui/SKILL.md
-name: team-b:ui
+# Option 2: Route with filters in config.yaml
+targets:
+  codex:
+    path: ~/.codex/skills
+    include: [_team-a__*]
+  claude:
+    path: ~/.claude/skills
+    include: [_team-b__*]
 ```
 
 ---

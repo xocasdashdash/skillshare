@@ -264,18 +264,28 @@ skillshare doctor
 # 3. Restart AI CLI
 ```
 
-### `skill name collision detected`
+### `skill name 'X' is defined in multiple places`
 
-**Cause:** Multiple skills have the same `name` field.
+**Cause:** Multiple skills have the same `name` field and land on the same target.
 
-**Solution:** Use namespaced names:
+**Solution:** Rename one in SKILL.md or use `include`/`exclude` filters to route them to different targets:
 ```yaml
-# In _team-a/skill/SKILL.md
+# Option 1: Namespace in SKILL.md
 name: team-a:skill-name
 
-# In _team-b/skill/SKILL.md
-name: team-b:skill-name
+# Option 2: Route with filters
+targets:
+  codex:
+    path: ~/.codex/skills
+    include: [_team-a__*]
+  claude:
+    path: ~/.claude/skills
+    include: [_team-b__*]
 ```
+
+:::tip
+If filters already isolate the duplicates, sync shows an info message instead of a warning — no action needed.
+:::
 
 ---
 

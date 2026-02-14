@@ -460,6 +460,57 @@ func TestInclude_ProjectMerge_PreservesLocalDirectoryOutsideInclude(t *testing.T
 	}
 }
 
+func TestExclude_CollisionWarningSuppressedByFilters(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	// Two skills with the same SKILL.md name ("planner") but different directories.
+	sb.CreateSkill("codex-plan", map[string]string{
+		"SKILL.md": "---\nname: planner\n---\n# Codex planner",
+	})
+	sb.CreateSkill("gemini-plan", map[string]string{
+		"SKILL.md": "---\nname: planner\n---\n# Gemini planner",
+	})
+
+	codexTarget := sb.CreateTarget("codex")
+	geminiTarget := sb.CreateTarget("gemini")
+
+	// Route each skill to a different target via include filters.
+	sb.WriteConfig(`source: ` + sb.SourcePath + `
+mode: merge
+targets:
+  codex:
+    path: ` + codexTarget + `
+    include: [codex-*]
+  gemini:
+    path: ` + geminiTarget + `
+    include: [gemini-*]
+`)
+
+	result := sb.RunCLI("sync")
+	result.AssertSuccess(t)
+
+	// Should NOT show "Name conflicts detected" (warning-level header)
+	result.AssertOutputNotContains(t, "Name conflicts detected")
+
+	// Should show info-level message about isolated duplicates
+	result.AssertAnyOutputContains(t, "isolated by target filters")
+
+	// Verify correct skills landed on correct targets
+	if !sb.IsSymlink(filepath.Join(codexTarget, "codex-plan")) {
+		t.Error("codex-plan should be linked to codex target")
+	}
+	if sb.FileExists(filepath.Join(codexTarget, "gemini-plan")) {
+		t.Error("gemini-plan should not be on codex target")
+	}
+	if !sb.IsSymlink(filepath.Join(geminiTarget, "gemini-plan")) {
+		t.Error("gemini-plan should be linked to gemini target")
+	}
+	if sb.FileExists(filepath.Join(geminiTarget, "codex-plan")) {
+		t.Error("codex-plan should not be on gemini target")
+	}
+}
+
 func TestIncludeExclude_ProjectMerge_PrecedenceAndRemoval(t *testing.T) {
 	sb := testutil.NewSandbox(t)
 	defer sb.Cleanup()
