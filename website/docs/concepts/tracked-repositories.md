@@ -231,7 +231,7 @@ Rename one in SKILL.md or adjust include/exclude filters
 # Option 1: Namespace in SKILL.md
 name: team-a:ui
 
-# Option 2: Route with filters in config.yaml
+# Option 2: Route with filters (global config)
 targets:
   codex:
     path: ~/.codex/skills
@@ -240,6 +240,17 @@ targets:
     path: ~/.claude/skills
     include: [_team-b__*]
 ```
+
+```yaml
+# Option 2: Route with filters (project config)
+targets:
+  - name: claude-code
+    exclude: [codex-*]
+  - name: codex
+    include: [codex-*]
+```
+
+See [Target Filters](/docs/targets/configuration#include--exclude-target-filters) for full syntax and examples.
 
 ---
 

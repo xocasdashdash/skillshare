@@ -273,7 +273,7 @@ skillshare doctor
 # Option 1: Namespace in SKILL.md
 name: team-a:skill-name
 
-# Option 2: Route with filters
+# Option 2: Route with filters (global config)
 targets:
   codex:
     path: ~/.codex/skills
@@ -281,10 +281,18 @@ targets:
   claude:
     path: ~/.claude/skills
     include: [_team-b__*]
+
+# Option 2: Route with filters (project config)
+targets:
+  - name: claude-code
+    exclude: [codex-*]
+  - name: codex
+    include: [codex-*]
 ```
 
 :::tip
 If filters already isolate the duplicates, sync shows an info message instead of a warning — no action needed.
+See [Target Filters](/docs/targets/configuration#include--exclude-target-filters) for full syntax.
 :::
 
 ---
