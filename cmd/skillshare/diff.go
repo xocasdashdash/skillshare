@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"skillshare/internal/config"
 	"skillshare/internal/sync"
@@ -12,24 +13,50 @@ import (
 )
 
 func cmdDiff(args []string) error {
-	var targetName string
-	for i := 0; i < len(args); i++ {
-		if args[i] == "--target" || args[i] == "-t" {
-			if i+1 < len(args) {
-				targetName = args[i+1]
-				i++
-			}
+	mode, rest, err := parseModeArgs(args)
+	if err != nil {
+		return err
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+
+	if mode == modeAuto {
+		if projectConfigExists(cwd) {
+			mode = modeProject
 		} else {
-			targetName = args[i]
+			mode = modeGlobal
 		}
 	}
 
+	applyModeLabel(mode)
+
+	var targetName string
+	for i := 0; i < len(rest); i++ {
+		if rest[i] == "--target" || rest[i] == "-t" {
+			if i+1 < len(rest) {
+				targetName = rest[i+1]
+				i++
+			}
+		} else {
+			targetName = rest[i]
+		}
+	}
+
+	if mode == modeProject {
+		return cmdDiffProject(cwd, targetName)
+	}
+	return cmdDiffGlobal(targetName)
+}
+
+func cmdDiffGlobal(targetName string) error {
 	cfg, err := config.Load()
 	if err != nil {
 		return err
 	}
 
-	// Use same discovery as sync to get proper skill names (including tracked repo skills)
 	discovered, err := sync.DiscoverSourceSkills(cfg.Source)
 	if err != nil {
 		return fmt.Errorf("failed to discover skills: %w", err)
@@ -61,6 +88,13 @@ func cmdDiff(args []string) error {
 
 func showTargetDiff(name string, target config.TargetConfig, source string, sourceSkills map[string]bool) {
 	ui.Header(name)
+
+	if len(target.Include) > 0 {
+		ui.Info("  include: %s", strings.Join(target.Include, ", "))
+	}
+	if len(target.Exclude) > 0 {
+		ui.Info("  exclude: %s", strings.Join(target.Exclude, ", "))
+	}
 
 	// Check if target is a symlink (symlink mode)
 	_, err := os.Lstat(target.Path)

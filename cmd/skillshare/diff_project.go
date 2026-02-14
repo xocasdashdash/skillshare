@@ -1,0 +1,62 @@
+package main
+
+import (
+	"fmt"
+
+	"skillshare/internal/config"
+	"skillshare/internal/sync"
+)
+
+func cmdDiffProject(root, targetName string) error {
+	if !projectConfigExists(root) {
+		if err := performProjectInit(root, projectInitOptions{}); err != nil {
+			return err
+		}
+	}
+
+	runtime, err := loadProjectRuntime(root)
+	if err != nil {
+		return err
+	}
+
+	discovered, err := sync.DiscoverSourceSkills(runtime.sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to discover skills: %w", err)
+	}
+
+	targets := make([]config.ProjectTargetEntry, len(runtime.config.Targets))
+	copy(targets, runtime.config.Targets)
+
+	if targetName != "" {
+		found := false
+		for _, entry := range runtime.config.Targets {
+			if entry.Name == targetName {
+				targets = []config.ProjectTargetEntry{entry}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("target '%s' not found", targetName)
+		}
+	}
+
+	for _, entry := range targets {
+		target, ok := runtime.targets[entry.Name]
+		if !ok {
+			return fmt.Errorf("target '%s' not resolved", entry.Name)
+		}
+
+		filtered, err := sync.FilterSkills(discovered, target.Include, target.Exclude)
+		if err != nil {
+			return fmt.Errorf("target %s has invalid include/exclude config: %w", entry.Name, err)
+		}
+		sourceSkills := make(map[string]bool, len(filtered))
+		for _, skill := range filtered {
+			sourceSkills[skill.FlatName] = true
+		}
+		showTargetDiff(entry.Name, target, runtime.sourcePath, sourceSkills)
+	}
+
+	return nil
+}
