@@ -4,7 +4,7 @@ Initialize skillshare configuration (global or project).
 
 ## Global Init
 
-**Source:** Always `~/.config/skillshare/skills` (use `--source` only if user explicitly requests).
+**Source:** `~/.config/skillshare/skills` by default. Respects `$XDG_CONFIG_HOME` — if set, uses `$XDG_CONFIG_HOME/skillshare/skills`. Use `--source` only if user explicitly requests a custom path.
 
 ### Flags
 

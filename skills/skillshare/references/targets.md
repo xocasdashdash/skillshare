@@ -1,6 +1,6 @@
 # Target Management
 
-Manage AI CLI tool targets (Claude, Cursor, Windsurf, etc.). Skillshare supports 46+ built-in targets.
+Manage AI CLI tool targets (Claude, Cursor, Windsurf, etc.). Skillshare supports 48+ built-in targets.
 
 ## Global Targets
 
@@ -33,6 +33,50 @@ targets:
     mode: merge
 ```
 
+## Target Filters
+
+Control which skills sync to each target using include/exclude glob patterns.
+
+```bash
+# Add filters
+skillshare target claude --add-include "team-*"       # Only sync matching skills
+skillshare target claude --add-exclude "_legacy*"     # Skip matching skills
+skillshare target claude --add-include "team-*" -p    # Project target filter
+
+# Remove filters
+skillshare target claude --remove-include "team-*"
+skillshare target claude --remove-exclude "_legacy*"
+```
+
+**Config format** with filters:
+
+```yaml
+targets:
+  - name: claude
+    include: ["team-*", "core-*"]
+    exclude: ["_legacy*"]
+  - cursor                          # No filters = sync all skills
+```
+
+**Pattern syntax:** `filepath.Match` globs — `*` matches any non-separator chars, `?` matches single char.
+
+**Precedence:** Include filters apply first (whitelist), then exclude filters remove from that set. No filters = all skills.
+
+## Skill-Level Targets
+
+Skills can declare which targets they should sync to via a `targets` frontmatter field in SKILL.md:
+
+```yaml
+---
+name: enterprise-skill
+targets: [claude, cursor]
+---
+```
+
+- Skills **without** `targets` sync to all targets (backward compatible)
+- `check` warns about unknown target names in the `targets` field
+- Works with both global and project mode target names
+
 ## Sync Modes
 
 Per-target mode (both global and project):
@@ -47,6 +91,10 @@ skillshare target claude --mode symlink -p   # Project target mode
 |------|-------------|--------------|
 | `merge` | Individual symlinks per skill | Preserved |
 | `symlink` | Single symlink for entire dir | Not possible |
+
+## Unified Target Names
+
+Global and project modes use the **same short names** (e.g., `claude`, `cursor`, `windsurf`). Old project-only names (e.g., `claude-code`) are supported as aliases for backward compatibility.
 
 ## Safety
 
