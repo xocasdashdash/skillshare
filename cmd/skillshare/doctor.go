@@ -76,6 +76,7 @@ func cmdDoctorGlobal() error {
 		return nil
 	}
 	ui.Success("Config: %s", config.ConfigPath())
+	ui.Info("Base directory: %s", config.BaseDir())
 
 	cfg, err := config.Load()
 	if err != nil {

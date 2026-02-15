@@ -20,6 +20,31 @@ SKILLSHARE_CONFIG=~/custom-config.yaml skillshare status
 
 ---
 
+### XDG_CONFIG_HOME
+
+Override the base configuration directory per the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/).
+
+```bash
+export XDG_CONFIG_HOME=~/my-config
+# skillshare will use ~/my-config/skillshare/
+```
+
+**Default behavior:**
+
+| Platform | Default |
+|----------|---------|
+| Linux | `~/.config/skillshare/` |
+| macOS | `~/.config/skillshare/` |
+| Windows | `%AppData%\skillshare\` |
+
+**Priority:** `SKILLSHARE_CONFIG` > `XDG_CONFIG_HOME` > platform default.
+
+:::note
+If you set `XDG_CONFIG_HOME` after initial setup, move your existing `~/.config/skillshare/` directory to the new location manually.
+:::
+
+---
+
 ## GitHub API
 
 ### GITHUB_TOKEN
@@ -103,6 +128,7 @@ export GITHUB_TOKEN="ghp_your_token_here"
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `SKILLSHARE_CONFIG` | Config file path | `~/.config/skillshare/config.yaml` |
+| `XDG_CONFIG_HOME` | Base config directory | `~/.config` (Linux/macOS), `%AppData%` (Windows) |
 | `GITHUB_TOKEN` | GitHub API auth | None |
 | `SKILLSHARE_TEST_BINARY` | Test binary path | `bin/skillshare` |
 

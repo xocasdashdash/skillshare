@@ -127,6 +127,17 @@ func TestCopyDir_EmptyDir(t *testing.T) {
 	}
 }
 
+func TestBackupDir_RespectsXDGConfigHome(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", "/custom/config")
+	t.Setenv("SKILLSHARE_CONFIG", "")
+
+	got := BackupDir()
+	want := filepath.Join("/custom/config", "skillshare", "backups")
+	if got != want {
+		t.Errorf("BackupDir() = %q, want %q", got, want)
+	}
+}
+
 // --- helpers ---
 
 func writeTestFile(t *testing.T, path, content string) {

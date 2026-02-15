@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -48,14 +49,31 @@ type Config struct {
 
 const defaultAuditBlockThreshold = "CRITICAL"
 
+// BaseDir returns the skillshare data root directory.
+// Priority:
+//  1. $XDG_CONFIG_HOME/skillshare  (any platform, if set)
+//  2. %AppData%/skillshare         (Windows only, via os.UserConfigDir())
+//  3. ~/.config/skillshare         (Linux, macOS, Windows fallback)
+func BaseDir() string {
+	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
+		return filepath.Join(xdg, "skillshare")
+	}
+	if runtime.GOOS == "windows" {
+		if dir, err := os.UserConfigDir(); err == nil {
+			return filepath.Join(dir, "skillshare")
+		}
+	}
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".config", "skillshare")
+}
+
 // ConfigPath returns the config file path, respecting SKILLSHARE_CONFIG env var
 func ConfigPath() string {
 	// Allow override for testing
 	if envPath := os.Getenv("SKILLSHARE_CONFIG"); envPath != "" {
 		return envPath
 	}
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "skillshare", "config.yaml")
+	return filepath.Join(BaseDir(), "config.yaml")
 }
 
 // Load reads the config from the default location

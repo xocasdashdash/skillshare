@@ -52,9 +52,14 @@ Directory layout and file locations for skillshare.
 ~/.config/skillshare/config.yaml
 ```
 
-**Windows:**
+**Override with XDG:**
 ```
-%USERPROFILE%\.config\skillshare\config.yaml
+XDG_CONFIG_HOME=/custom/path → /custom/path/skillshare/config.yaml
+```
+
+**Windows default:**
+```
+%AppData%\skillshare\config.yaml
 ```
 
 ### Contents
@@ -86,7 +91,7 @@ See [Configuration](/docs/targets/configuration) for full reference.
 
 **Windows:**
 ```
-%USERPROFILE%\.config\skillshare\skills\
+%AppData%\skillshare\skills\
 ```
 
 ### Structure
@@ -277,6 +282,12 @@ _team-skills__frontend__ui/SKILL.md
 
 ## Platform Differences
 
+:::tip XDG_CONFIG_HOME
+On any platform, setting `XDG_CONFIG_HOME` overrides the base directory. All paths below become relative to `$XDG_CONFIG_HOME/skillshare/` instead.
+
+See [Environment Variables](./environment-variables.md#xdg_config_home) for details.
+:::
+
 ### macOS / Linux
 
 | Item | Path |
@@ -292,11 +303,11 @@ _team-skills__frontend__ui/SKILL.md
 
 | Item | Path |
 |------|------|
-| Config | `%USERPROFILE%\.config\skillshare\config.yaml` |
-| Source | `%USERPROFILE%\.config\skillshare\skills\` |
-| Logs | `%USERPROFILE%\.config\skillshare\logs\` |
-| Backups | `%USERPROFILE%\.config\skillshare\backups\` |
-| Trash | `%USERPROFILE%\.config\skillshare\trash\` |
+| Config | `%AppData%\skillshare\config.yaml` |
+| Source | `%AppData%\skillshare\skills\` |
+| Logs | `%AppData%\skillshare\logs\` |
+| Backups | `%AppData%\skillshare\backups\` |
+| Trash | `%AppData%\skillshare\trash\` |
 | Link type | NTFS Junctions |
 
 ---
