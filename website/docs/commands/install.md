@@ -20,6 +20,12 @@ Add skills from GitHub repos, git URLs, or local paths.
 └──────────────────────────────────────────────────────────────┘
 ```
 
+## When to Use
+
+- Add a new skill from GitHub, GitLab, Bitbucket, or a local path
+- Install an organization's shared skill repository (with `--track`)
+- Re-install or update an existing skill (with `--update` or `--force`)
+
 ---
 
 ## Quick Examples
@@ -332,7 +338,7 @@ skillshare install anthropics/skills/skills/pdf
 skillshare sync  # ← Don't forget!
 ```
 
-## Related
+## See Also
 
 - [list](/docs/commands/list) — View installed skills
 - [update](/docs/commands/update) — Update skills or tracked repos

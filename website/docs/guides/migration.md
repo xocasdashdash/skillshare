@@ -326,8 +326,8 @@ After migrating:
 
 ---
 
-## Related
+## See Also
 
-- [Getting Started](/docs/getting-started/from-existing-skills) — Detailed migration walkthrough
-- [Commands: collect](/docs/commands/collect) — Collect command
-- [Organization-Wide Skills](./organization-sharing.md) — Organization migration
+- [From Existing Skills](/docs/getting-started/from-existing-skills) — Quick migration path
+- [collect](/docs/commands/collect) — Collect from targets
+- [Comparison](./comparison.md) — Compare approaches

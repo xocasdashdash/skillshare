@@ -170,8 +170,9 @@ skillshare doctor            # Check for issues
 
 ---
 
-## Related
+## See Also
 
-- [Cross-Machine Sync](/docs/guides/cross-machine-sync) — Full setup guide
-- [Commands: sync](/docs/commands/sync) — Sync command details
-- [Commands: status](/docs/commands/status) — Status command
+- [sync](/docs/commands/sync) — Core sync command
+- [status](/docs/commands/status) — Check sync state
+- [push](/docs/commands/push) / [pull](/docs/commands/pull) — Cross-machine sync
+- [Skill Discovery](/docs/workflows/skill-discovery) — Find new skills

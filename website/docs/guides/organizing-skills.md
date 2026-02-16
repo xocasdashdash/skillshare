@@ -278,9 +278,9 @@ After `sync`, targets are updated automatically — old flat symlinks are cleane
 
 ---
 
-## Related
+## See Also
 
-- [Source & Targets](/docs/concepts/source-and-targets#organize-with-folders-auto-flattening) — Auto-flattening concept
-- [Tracked Repositories](/docs/concepts/tracked-repositories#nested-skills--auto-flattening) — Nested skills in tracked repos
+- [Source & Targets](/docs/concepts/source-and-targets) — How flattening works
+- [Tracked Repositories](/docs/concepts/tracked-repositories) — Nested skills in repos
 - [Best Practices](./best-practices.md) — Naming conventions
-- [Cross-Machine Sync](./cross-machine-sync.md) — Sync across computers
+- [install](/docs/commands/install) — Install with `--into` for subdirectories

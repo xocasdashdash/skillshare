@@ -6,15 +6,32 @@ sidebar_position: 1
 
 Complete reference for all skillshare commands.
 
+## What do you want to do?
+
+| I want to... | Command |
+|--------------|---------|
+| Set up skillshare for the first time | [`init`](./init.md) |
+| Install a skill from GitHub | [`install`](./install.md) |
+| Create my own skill | [`new`](./new.md) |
+| Sync skills to all AI CLIs | [`sync`](./sync.md) |
+| Check what's out of sync | [`status`](./status.md) / [`diff`](./diff.md) |
+| Search for community skills | [`search`](./search.md) |
+| Update installed skills | [`check`](./check.md) then [`update`](./update.md) |
+| Sync across machines | [`push`](./push.md) / [`pull`](./pull.md) |
+| Fix something broken | [`doctor`](./doctor.md) |
+| Open the web dashboard | [`ui`](./ui.md) |
+
+---
+
 ## Overview
 
 | Category | Commands |
 |----------|----------|
 | **Core** | `init`, `install`, `uninstall`, `list`, `search`, `sync`, `status` |
-| **Skill Management** | `new`, `update`, `upgrade` |
+| **Skill Management** | `new`, `check`, `update`, `upgrade` |
 | **Target Management** | `target`, `diff` |
-| **Sync Operations** | `collect`, `backup`, `restore`, `push`, `pull` |
-| **Utilities** | `audit`, `log`, `doctor`, `ui` |
+| **Sync Operations** | `collect`, `backup`, `restore`, `trash`, `push`, `pull` |
+| **Security & Utilities** | `audit`, `hub`, `log`, `doctor`, `ui`, `version` |
 
 ---
 
@@ -35,6 +52,7 @@ Complete reference for all skillshare commands.
 | Command | Description |
 |---------|-------------|
 | [new](./new.md) | Create a new skill |
+| [check](./check.md) | Check for available updates |
 | [update](./update.md) | Update a skill or tracked repo |
 | [upgrade](./upgrade.md) | Upgrade CLI or built-in skill |
 
@@ -52,10 +70,11 @@ Complete reference for all skillshare commands.
 | [collect](./collect.md) | Collect skills from target to source |
 | [backup](./backup.md) | Create backup of targets |
 | [restore](./restore.md) | Restore targets from backup |
+| [trash](./trash.md) | Manage uninstalled skills in trash |
 | [push](./push.md) | Push to git remote |
 | [pull](./pull.md) | Pull from git remote and sync |
 
-## Utilities
+## Security & Utilities
 
 | Command | Description |
 |---------|-------------|
@@ -63,6 +82,8 @@ Complete reference for all skillshare commands.
 | [log](./log.md) | View operations and audit logs |
 | [doctor](./doctor.md) | Diagnose issues |
 | [ui](./ui.md) | Launch web dashboard |
+| [hub](./hub.md) | Manage skill hub sources |
+| [version](./version.md) | Show CLI version |
 
 ---
 
@@ -114,6 +135,20 @@ skillshare backup
 # Web UI
 skillshare ui
 skillshare ui -p          # Project mode
+
+# Hub
+skillshare hub list
+skillshare hub add https://hub.example.com/index.json
+
+# Check for updates
+skillshare check
+
+# Trash management
+skillshare trash list
+skillshare trash restore my-skill
+
+# Version
+skillshare version
 ```
 
 ---

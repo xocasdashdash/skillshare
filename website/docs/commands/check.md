@@ -11,6 +11,27 @@ skillshare check             # Check all repos and skills
 skillshare check --json      # Machine-readable output
 ```
 
+## When to Use
+
+### Before Updating
+
+Preview what would change before running `update`:
+
+```bash
+skillshare check         # See what has updates
+skillshare update --all  # Apply updates
+skillshare sync          # Distribute changes
+```
+
+### CI/CD Pipeline
+
+Check for stale skills in CI:
+
+```bash
+result=$(skillshare check --json)
+# Parse JSON to detect outdated skills
+```
+
 ## What It Does
 
 `check` inspects your source directory and reports update status for:
@@ -104,28 +125,7 @@ skillshare check -p         # Check project skills
 skillshare check -p --json  # JSON output for project
 ```
 
-## Use Cases
-
-### Before Updating
-
-Preview what would change before running `update`:
-
-```bash
-skillshare check         # See what has updates
-skillshare update --all  # Apply updates
-skillshare sync          # Distribute changes
-```
-
-### CI/CD Pipeline
-
-Check for stale skills in CI:
-
-```bash
-result=$(skillshare check --json)
-# Parse JSON to detect outdated skills
-```
-
-## Related
+## See Also
 
 - [update](/docs/commands/update) — Apply updates
 - [list](/docs/commands/list) — View installed skills

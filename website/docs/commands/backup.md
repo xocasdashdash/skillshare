@@ -13,6 +13,12 @@ skillshare backup --list       # List all backups
 skillshare backup --cleanup    # Remove old backups
 ```
 
+## When to Use
+
+- Create a manual backup before risky changes
+- List existing backups to check recovery options
+- Clean up old backups to free disk space
+
 ## Automatic Backups
 
 Backups are created **automatically** before:
@@ -90,7 +96,7 @@ This means:
 - In merge mode: Only local-only skills are backed up
 - In symlink mode: Nothing is backed up (entire dir is symlink)
 
-## Related
+## See Also
 
 - [restore](/docs/commands/restore) — Restore from backup
 - [sync](/docs/commands/sync) — Auto-creates backups

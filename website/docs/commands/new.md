@@ -12,6 +12,11 @@ skillshare new <name> -p         # Create in project (.skillshare/skills/)
 skillshare new <name> --dry-run  # Preview without creating
 ```
 
+## When to Use
+
+- Create a new skill from scratch with the recommended template structure
+- Start with the correct SKILL.md format (name, description, frontmatter)
+
 **What happens:**
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -198,7 +203,7 @@ After creating a skill:
 
 ---
 
-## Related
+## See Also
 
 - [install](/docs/commands/install) — Install skills from repos
 - [sync](/docs/commands/sync) — Sync skills to targets

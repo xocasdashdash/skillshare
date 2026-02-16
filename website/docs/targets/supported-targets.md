@@ -105,6 +105,27 @@ These are auto-detected during `skillshare init`:
 | xcode-codex | `~/Library/Developer/Xcode/CodingAssistant/codex/skills` | `.codex/skills` |
 | zencoder | `~/.zencoder/skills` | `.zencoder/skills` |
 
+## Aliases
+
+Some targets have alternative names for backward compatibility or convenience:
+
+| Alias | Resolves To | Notes |
+|-------|-------------|-------|
+| `claude-code` | `claude` | Legacy name |
+| `command-code` | `commandcode` | Hyphenated variant |
+| `github-copilot` | `copilot` | Full product name |
+| `opencode-ai` | `opencode` | With suffix |
+| `trae-cn` | `traecn` | Hyphenated variant |
+
+You can use either the alias or the canonical name in all commands:
+
+```bash
+skillshare target add claude           # canonical
+skillshare target add claude-code      # alias — same result
+```
+
+Aliases are resolved automatically. The canonical name is used in config files and status output.
+
 ---
 
 ## Check Target Path

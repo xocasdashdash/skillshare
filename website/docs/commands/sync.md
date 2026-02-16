@@ -10,6 +10,12 @@ Push skills from source to all targets.
 Operations like `install` and `uninstall` only modify source — sync propagates to targets. This lets you batch changes, preview with `--dry-run`, and control when targets update. See [Why Sync is a Separate Step](/docs/concepts/source-and-targets#why-sync-is-a-separate-step).
 :::
 
+## When to Use
+
+- After installing, uninstalling, or editing skills — propagate changes to all targets
+- After changing a target's sync mode — apply the new mode
+- Periodically to ensure all targets are in sync
+
 ## Command Overview
 
 | Type | Command | Direction |
@@ -436,7 +442,7 @@ skillshare restore claude --dry-run                    # Preview
 
 ---
 
-## Related
+## See Also
 
 - [status](/docs/commands/status) — Show sync state
 - [diff](/docs/commands/diff) — Show differences

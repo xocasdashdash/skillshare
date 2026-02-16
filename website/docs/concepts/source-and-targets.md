@@ -6,6 +6,10 @@ sidebar_position: 2
 
 The core model behind skillshare: one source, many targets.
 
+:::tip When does this matter?
+Understanding source vs targets helps you know where to edit skills (always in source — changes reflect via symlinks), why `sync` is a separate step, and how `collect` works in the reverse direction.
+:::
+
 ## The Problem
 
 Without skillshare, you manage skills separately for each AI CLI:
@@ -189,8 +193,9 @@ $EDITOR ~/.claude/skills/my-skill/SKILL.md
 
 ---
 
-## Related
+## See Also
 
-- [Sync Modes](./sync-modes.md) — Merge vs symlink mode
-- [Target Management](/docs/targets) — Managing targets
-- [Configuration](/docs/targets/configuration) — Custom source path
+- [sync](/docs/commands/sync) — Propagate changes from source to targets
+- [collect](/docs/commands/collect) — Pull skills from targets back to source
+- [Sync Modes](./sync-modes.md) — How files are linked (merge vs symlink)
+- [Configuration](/docs/targets/configuration) — Target config reference

@@ -10,6 +10,13 @@ Show the current state of skillshare: source, tracked repositories, targets, and
 skillshare status
 ```
 
+## When to Use
+
+- Check if all targets are in sync after making changes
+- See which targets need a `sync` run
+- Verify tracked repos are up to date
+- Check for CLI or skill updates
+
 ![status demo](/img/status-demo.png)
 
 ## Example Output
@@ -96,7 +103,7 @@ Remote Skills
 
 Project status does not show Tracked Repositories or Version sections (these are global-only features).
 
-## Related
+## See Also
 
 - [sync](/docs/commands/sync) — Sync skills to targets
 - [diff](/docs/commands/diff) — Show detailed differences

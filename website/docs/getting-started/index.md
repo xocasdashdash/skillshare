@@ -4,32 +4,37 @@ sidebar_position: 1
 
 # Getting Started
 
-Choose your path based on your situation:
+Get skillshare running in minutes. Choose your starting point:
 
-## New User
+## What's your situation?
 
-Never used skillshare or any skill management tool before?
+| I want to... | Start here |
+|--------------|-----------|
+| Set up skillshare from scratch | [First Sync](./first-sync.md) — install, init, and sync in 5 minutes |
+| I already have skills in Claude/Cursor/etc. | [From Existing Skills](./from-existing-skills.md) — consolidate and unify |
+| I know skillshare, just need command syntax | [Quick Reference](./quick-reference.md) — cheat sheet |
 
-**→ [First Sync](./first-sync.md)** — Get synced in 5 minutes
+## The 3-Step Pattern
 
-## Migrating from Existing Skills
+No matter which path you choose, skillshare follows a simple pattern:
 
-Already have skills scattered across AI CLIs?
+```bash
+# 1. Install skillshare
+curl -fsSL https://raw.githubusercontent.com/runkids/skillshare/main/install.sh | sh
 
-**→ [From Existing Skills](./from-existing-skills.md)** — Consolidate and sync
+# 2. Initialize (auto-detects your AI CLIs)
+skillshare init
 
-## Quick Reference
+# 3. Sync skills to all targets
+skillshare sync
+```
 
-Know what you're doing, just need command syntax?
-
-**→ [Quick Reference](./quick-reference.md)** — Command cheat sheet
-
----
+After setup, your skills are symlinked — edit once, reflect everywhere.
 
 ## What's Next?
 
-After setup, explore:
+After you're set up:
 
-- [Core Concepts](/docs/concepts) — Understand how skillshare works
-- [Workflows](/docs/workflows) — Daily usage patterns
-- [Commands](/docs/commands) — Full command reference
+- [Core Concepts](/docs/concepts) — Understand source, targets, and sync modes
+- [Daily Workflow](/docs/workflows/daily-workflow) — How to use skillshare day-to-day
+- [Commands Reference](/docs/commands) — Full command reference

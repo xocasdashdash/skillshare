@@ -288,8 +288,8 @@ Before installing third-party skills:
 
 ---
 
-## Related
+## See Also
 
 - [Creating Skills](./creating-skills.md) — Skill creation guide
-- [Organization-Wide Skills](./organization-sharing.md) — Organization workflow
-- [Skill Format](/docs/concepts/skill-format) — Format specification
+- [Skill Format](/docs/concepts/skill-format) — SKILL.md reference
+- [Organization-Wide Skills](./organization-sharing.md) — Team sharing patterns

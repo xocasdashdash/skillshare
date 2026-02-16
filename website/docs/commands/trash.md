@@ -14,6 +14,12 @@ skillshare trash delete my-skill         # Permanently delete from trash
 skillshare trash empty                   # Empty the trash
 ```
 
+## When to Use
+
+- Recover a skill you recently uninstalled (within 7 days)
+- Permanently delete trashed skills to free space
+- Check what's in the trash before it auto-expires
+
 ## Subcommands
 
 ### list
@@ -99,7 +105,7 @@ These two safety mechanisms protect different things:
 
 Expired trash items (older than 7 days) are automatically cleaned up when you run `uninstall` or `sync`. No cron or scheduled task is needed.
 
-## Related
+## See Also
 
 - [uninstall](/docs/commands/uninstall) — Remove skills (moves to trash)
 - [backup](/docs/commands/backup) — Backup target directories

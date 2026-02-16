@@ -6,6 +6,10 @@ sidebar_position: 3
 
 How skillshare links source to targets.
 
+:::tip When does this matter?
+Choose merge mode (default) when you want per-skill symlinks and to preserve local skills in targets. Choose symlink mode when you want the entire directory linked and don't need local target skills.
+:::
+
 ## Overview
 
 | Mode | Behavior | Use Case |
@@ -150,8 +154,9 @@ $ skillshare sync
 
 ---
 
-## Related
+## See Also
 
-- [Source & Targets](./source-and-targets.md) — Core model
-- [Target Management](/docs/targets) — Managing targets
-- [Commands: sync](/docs/commands/sync) — Sync command details
+- [sync](/docs/commands/sync) — Run sync to apply mode changes
+- [target](/docs/commands/target) — Change a target's sync mode
+- [Source & Targets](./source-and-targets.md) — The core architecture
+- [Configuration](/docs/targets/configuration) — Per-target settings

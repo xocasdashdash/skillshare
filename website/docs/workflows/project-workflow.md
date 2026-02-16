@@ -254,9 +254,8 @@ skillshare sync --dry-run
 
 ---
 
-## Related
+## See Also
 
-- [Project Skills](/docs/concepts/project-skills) — Core concepts
+- [Project Skills](/docs/concepts/project-skills) — Concept explanation
 - [Project Setup](/docs/guides/project-setup) — Initial setup guide
-- [Daily Workflow](/docs/workflows/daily-workflow) — Global mode daily workflow
-- [Commands: sync](/docs/commands/sync) — Sync command details
+- [Daily Workflow](./daily-workflow.md) — Global mode daily usage

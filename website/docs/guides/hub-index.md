@@ -253,3 +253,11 @@ Want to share your skills with the community? [Open a PR](https://github.com/run
 - **Automate index generation** — Add `skillshare hub index` to your CI pipeline after skill changes
 - **Use `--full` for auditing** — Full mode includes version, install date, and type information
 - **Combine with project mode** — `skillshare hub index -p` indexes only project-level skills
+
+---
+
+## See Also
+
+- [search](/docs/commands/search) — Search skills from hubs
+- [hub](/docs/commands/hub) — Manage hub sources
+- [install](/docs/commands/install) — Install discovered skills

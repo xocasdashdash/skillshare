@@ -325,6 +325,30 @@ See [Environment Variables](./environment-variables.md#xdg_config_home) for deta
 | UI cache | `%AppData%\skillshare\ui\{version}\` |
 | Link type | NTFS Junctions |
 
+## XDG Base Directory Layout
+
+Skillshare follows the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/) on Unix systems:
+
+| XDG Variable | Default Path | Skillshare Uses For |
+|-------------|-------------|---------------------|
+| `XDG_CONFIG_HOME` | `~/.config` | `skillshare/config.yaml`, `skillshare/skills/` |
+| `XDG_DATA_HOME` | `~/.local/share` | `skillshare/backups/`, `skillshare/trash/` |
+| `XDG_STATE_HOME` | `~/.local/state` | `skillshare/logs/` |
+| `XDG_CACHE_HOME` | `~/.cache` | `skillshare/ui/` (downloaded web dashboard) |
+
+### Windows Paths
+
+| Purpose | Path |
+|---------|------|
+| Config + Skills | `%AppData%\skillshare\` |
+| Data (backups, trash) | `%LocalAppData%\skillshare\` |
+| State (logs) | `%LocalAppData%\skillshare\state\` |
+| Cache (UI) | `%LocalAppData%\skillshare\cache\` |
+
+### Migration Note
+
+If upgrading from a version before the XDG split, skillshare automatically migrates data from the old location (`~/.config/skillshare/`) to the correct XDG directories on first run.
+
 ---
 
 ## Related

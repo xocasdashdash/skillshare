@@ -6,6 +6,10 @@ sidebar_position: 5
 
 The structure and metadata of a skillshare skill.
 
+:::tip When does this matter?
+The SKILL.md format determines how AI CLIs discover and load your skill. The `description` field is especially critical — it's what the AI uses to decide when to activate your skill.
+:::
+
 ## Overview
 
 A skill is a directory containing at least a `SKILL.md` file:
@@ -253,8 +257,8 @@ Checks for:
 
 ---
 
-## Related
+## See Also
 
-- [Creating Skills](/docs/guides/creating-skills) — Step-by-step guide
-- [Commands: new](/docs/commands/new) — Create command
-- [Commands: doctor](/docs/commands/doctor) — Diagnose issues
+- [new](/docs/commands/new) — Create a skill with the correct template
+- [Creating Skills](/docs/guides/creating-skills) — Full guide to writing skills
+- [Best Practices](/docs/guides/best-practices) — Naming and organization tips

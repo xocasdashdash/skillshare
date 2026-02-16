@@ -25,6 +25,14 @@ Targets are AI CLI skill directories that skillshare syncs to.
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## What do you want to do?
+
+| I want to... | Read |
+|--------------|------|
+| See which AI CLIs are supported | [Supported Targets](./supported-targets.md) |
+| Add a target not in the built-in list | [Adding Custom Targets](./adding-custom-targets.md) |
+| Configure sync mode, filters, or paths | [Configuration](./configuration.md) |
+
 ## Quick Links
 
 | Topic | Description |

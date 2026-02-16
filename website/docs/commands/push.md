@@ -12,6 +12,12 @@ skillshare push -m "Add pdf"     # Custom message
 skillshare push --dry-run        # Preview
 ```
 
+## When to Use
+
+- Share skill changes with your other machines via git
+- Back up your skills to a remote repository
+- After editing skills, commit and push in one command
+
 ## What Happens
 
 ```
@@ -110,7 +116,7 @@ skillshare push -m "Update my-skill"
 skillshare pull    # Gets changes and syncs
 ```
 
-## Related
+## See Also
 
 - [pull](/docs/commands/pull) — Pull from remote
 - [sync](/docs/commands/sync) — Sync to local targets

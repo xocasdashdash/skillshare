@@ -12,6 +12,11 @@ skillshare restore claude --from 2026-01-19_10-00-00   # Specific backup
 skillshare restore claude --dry-run                    # Preview
 ```
 
+## When to Use
+
+- A sync went wrong and you need to revert a target to its previous state
+- You accidentally removed skills from a target
+
 ## What Happens
 
 ```
@@ -120,7 +125,7 @@ skillshare restore claude --from 2026-01-15_10-00-00
 skillshare sync  # Return to current state
 ```
 
-## Related
+## See Also
 
 - [backup](/docs/commands/backup) — Create and manage backups
 - [sync](/docs/commands/sync) — Re-sync after restore

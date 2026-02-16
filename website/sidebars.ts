@@ -129,6 +129,7 @@ const sidebars: SidebarsConfig = {
             'commands/log',
             'commands/doctor',
             'commands/ui',
+            'commands/version',
           ],
         },
       ],

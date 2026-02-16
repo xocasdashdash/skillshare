@@ -13,6 +13,12 @@ skillshare diff claude       # Specific target
 
 ![diff demo](/img/diff-demo.png)
 
+## When to Use
+
+- See exactly what's different between source and a target before syncing
+- Find skills that exist only in a target (local-only, not yet collected)
+- Identify local copies that could be replaced by symlinks
+
 ## Example Output
 
 ```
@@ -81,7 +87,7 @@ skillshare diff claude     # See exactly what's different
 skillshare sync            # Fix it
 ```
 
-## Related
+## See Also
 
 - [sync](/docs/commands/sync) — Sync to targets
 - [collect](/docs/commands/collect) — Import local skills

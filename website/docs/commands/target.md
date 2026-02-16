@@ -14,6 +14,13 @@ skillshare target <name>               # Show target info
 skillshare target <name> --mode merge  # Change sync mode
 ```
 
+## When to Use
+
+- Add a new AI CLI target after installing a new tool
+- Remove a target you no longer use
+- Change sync mode (merge vs symlink) for a target
+- Set up include/exclude filters for selective skill syncing
+
 ## Subcommands
 
 ### target add
@@ -201,7 +208,7 @@ Targets in project mode support:
 - **Known target names** (e.g., `claude`, `cursor`) — resolved to project-local paths
 - **Custom paths** — relative to project root or absolute with `~` expansion
 
-## Related
+## See Also
 
 - [sync](/docs/commands/sync) — Sync skills to targets
 - [status](/docs/commands/status) — Show target status

@@ -6,6 +6,16 @@ sidebar_position: 1
 
 Understanding these concepts helps you get the most out of skillshare.
 
+## What do you want to understand?
+
+| Question | Read |
+|----------|------|
+| How does skillshare move skills around? | [Source & Targets](./source-and-targets.md) |
+| What's the difference between merge and symlink? | [Sync Modes](./sync-modes.md) |
+| How do I share organization-wide skills? | [Tracked Repositories](./tracked-repositories.md) |
+| What goes inside a SKILL.md? | [Skill Format](./skill-format.md) |
+| How do project-level skills work? | [Project Skills](./project-skills.md) |
+
 ## Overview
 
 ```

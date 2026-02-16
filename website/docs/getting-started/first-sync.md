@@ -106,3 +106,27 @@ You should see:
 - [Create your own skill](/docs/guides/creating-skills)
 - [Sync across machines](/docs/guides/cross-machine-sync)
 - [Organization-wide skills](/docs/guides/organization-sharing)
+
+## What Just Happened?
+
+Here's what skillshare did behind the scenes:
+
+1. **`init`** — Created `~/.config/skillshare/config.yaml` and `~/.config/skillshare/skills/`. Auto-detected your AI CLIs (Claude, Cursor, etc.) and added them as targets.
+
+2. **`install`** — Cloned the skill from GitHub into your source directory (`~/.config/skillshare/skills/`). Ran a security audit automatically.
+
+3. **`sync`** — Created symlinks from your source to each target. For example:
+   ```
+   ~/.claude/skills/pdf → ~/.config/skillshare/skills/pdf  (symlink)
+   ```
+
+This means:
+- **Edit once, reflect everywhere** — Editing the source file updates all targets instantly (via symlinks)
+- **Non-destructive** — Your existing target skills are preserved (merge mode)
+- **Reversible** — `skillshare backup` creates snapshots; `skillshare restore` reverts
+
+## See Also
+
+- [Core Concepts](/docs/concepts) — Understand source, targets, and sync modes
+- [Daily Workflow](/docs/workflows/daily-workflow) — How to use skillshare day-to-day
+- [Creating Skills](/docs/guides/creating-skills) — Write your own skills

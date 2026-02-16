@@ -6,6 +6,12 @@ sidebar_position: 5
 
 Discover and install skills from GitHub repositories.
 
+## When to Use
+
+- Discover community skills from hub indexes
+- Find skills by name, tag, or description
+- Browse available skills before installing
+
 ## Quick Start
 
 ```bash

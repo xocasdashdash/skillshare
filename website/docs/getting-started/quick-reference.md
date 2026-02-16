@@ -25,7 +25,11 @@ Command cheat sheet for skillshare.
 | `new <name>` | Create a new skill |
 | `update <name>` | Update a skill (git pull) |
 | `update --all` | Update all tracked repos |
+| `check` | Check for skill updates |
+| `check --json` | Check for updates (JSON output) |
 | `upgrade` | Upgrade CLI and built-in skill |
+| `hub list` | List configured skill hubs |
+| `hub add <url>` | Add a skill hub |
 
 ## Target Management
 
@@ -49,6 +53,8 @@ Command cheat sheet for skillshare.
 | `restore <target>` | Restore from backup |
 | `push [-m "msg"]` | Push to git remote |
 | `pull` | Pull from git and sync |
+| `trash list` | List soft-deleted skills |
+| `trash restore <name>` | Restore a soft-deleted skill |
 
 ## Utilities
 
@@ -57,6 +63,8 @@ Command cheat sheet for skillshare.
 | `doctor` | Diagnose issues |
 | `log` | View operations and audit logs |
 | `ui` | Launch web dashboard on `localhost:19420` |
+| `ui -p` | Launch web dashboard in project mode |
+| `version` | Show CLI version |
 | `mise run test:docker` | Run offline Docker sandbox tests |
 | `mise run test:docker:online` | Run optional online Docker tests |
 | `mise run sandbox:up` | Start persistent playground container |

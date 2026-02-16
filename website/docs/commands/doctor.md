@@ -14,6 +14,13 @@ skillshare doctor -g     # Force global mode
 
 ![doctor demo](/img/doctor-demo.png)
 
+## When to Use
+
+- Something isn't working and you don't know why
+- After upgrading skillshare or your OS
+- Verify all targets, git, and symlinks are healthy
+- First diagnostic step before filing a bug report
+
 ## What It Checks
 
 ```
@@ -167,7 +174,7 @@ Summary
   ✗ 1 error(s), 4 warning(s)
 ```
 
-## Related
+## See Also
 
 - [status](/docs/commands/status) — Quick status check
 - [sync](/docs/commands/sync) — Fix sync issues

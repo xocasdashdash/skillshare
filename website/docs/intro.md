@@ -78,17 +78,25 @@ Edit in source → all targets update. Edit in target → changes go to source (
 
 ## Next Steps
 
-**New to skillshare?**
-- [First Sync](/docs/getting-started/first-sync) — Get synced in 5 minutes
+### Individual Developer
 
-**Already have skills?**
+1. [First Sync](/docs/getting-started/first-sync) — Get synced in 5 minutes
+2. [Creating Skills](/docs/guides/creating-skills) — Write your first skill
+3. [Cross-Machine Sync](/docs/guides/cross-machine-sync) — Keep skills in sync across machines
+
+### Team Lead / Organization
+
+1. [Organization-Wide Skills](/docs/guides/organization-sharing) — Share standards across the team
+2. [Project Setup](/docs/guides/project-setup) — Set up project-scoped skills
+3. [Security Audit](/docs/commands/audit) — Scan third-party skills before deployment
+
+### Already Have Skills?
+
 - [From Existing Skills](/docs/getting-started/from-existing-skills) — Migrate and consolidate
 
-**Project-level skills:**
-- [Project Setup](/docs/guides/project-setup) — Set up project-scoped skills
+### Explore More
 
-**Learn more:**
 - [Core Concepts](/docs/concepts) — Source, targets, sync modes
 - [Commands Reference](/docs/commands) — All available commands
-- [Docker Sandbox Guide](/docs/guides/docker-sandbox) — Isolated testing and playground
+- [Docker Sandbox](/docs/guides/docker-sandbox) — Try skillshare in an isolated environment
 - [FAQ](/docs/troubleshooting/faq) — Common questions

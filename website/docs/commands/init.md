@@ -11,6 +11,13 @@ skillshare init              # Interactive setup
 skillshare init --dry-run    # Preview without changes
 ```
 
+## When to Use
+
+- First time setting up skillshare on a machine
+- Migrating to a new computer (with `--remote` to connect to existing repo)
+- Adding skillshare to a project (with `--project`)
+- Discovering newly installed AI CLIs (with `--discover`)
+
 ## What Happens
 
 ```

@@ -12,6 +12,11 @@ skillshare uninstall team-repo         # Remove tracked repository (_ prefix opt
 skillshare uninstall my-skill --force  # Skip confirmation
 ```
 
+## When to Use
+
+- Remove a skill you no longer need (it moves to trash for 7 days)
+- Clean up a tracked repository you've stopped using
+
 ![uninstall demo](/img/uninstall-demo.png)
 
 ## What Happens
@@ -133,7 +138,7 @@ skillshare sync
 git add .skillshare/ && git commit -m "Remove pdf skill"
 ```
 
-## Related
+## See Also
 
 - [install](/docs/commands/install) — Install skills
 - [list](/docs/commands/list) — List installed skills

@@ -265,10 +265,9 @@ Each project gets its own context, while organization standards apply globally.
 
 ---
 
-## Related
+## See Also
 
-- [Project Skills](/docs/concepts/project-skills) — Core concepts
-- [Project Workflow](/docs/workflows/project-workflow) — Daily operations
-- [Organization-Wide Skills](/docs/guides/organization-sharing) — Organization sharing with tracked repos
-- [Commands: init](/docs/commands/init) — Init command details
-- [Commands: install](/docs/commands/install) — Install command details
+- [Project Skills](/docs/concepts/project-skills) — Concept explanation
+- [Project Workflow](/docs/workflows/project-workflow) — Day-to-day usage
+- [Organization-Wide Skills](./organization-sharing.md) — Team sharing
+- [init](/docs/commands/init) — Init with `--project`

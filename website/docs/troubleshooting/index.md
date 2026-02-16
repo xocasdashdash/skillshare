@@ -23,13 +23,14 @@ This checks:
 
 ---
 
-## Choose Your Issue
+## What's happening?
 
 | Problem | Go To |
 |---------|-------|
-| Error messages | [Common Errors](./common-errors.md) |
-| Windows problems | [Windows](./windows.md) |
-| General questions | [FAQ](./faq.md) |
+| I see an error message | [Common Errors](./common-errors.md) |
+| Something isn't working on Windows | [Windows](./windows.md) |
+| I need a step-by-step debugging process | [Troubleshooting Workflow](./troubleshooting-workflow.md) |
+| I have a general question | [FAQ](./faq.md) |
 
 ---
 

@@ -18,6 +18,12 @@ skillshare log --clear            # Clear operations log
 skillshare log -p                 # Show project operations + audit logs
 ```
 
+## When to Use
+
+- Debug what happened during a failed operation
+- Review the audit trail for compliance or troubleshooting
+- Filter logs by command, status, or time range for investigation
+
 ## What Gets Logged
 
 Every mutating CLI and Web UI operation is recorded as a JSONL entry with timestamp, command, status, duration, and contextual args.
@@ -176,7 +182,7 @@ The Log page provides:
 - **Audit detail rows** showing failed/warning skill names when present
 - **Clear** and **Refresh** controls
 
-## Related
+## See Also
 
 - [audit](/docs/commands/audit) — Security scanning (logged to audit.log)
 - [status](/docs/commands/status) — Show current sync state

@@ -161,3 +161,10 @@ Your existing skills are now managed from one place. For a detailed walkthrough,
 - You want backup, restore, and version control for your skills
 - You prefer a single binary with no runtime dependencies
 - You don't want installation/download activity tracked outside your local workflow
+
+---
+
+## See Also
+
+- [Migration](./migration.md) — Migration guide
+- [Core Concepts](/docs/concepts) — How skillshare works

@@ -302,8 +302,9 @@ Before publishing:
 
 ---
 
-## Related
+## See Also
 
-- [Skill Format](/docs/concepts/skill-format) — Detailed format reference
-- [Commands: new](/docs/commands/new) — Create command
-- [Organization-Wide Skills](./organization-sharing.md) — Share across your organization
+- [new](/docs/commands/new) — Create a skill with template
+- [Skill Format](/docs/concepts/skill-format) — SKILL.md structure
+- [Best Practices](./best-practices.md) — Naming and organization
+- [Organizing Skills](./organizing-skills.md) — Folder structure

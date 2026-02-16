@@ -11,6 +11,12 @@ skillshare pull              # Pull and sync
 skillshare pull --dry-run    # Preview
 ```
 
+## When to Use
+
+- Sync skills from another machine that pushed changes
+- Get the latest skills after someone else pushed updates
+- Start working on a new machine after `init --remote`
+
 ## What Happens
 
 ```
@@ -107,7 +113,7 @@ skillshare collect claude    # If you created new skills
 skillshare push -m "Add new skill"
 ```
 
-## Related
+## See Also
 
 - [push](/docs/commands/push) — Push to remote
 - [sync](/docs/commands/sync) — Manual sync without pull

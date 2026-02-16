@@ -12,6 +12,12 @@ skillshare update team-skills        # Update tracked repo
 skillshare update --all              # Update everything
 ```
 
+## When to Use
+
+- A tracked repository has new commits (found via `check`)
+- An installed skill has a newer version available
+- You want to re-download a skill from its original source
+
 ![update demo](/img/update-skilk-demo.png)
 
 ## What Happens
@@ -175,7 +181,7 @@ skillshare sync
 git add .skillshare/ && git commit -m "Update remote skills"
 ```
 
-## Related
+## See Also
 
 - [install](/docs/commands/install) — Install skills
 - [upgrade](/docs/commands/upgrade) — Upgrade CLI and built-in skill

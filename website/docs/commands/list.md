@@ -11,6 +11,12 @@ skillshare list              # Compact view
 skillshare list --verbose    # Detailed view
 ```
 
+## When to Use
+
+- See what skills are installed and where they came from
+- Check which skills are tracked repos vs local
+- Audit your skill collection before a cleanup
+
 ![list demo](/img/list-demo.png)
 
 ## Example Output
@@ -181,7 +187,7 @@ Project list uses the same visual format as global list, with `(project)` label 
 | `✓` | Up-to-date, no local changes |
 | `!` | Has uncommitted changes |
 
-## Related
+## See Also
 
 - [install](/docs/commands/install) — Install skills
 - [uninstall](/docs/commands/uninstall) — Remove skills

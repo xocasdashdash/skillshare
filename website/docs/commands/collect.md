@@ -111,7 +111,7 @@ skillshare sync
 skillshare push -m "Add my-new-skill"
 ```
 
-## Related
+## See Also
 
 - [sync](/docs/commands/sync) — Sync from source to targets
 - [diff](/docs/commands/diff) — See local-only skills

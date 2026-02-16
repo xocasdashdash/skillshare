@@ -6,6 +6,10 @@ sidebar_position: 6
 
 Run skillshare at the project level — skills scoped to a single repository, shared via git.
 
+:::tip When does this matter?
+Use project skills when your team needs repo-specific AI instructions (coding standards, deployment guides, API conventions) that shouldn't be in your personal global skill collection.
+:::
+
 ## Usage Scenarios
 
 | Scenario | Example |
@@ -183,10 +187,8 @@ Project mode has some intentional limitations:
 
 ---
 
-## Related
+## See Also
 
-- [Project Setup Guide](/docs/guides/project-setup) — Step-by-step setup tutorial
-- [Project Workflow](/docs/workflows/project-workflow) — Daily operations
-- [Organization-Wide Skills](/docs/guides/organization-sharing) — Organization-level sharing
-- [Source & Targets](/docs/concepts/source-and-targets) — How source and targets work
-- [Sync Modes](/docs/concepts/sync-modes) — Merge vs symlink
+- [Project Setup](/docs/guides/project-setup) — Step-by-step setup guide
+- [Project Workflow](/docs/workflows/project-workflow) — Day-to-day project mode usage
+- [Organization-Wide Skills](/docs/guides/organization-sharing) — Team-wide sharing

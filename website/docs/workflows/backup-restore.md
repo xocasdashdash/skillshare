@@ -207,8 +207,9 @@ git checkout <commit-hash> -- specific-skill/
 
 ---
 
-## Related
+## See Also
 
-- [Commands: backup](/docs/commands/backup) — Backup command details
-- [Commands: restore](/docs/commands/restore) — Restore command details
+- [backup](/docs/commands/backup) — Backup command reference
+- [restore](/docs/commands/restore) — Restore command reference
+- [trash](/docs/commands/trash) — Soft-delete management
 - [Troubleshooting](/docs/troubleshooting) — When things go wrong

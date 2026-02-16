@@ -6,6 +6,12 @@ sidebar_position: 8
 
 Manage skill hubs — saved hub sources for search.
 
+## When to Use
+
+- Add a private or community skill hub for `search` to query
+- Switch between multiple hubs (e.g., internal team vs public community)
+- List or remove saved hub sources
+
 ## hub add
 
 Save a hub source to config for reuse in [`search --hub`](./search.md).

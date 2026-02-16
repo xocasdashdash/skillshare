@@ -12,6 +12,13 @@ skillshare ui
 
 Opens `http://127.0.0.1:19420` in your default browser.
 
+## When to Use
+
+- Manage skills, targets, and sync through a visual web interface
+- Browse and install skills without memorizing CLI flags
+- Run security audits with a visual findings report
+- Share a dashboard view with team members less comfortable with CLI
+
 ## Flags
 
 | Flag | Default | Description |
@@ -171,7 +178,7 @@ skillshare ui
   └── Browser opens http://127.0.0.1:19420
 ```
 
-## Related
+## See Also
 
 - [status](/docs/commands/status) — CLI status check
 - [sync](/docs/commands/sync) — CLI sync command

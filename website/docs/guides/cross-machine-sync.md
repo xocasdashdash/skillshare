@@ -245,8 +245,9 @@ skillshare pull 2>/dev/null
 
 ---
 
-## Related
+## See Also
 
-- [Organization-Wide Skills](./organization-sharing.md) — Share across your organization
-- [Commands: push](/docs/commands/push) — Push command details
-- [Commands: pull](/docs/commands/pull) — Pull command details
+- [push](/docs/commands/push) — Push to remote
+- [pull](/docs/commands/pull) — Pull from remote
+- [Organization-Wide Skills](./organization-sharing.md) — Team sharing
+- [init](/docs/commands/init) — Init with `--remote`

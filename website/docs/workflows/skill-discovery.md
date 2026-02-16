@@ -177,9 +177,9 @@ skillshare update _team-skills
 
 ---
 
-## Related
+## See Also
 
-- [Commands: search](/docs/commands/search) — Search command
-- [Commands: install](/docs/commands/install) — Install command
-- [Commands: check](/docs/commands/check) — Check for updates
-- [Commands: list](/docs/commands/list) — List command
+- [search](/docs/commands/search) — Search command reference
+- [install](/docs/commands/install) — Install command reference
+- [Hub Index](/docs/guides/hub-index) — Managing skill hubs
+- [Daily Workflow](./daily-workflow.md) — After installing, use daily

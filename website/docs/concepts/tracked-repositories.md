@@ -6,6 +6,10 @@ sidebar_position: 4
 
 Git repos installed with `--track` for team sharing and easy updates.
 
+:::tip When does this matter?
+Tracked repos are how organizations distribute shared skills. Install once with `--track`, then update with a single command. Changes flow from the maintainer's repo to every team member.
+:::
+
 ## Overview
 
 Tracked repositories are git repos cloned into your source with their `.git` directory preserved. This enables:
@@ -254,9 +258,9 @@ See [Target Filters](/docs/targets/configuration#include--exclude-target-filters
 
 ---
 
-## Related
+## See Also
 
-- [Organization-Wide Skills](/docs/guides/organization-sharing) — Full organization workflow
-- [Project Skills](/docs/concepts/project-skills) — Project mode concepts
-- [Commands: install](/docs/commands/install) — Install options
-- [Commands: update](/docs/commands/update) — Update command
+- [install](/docs/commands/install) — Install with `--track`
+- [update](/docs/commands/update) — Pull latest changes
+- [check](/docs/commands/check) — See available updates
+- [Organization-Wide Skills](/docs/guides/organization-sharing) — Team sharing guide

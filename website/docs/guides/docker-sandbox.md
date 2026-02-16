@@ -325,3 +325,11 @@ On tag push (`v*`), the `docker-publish` GitHub Actions workflow builds and push
 ./scripts/test_docker.sh --cmd "go test -v ./tests/integration/..."
 ./scripts/sandbox_playground_shell.sh "skillshare list"
 ```
+
+---
+
+## See Also
+
+- [Getting Started](/docs/getting-started) — Standard setup
+- [Commands Reference](/docs/commands) — All commands
+- [Troubleshooting](/docs/troubleshooting) — Common issues

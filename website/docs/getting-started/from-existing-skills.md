@@ -10,6 +10,14 @@ Migrate your existing skills from various AI CLIs to skillshare.
 
 If you already have skills in `~/.claude/skills/`, `~/.cursor/skills/`, or other locations, skillshare can consolidate them into a single source.
 
+## Starting Scenarios
+
+| Your situation | What to do |
+|----------------|-----------|
+| Skills in one CLI (e.g., Claude) | `skillshare init --copy-from claude` copies them to source |
+| Skills in multiple CLIs | Init, then `skillshare collect --all` to gather from all targets |
+| Skills in a git repo already | `skillshare init --remote <url>` connects to it |
+
 ```
 BEFORE:                              AFTER:
 ─────────────────────────────────────────────────────────
@@ -135,8 +143,8 @@ skillshare restore cursor
 
 ---
 
-## What's Next?
+## See Also
 
-- [Daily Workflow](/docs/workflows/daily-workflow) — Edit, sync, push/pull
-- [Cross-Machine Sync](/docs/guides/cross-machine-sync) — Sync across computers
-- [Concepts](/docs/concepts) — Understand source, targets, and sync modes
+- [Daily Workflow](/docs/workflows/daily-workflow) — Your day-to-day after migration
+- [Cross-Machine Sync](/docs/guides/cross-machine-sync) — Sync to other machines
+- [Core Concepts](/docs/concepts) — How source and targets work

@@ -15,6 +15,13 @@ skillshare audit --json                 # JSON output
 skillshare audit -p                     # Scan project skills
 ```
 
+## When to Use
+
+- Review security findings after installing a new skill
+- Scan all skills for prompt injection, data exfiltration, or credential access patterns
+- Customize audit rules for your organization's security policy
+- Generate audit reports for compliance (with `--json`)
+
 ## What It Detects
 
 ### CRITICAL (blocks installation and counted as Failed)
@@ -304,7 +311,7 @@ Source of truth (full built-in definitions):
 | `--init-rules` | Create a starter `audit-rules.yaml` (respects `-p`/`-g`) |
 | `-h`, `--help` | Show help |
 
-## Related
+## See Also
 
 - [install](/docs/commands/install) — Install skills (with automatic scanning)
 - [doctor](/docs/commands/doctor) — Diagnose setup issues

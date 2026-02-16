@@ -12,6 +12,12 @@ skillshare upgrade --cli        # CLI only
 skillshare upgrade --skill      # Skill only
 ```
 
+## When to Use
+
+- A new version of the skillshare CLI is available
+- The built-in skillshare skill needs updating
+- After `doctor` reports an available update
+
 ![upgrade demo](/img/upgrade-demo.png)
 
 ## What Happens
@@ -116,7 +122,7 @@ The built-in `skillshare` skill that adds the `/skillshare` command to AI CLIs. 
 ~/.config/skillshare/skills/skillshare/SKILL.md
 ```
 
-## Related
+## See Also
 
 - [update](/docs/commands/update) — Update other skills and repos
 - [status](/docs/commands/status) — Check current versions
