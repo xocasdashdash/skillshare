@@ -27,9 +27,9 @@ This checks:
 
 | Problem | Go To |
 |---------|-------|
-| Error messages | [Common Errors](./common-errors) |
-| Windows problems | [Windows](./windows) |
-| General questions | [FAQ](./faq) |
+| Error messages | [Common Errors](./common-errors.md) |
+| Windows problems | [Windows](./windows.md) |
+| General questions | [FAQ](./faq.md) |
 
 ---
 
@@ -84,5 +84,5 @@ If you can't resolve the issue:
 
 ## Related
 
-- [Troubleshooting Workflow](./troubleshooting-workflow) — Step-by-step debugging
+- [Troubleshooting Workflow](./troubleshooting-workflow.md) — Step-by-step debugging
 - [Commands: doctor](/docs/commands/doctor) — Doctor command details

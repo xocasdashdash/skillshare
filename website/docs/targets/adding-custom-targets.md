@@ -8,7 +8,7 @@ Add any tool with a skills directory to skillshare.
 
 ## Overview
 
-If your AI CLI isn't in the [supported list](./supported-targets), you can add it manually.
+If your AI CLI isn't in the [supported list](./supported-targets.md), you can add it manually.
 
 ---
 
@@ -168,6 +168,6 @@ skillshare target add myapp /correct/path/skills
 
 ## Related
 
-- [Supported Targets](./supported-targets) — Built-in targets
-- [Configuration](./configuration) — Edit config directly
+- [Supported Targets](./supported-targets.md) — Built-in targets
+- [Configuration](./configuration.md) — Edit config directly
 - [Sync Modes](/docs/concepts/sync-modes) — Merge vs symlink

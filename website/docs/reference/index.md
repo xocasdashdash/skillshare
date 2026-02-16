@@ -10,8 +10,8 @@ Technical reference documentation for skillshare.
 
 | Reference | Description |
 |-----------|-------------|
-| [Environment Variables](./environment-variables) | All environment variables |
-| [File Structure](./file-structure) | Directory and file layout |
+| [Environment Variables](./environment-variables.md) | All environment variables |
+| [File Structure](./file-structure.md) | Directory and file layout |
 
 ---
 

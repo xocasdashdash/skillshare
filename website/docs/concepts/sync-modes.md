@@ -152,6 +152,6 @@ $ skillshare sync
 
 ## Related
 
-- [Source & Targets](./source-and-targets) — Core model
+- [Source & Targets](./source-and-targets.md) — Core model
 - [Target Management](/docs/targets) — Managing targets
 - [Commands: sync](/docs/commands/sync) — Sync command details

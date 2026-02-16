@@ -191,6 +191,6 @@ $EDITOR ~/.claude/skills/my-skill/SKILL.md
 
 ## Related
 
-- [Sync Modes](./sync-modes) — Merge vs symlink mode
+- [Sync Modes](./sync-modes.md) — Merge vs symlink mode
 - [Target Management](/docs/targets) — Managing targets
 - [Configuration](/docs/targets/configuration) — Custom source path

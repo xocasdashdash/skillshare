@@ -330,4 +330,4 @@ After migrating:
 
 - [Getting Started](/docs/getting-started/from-existing-skills) — Detailed migration walkthrough
 - [Commands: collect](/docs/commands/collect) — Collect command
-- [Organization-Wide Skills](./organization-sharing) — Organization migration
+- [Organization-Wide Skills](./organization-sharing.md) — Organization migration

@@ -181,5 +181,5 @@ Include in bug reports:
 
 ## Related
 
-- [Common Errors](./common-errors) — General error solutions
+- [Common Errors](./common-errors.md) — General error solutions
 - [Configuration](/docs/targets/configuration) — Config file reference

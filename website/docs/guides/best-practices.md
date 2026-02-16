@@ -290,6 +290,6 @@ Before installing third-party skills:
 
 ## Related
 
-- [Creating Skills](./creating-skills) — Skill creation guide
-- [Organization-Wide Skills](./organization-sharing) — Organization workflow
+- [Creating Skills](./creating-skills.md) — Skill creation guide
+- [Organization-Wide Skills](./organization-sharing.md) — Organization workflow
 - [Skill Format](/docs/concepts/skill-format) — Format specification

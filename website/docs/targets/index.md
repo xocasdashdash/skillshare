@@ -29,9 +29,9 @@ Targets are AI CLI skill directories that skillshare syncs to.
 
 | Topic | Description |
 |-------|-------------|
-| [Supported Targets](./supported-targets) | Complete list of 48+ supported AI CLIs |
-| [Adding Custom Targets](./adding-custom-targets) | Add any tool with a skills directory |
-| [Configuration](./configuration) | Config file reference |
+| [Supported Targets](./supported-targets.md) | Complete list of 48+ supported AI CLIs |
+| [Adding Custom Targets](./adding-custom-targets.md) | Add any tool with a skills directory |
+| [Configuration](./configuration.md) | Config file reference |
 
 ---
 
@@ -75,7 +75,7 @@ skillshare target remove claude
 
 When running `skillshare init`, installed AI CLIs are automatically detected and added as targets.
 
-Only paths that exist are added. See [Supported Targets](./supported-targets) for the full list of checked paths.
+Only paths that exist are added. See [Supported Targets](./supported-targets.md) for the full list of checked paths.
 
 ---
 

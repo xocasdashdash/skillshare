@@ -245,7 +245,7 @@ This gives you:
 - **History** of skill changes across machines
 - **Backup** via GitHub/GitLab
 - **Sharing** — others can browse and fork your collection
-- **Cross-machine sync** via `skillshare pull` (see [Cross-Machine Sync](./cross-machine-sync))
+- **Cross-machine sync** via `skillshare pull` (see [Cross-Machine Sync](./cross-machine-sync.md))
 
 ---
 
@@ -282,5 +282,5 @@ After `sync`, targets are updated automatically — old flat symlinks are cleane
 
 - [Source & Targets](/docs/concepts/source-and-targets#organize-with-folders-auto-flattening) — Auto-flattening concept
 - [Tracked Repositories](/docs/concepts/tracked-repositories#nested-skills--auto-flattening) — Nested skills in tracked repos
-- [Best Practices](./best-practices) — Naming conventions
-- [Cross-Machine Sync](./cross-machine-sync) — Sync across computers
+- [Best Practices](./best-practices.md) — Naming conventions
+- [Cross-Machine Sync](./cross-machine-sync.md) — Sync across computers

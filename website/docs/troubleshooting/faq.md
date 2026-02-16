@@ -310,6 +310,6 @@ No scanner is perfect. `skillshare audit` catches common patterns like prompt in
 
 ## Related
 
-- [Common Errors](./common-errors) — Error solutions
-- [Windows](./windows) — Windows-specific FAQ
-- [Troubleshooting Workflow](./troubleshooting-workflow) — Step-by-step debugging
+- [Common Errors](./common-errors.md) — Error solutions
+- [Windows](./windows.md) — Windows-specific FAQ
+- [Troubleshooting Workflow](./troubleshooting-workflow.md) — Step-by-step debugging

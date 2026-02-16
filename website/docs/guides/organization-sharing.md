@@ -287,5 +287,5 @@ Organization skills provide company-wide standards. Project skills provide repo-
 - [Tracked Repositories](/docs/concepts/tracked-repositories) — How tracked repos work
 - [Project Skills](/docs/concepts/project-skills) — Project-level skills
 - [Project Setup](/docs/guides/project-setup) — Project-level setup guide
-- [Cross-Machine Sync](./cross-machine-sync) — Personal cross-machine sync
+- [Cross-Machine Sync](./cross-machine-sync.md) — Personal cross-machine sync
 - [Commands: install](/docs/commands/install) — Install command details

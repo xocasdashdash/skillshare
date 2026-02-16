@@ -314,4 +314,4 @@ export SKILLSHARE_TEST_BINARY=/path/to/skillshare
 
 ## Still Having Issues?
 
-See [Troubleshooting Workflow](./troubleshooting-workflow) for a systematic debugging approach.
+See [Troubleshooting Workflow](./troubleshooting-workflow.md) for a systematic debugging approach.

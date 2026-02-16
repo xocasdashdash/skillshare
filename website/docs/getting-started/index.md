@@ -10,19 +10,19 @@ Choose your path based on your situation:
 
 Never used skillshare or any skill management tool before?
 
-**→ [First Sync](./first-sync)** — Get synced in 5 minutes
+**→ [First Sync](./first-sync.md)** — Get synced in 5 minutes
 
 ## Migrating from Existing Skills
 
 Already have skills scattered across AI CLIs?
 
-**→ [From Existing Skills](./from-existing-skills)** — Consolidate and sync
+**→ [From Existing Skills](./from-existing-skills.md)** — Consolidate and sync
 
 ## Quick Reference
 
 Know what you're doing, just need command syntax?
 
-**→ [Quick Reference](./quick-reference)** — Command cheat sheet
+**→ [Quick Reference](./quick-reference.md)** — Command cheat sheet
 
 ---
 

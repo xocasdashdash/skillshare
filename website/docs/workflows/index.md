@@ -10,9 +10,9 @@ Common usage patterns for skillshare.
 
 | I want to... | Workflow |
 |-------------|----------|
-| Use skills day-to-day | [Daily Workflow](./daily-workflow) |
-| Find and install new skills | [Skill Discovery](./skill-discovery) |
-| Protect my skills | [Backup & Restore](./backup-restore) |
+| Use skills day-to-day | [Daily Workflow](./daily-workflow.md) |
+| Find and install new skills | [Skill Discovery](./skill-discovery.md) |
+| Protect my skills | [Backup & Restore](./backup-restore.md) |
 | Fix something broken | [Troubleshooting](/docs/troubleshooting) |
 
 ---

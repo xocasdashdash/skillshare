@@ -22,47 +22,47 @@ Complete reference for all skillshare commands.
 
 | Command | Description |
 |---------|-------------|
-| [init](./init) | First-time setup |
-| [install](./install) | Add a skill from a repo or path |
-| [uninstall](./uninstall) | Remove a skill |
-| [list](./list) | List all skills |
-| [search](./search) | Search for skills |
-| [sync](./sync) | Push skills to all targets |
-| [status](./status) | Show sync state |
+| [init](./init.md) | First-time setup |
+| [install](./install.md) | Add a skill from a repo or path |
+| [uninstall](./uninstall.md) | Remove a skill |
+| [list](./list.md) | List all skills |
+| [search](./search.md) | Search for skills |
+| [sync](./sync.md) | Push skills to all targets |
+| [status](./status.md) | Show sync state |
 
 ## Skill Management
 
 | Command | Description |
 |---------|-------------|
-| [new](./new) | Create a new skill |
-| [update](./update) | Update a skill or tracked repo |
-| [upgrade](./upgrade) | Upgrade CLI or built-in skill |
+| [new](./new.md) | Create a new skill |
+| [update](./update.md) | Update a skill or tracked repo |
+| [upgrade](./upgrade.md) | Upgrade CLI or built-in skill |
 
 ## Target Management
 
 | Command | Description |
 |---------|-------------|
-| [target](./target) | Manage targets |
-| [diff](./diff) | Show differences between source and targets |
+| [target](./target.md) | Manage targets |
+| [diff](./diff.md) | Show differences between source and targets |
 
 ## Sync Operations
 
 | Command | Description |
 |---------|-------------|
-| [collect](./collect) | Collect skills from target to source |
-| [backup](./backup) | Create backup of targets |
-| [restore](./restore) | Restore targets from backup |
-| [push](./push) | Push to git remote |
-| [pull](./pull) | Pull from git remote and sync |
+| [collect](./collect.md) | Collect skills from target to source |
+| [backup](./backup.md) | Create backup of targets |
+| [restore](./restore.md) | Restore targets from backup |
+| [push](./push.md) | Push to git remote |
+| [pull](./pull.md) | Pull from git remote and sync |
 
 ## Utilities
 
 | Command | Description |
 |---------|-------------|
-| [audit](./audit) | Scan skills for security threats |
-| [log](./log) | View operations and audit logs |
-| [doctor](./doctor) | Diagnose issues |
-| [ui](./ui) | Launch web dashboard |
+| [audit](./audit.md) | Scan skills for security threats |
+| [log](./log.md) | View operations and audit logs |
+| [doctor](./doctor.md) | Diagnose issues |
+| [ui](./ui.md) | Launch web dashboard |
 
 ---
 

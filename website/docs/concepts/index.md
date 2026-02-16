@@ -44,11 +44,11 @@ Understanding these concepts helps you get the most out of skillshare.
 
 | Concept | What It Is | Learn More |
 |---------|-----------|------------|
-| **Source & Targets** | Single source of truth, multiple destinations | [→ Source & Targets](./source-and-targets) |
-| **Sync Modes** | Merge vs symlink — how files are linked | [→ Sync Modes](./sync-modes) |
-| **Tracked Repos** | Git repos installed with `--track` | [→ Tracked Repositories](./tracked-repositories) |
-| **Skill Format** | SKILL.md structure and metadata | [→ Skill Format](./skill-format) |
-| **Project Skills** | Project-level skills scoped to a repository | [→ Project Skills](./project-skills) |
+| **Source & Targets** | Single source of truth, multiple destinations | [→ Source & Targets](./source-and-targets.md) |
+| **Sync Modes** | Merge vs symlink — how files are linked | [→ Sync Modes](./sync-modes.md) |
+| **Tracked Repos** | Git repos installed with `--track` | [→ Tracked Repositories](./tracked-repositories.md) |
+| **Skill Format** | SKILL.md structure and metadata | [→ Skill Format](./skill-format.md) |
+| **Project Skills** | Project-level skills scoped to a repository | [→ Project Skills](./project-skills.md) |
 | **Organization Skills** | Organization-wide skills via tracked repositories | [→ Organization-Wide Skills](/docs/guides/organization-sharing) |
 
 ---

@@ -125,12 +125,12 @@ Don't see your AI CLI? Add it manually:
 skillshare target add myapp ~/.myapp/skills
 ```
 
-See [Adding Custom Targets](./adding-custom-targets) for details.
+See [Adding Custom Targets](./adding-custom-targets.md) for details.
 
 ---
 
 ## Related
 
-- [Adding Custom Targets](./adding-custom-targets) — Add unsupported tools
-- [Configuration](./configuration) — Config file reference
+- [Adding Custom Targets](./adding-custom-targets.md) — Add unsupported tools
+- [Configuration](./configuration.md) — Config file reference
 - [Commands: target](/docs/commands/target) — Target command

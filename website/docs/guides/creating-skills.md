@@ -306,4 +306,4 @@ Before publishing:
 
 - [Skill Format](/docs/concepts/skill-format) — Detailed format reference
 - [Commands: new](/docs/commands/new) — Create command
-- [Organization-Wide Skills](./organization-sharing) — Share across your organization
+- [Organization-Wide Skills](./organization-sharing.md) — Share across your organization

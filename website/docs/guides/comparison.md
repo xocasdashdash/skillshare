@@ -144,7 +144,7 @@ skillshare collect --all     # Imports existing skills from all detected targets
 skillshare sync              # Symlinks source skills to all targets
 ```
 
-Your existing skills are now managed from one place. For a detailed walkthrough, see the [Migration Guide](./migration).
+Your existing skills are now managed from one place. For a detailed walkthrough, see the [Migration Guide](./migration.md).
 
 ## Choosing the Right Tool
 
