@@ -35,19 +35,20 @@ targets: {}
 
 	skillPath := filepath.Join(sb.SourcePath, "skillshare", "SKILL.md")
 
-	// Create existing skill
+	// Create existing skill with frontmatter version
+	skillContent := "---\nname: skillshare\nversion: 0.1.0\n---\n# Old Content"
 	os.MkdirAll(filepath.Dir(skillPath), 0755)
-	os.WriteFile(skillPath, []byte("# Old Content"), 0644)
+	os.WriteFile(skillPath, []byte(skillContent), 0644)
 
 	// Test skill upgrade only (CLI upgrade hits GitHub API rate limits in CI)
 	result := sb.RunCLI("upgrade", "--skill", "--force", "--dry-run")
 
 	result.AssertSuccess(t)
-	result.AssertOutputContains(t, "Would upgrade")
+	result.AssertOutputContains(t, "Would re-download")
 
 	// Verify file was not changed
 	content, _ := os.ReadFile(skillPath)
-	if string(content) != "# Old Content" {
+	if string(content) != skillContent {
 		t.Error("dry-run should not modify file")
 	}
 }
@@ -63,9 +64,9 @@ targets: {}
 
 	skillPath := filepath.Join(sb.SourcePath, "skillshare", "SKILL.md")
 
-	// Create existing skill
+	// Create existing skill with frontmatter version
 	os.MkdirAll(filepath.Dir(skillPath), 0755)
-	os.WriteFile(skillPath, []byte("# Old Content"), 0644)
+	os.WriteFile(skillPath, []byte("---\nname: skillshare\nversion: 0.1.0\n---\n# Old Content"), 0644)
 
 	// Force upgrade skill only (don't upgrade CLI during tests!)
 	result := sb.RunCLI("upgrade", "--skill", "--force")

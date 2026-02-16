@@ -198,60 +198,65 @@ func upgradeSkillshareSkill(dryRun, force bool) error {
 	}
 
 	skillshareSkillDir := filepath.Join(cfg.Source, "skillshare")
-	skillshareSkillFile := filepath.Join(skillshareSkillDir, "SKILL.md")
+	localVersion := versionpkg.ReadLocalSkillVersion(cfg.Source)
 
-	// Check if skill exists
-	exists := false
-	if _, err := os.Stat(skillshareSkillFile); err == nil {
-		exists = true
+	// Skill not installed
+	if localVersion == "" {
+		ui.StepContinue("Status", "Not installed")
+
+		if force {
+			if dryRun {
+				ui.StepEnd("Action", "Would download")
+				return nil
+			}
+			return doSkillDownload(skillshareSkillDir)
+		}
+
+		if dryRun {
+			ui.StepEnd("Action", "Would prompt to install")
+			return nil
+		}
+
+		fmt.Println()
+		fmt.Print("  Install built-in skillshare skill? [y/N]: ")
+		var input string
+		fmt.Scanln(&input)
+		input = strings.ToLower(strings.TrimSpace(input))
+
+		if input != "y" && input != "yes" {
+			ui.StepEnd("Status", "Not installed (skipped)")
+			return nil
+		}
+
+		return doSkillDownload(skillshareSkillDir)
 	}
 
-	// Exists and not forced → already up to date
-	if exists && !force {
+	// Skill installed — compare versions
+	ui.StepContinue("Current", fmt.Sprintf("v%s", localVersion))
+
+	if force {
+		if dryRun {
+			ui.StepEnd("Action", "Would re-download (forced)")
+			return nil
+		}
+		return doSkillDownload(skillshareSkillDir)
+	}
+
+	treeSpinner := ui.StartTreeSpinner("Checking latest version...", false)
+	remoteVersion := versionpkg.FetchRemoteSkillVersion()
+	if remoteVersion == "" {
+		treeSpinner.Success("Skipped (network unavailable)")
+		return nil
+	}
+	treeSpinner.Success(fmt.Sprintf("Latest: v%s", remoteVersion))
+
+	if localVersion == remoteVersion {
 		ui.StepEnd("Status", "Already up to date ✓")
 		return nil
 	}
 
-	// Exists and forced → re-download
-	if exists {
-		ui.StepContinue("Status", "Will upgrade")
-
-		if dryRun {
-			ui.StepEnd("Action", "Would upgrade")
-			return nil
-		}
-
-		return doSkillDownload(skillshareSkillDir)
-	}
-
-	// Not installed + force → install without asking
-	if force {
-		ui.StepContinue("Status", "Not installed")
-
-		if dryRun {
-			ui.StepEnd("Action", "Would download")
-			return nil
-		}
-
-		return doSkillDownload(skillshareSkillDir)
-	}
-
-	// Not installed + no force → prompt
-	ui.StepContinue("Status", "Not installed")
-
 	if dryRun {
-		ui.StepEnd("Action", "Would prompt to install")
-		return nil
-	}
-
-	fmt.Println()
-	fmt.Print("  Install built-in skillshare skill? [y/N]: ")
-	var input string
-	fmt.Scanln(&input)
-	input = strings.ToLower(strings.TrimSpace(input))
-
-	if input != "y" && input != "yes" {
-		ui.StepEnd("Status", "Not installed (skipped)")
+		ui.StepEnd("Action", fmt.Sprintf("Would upgrade to v%s", remoteVersion))
 		return nil
 	}
 
