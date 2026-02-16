@@ -30,13 +30,32 @@ function Get-Arch {
     }
 }
 
-# Get latest version from GitHub API
+# Get latest version using redirect (avoids API rate limit)
 function Get-LatestVersion {
+    try {
+        # Use redirect to get latest version (no API rate limit)
+        $response = Invoke-WebRequest -Uri "https://github.com/$Repo/releases/latest" `
+            -MaximumRedirection 0 -UseBasicParsing -ErrorAction SilentlyContinue
+    } catch {
+        # PowerShell 5.1 throws on 3xx redirects; extract from the exception
+        $response = $_.Exception.Response
+    }
+
+    $location = ""
+    if ($response -and $response.Headers -and $response.Headers["Location"]) {
+        $location = $response.Headers["Location"]
+    }
+
+    if ($location -match "/tag/([^/\s]+)") {
+        return $Matches[1]
+    }
+
+    # Fallback to API if redirect fails
     try {
         $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
         return $release.tag_name
     } catch {
-        Write-Err "Failed to get latest version: $_"
+        Write-Err "Failed to get latest version. Please check your internet connection."
     }
 }
 
