@@ -107,7 +107,7 @@ func upgradeCLIBinary(dryRun, force bool) error {
 	if isHomebrewInstall(execPath) {
 		ui.StepContinue("Install", "Homebrew")
 		if dryRun {
-			ui.StepEnd("Action", "Would run: brew upgrade runkids/tap/skillshare")
+			ui.StepEnd("Action", "Would run: brew upgrade skillshare")
 			return nil
 		}
 		return runBrewUpgrade()
@@ -437,7 +437,7 @@ func runBrewUpgrade() error {
 
 	// Then upgrade
 	ui.Info("Upgrading...")
-	cmd := exec.Command("brew", "upgrade", "runkids/tap/skillshare")
+	cmd := exec.Command("brew", "upgrade", "skillshare")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
