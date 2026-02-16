@@ -14,11 +14,19 @@ func uiPlaceholderHandler() http.Handler {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write([]byte(`<!DOCTYPE html>
 <html>
-<head><title>Skillshare UI</title></head>
+<head><title>Skillshare UI (dev mode)</title>
+<style>body{font-family:system-ui,sans-serif;max-width:600px;margin:60px auto;padding:0 20px;color:#333}
+code{background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:0.9em}
+pre{background:#f0f0f0;padding:12px 16px;border-radius:6px;overflow-x:auto}</style>
+</head>
 <body>
-<h1>Skillshare UI</h1>
-<p>The frontend is served by Vite at <a href="http://localhost:5173">localhost:5173</a> in dev mode.</p>
-<p>In production, run <code>skillshare ui</code> to download and launch the web dashboard.</p>
+<h1>Skillshare UI — Dev Mode</h1>
+<p>This is the API server. The frontend needs to be started separately:</p>
+<pre>cd ui && pnpm run dev</pre>
+<p>Then open <a href="http://localhost:5173">http://localhost:5173</a> (Vite proxies <code>/api</code> to this server).</p>
+<p>Or use <code>make ui-dev</code> to start both together.</p>
+<hr>
+<p style="color:#888;font-size:0.85em">In production builds, <code>skillshare ui</code> downloads and serves the frontend automatically.</p>
 </body>
 </html>`))
 	})
