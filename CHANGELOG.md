@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.14.1] - 2026-02-19
+
+### Added
+- **Config YAML Schema** — JSON Schema files for both global `config.yaml` and project `.skillshare/config.yaml`; enables IDE autocompletion, validation, and hover documentation via YAML Language Server; `Save()` automatically prepends `# yaml-language-server: $schema=...` directive; new configs from `skillshare init` include the directive out of the box; existing configs get it on next save (any mutating command)
+
 ## [0.14.0] - 2026-02-18
 
 ### Added
