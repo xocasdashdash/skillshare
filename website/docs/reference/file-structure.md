@@ -76,6 +76,7 @@ XDG_CONFIG_HOME=/custom/path → /custom/path/skillshare/config.yaml
 ### Contents
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/runkids/skillshare/main/schemas/config.schema.json
 source: ~/.config/skillshare/skills
 mode: merge
 targets:

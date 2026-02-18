@@ -778,6 +778,22 @@ func TestInit_SkillFlag_InstallsSkill(t *testing.T) {
 	}
 }
 
+func TestInit_Fresh_ConfigHasSchemaComment(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	os.Remove(sb.ConfigPath)
+
+	result := sb.RunCLI("init", "--no-copy", "--no-targets", "--no-git", "--no-skill")
+	result.AssertSuccess(t)
+
+	configContent := sb.ReadFile(sb.ConfigPath)
+	firstLine := strings.SplitN(configContent, "\n", 2)[0]
+	if !strings.HasPrefix(firstLine, "# yaml-language-server: $schema=") {
+		t.Errorf("config should start with schema comment, got first line: %q", firstLine)
+	}
+}
+
 func TestInit_MutualExclusion_SkillFlags(t *testing.T) {
 	sb := testutil.NewSandbox(t)
 	defer sb.Cleanup()

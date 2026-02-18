@@ -10,6 +10,12 @@ import (
 	"skillshare/internal/utils"
 )
 
+// ProjectSchemaURL is the JSON Schema URL for the project config file.
+const ProjectSchemaURL = "https://raw.githubusercontent.com/runkids/skillshare/main/schemas/project-config.schema.json"
+
+// projectSchemaComment is the YAML Language Server directive prepended to saved project config files.
+var projectSchemaComment = []byte("# yaml-language-server: $schema=" + ProjectSchemaURL + "\n")
+
 // ProjectTargetEntry supports both string and object forms in YAML.
 // String: "claude"
 // Object: { name: "my-custom-ide", path: ".my-ide/skills/" }
@@ -171,6 +177,8 @@ func (c *ProjectConfig) Save(projectRoot string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal project config: %w", err)
 	}
+
+	data = append(projectSchemaComment, data...)
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to write project config: %w", err)

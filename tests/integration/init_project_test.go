@@ -86,6 +86,23 @@ func TestInitProject_ConfigContainsTargets(t *testing.T) {
 	}
 }
 
+func TestInitProject_ConfigHasSchemaComment(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+
+	projectRoot := filepath.Join(sb.Root, "project")
+	os.MkdirAll(projectRoot, 0755)
+
+	result := sb.RunCLIInDir(projectRoot, "init", "-p", "--targets", "claude")
+	result.AssertSuccess(t)
+
+	cfg := sb.ReadFile(filepath.Join(projectRoot, ".skillshare", "config.yaml"))
+	firstLine := strings.SplitN(cfg, "\n", 2)[0]
+	if !strings.HasPrefix(firstLine, "# yaml-language-server: $schema=") {
+		t.Errorf("project config should start with schema comment, got first line: %q", firstLine)
+	}
+}
+
 func TestInitProject_GitignoreIncludesLogsDirectory(t *testing.T) {
 	sb := testutil.NewSandbox(t)
 	defer sb.Cleanup()

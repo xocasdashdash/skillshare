@@ -26,6 +26,46 @@ Configuration file reference for skillshare.
 
 ---
 
+## IDE Support (JSON Schema) {#ide-support}
+
+Config files include a YAML Language Server directive that enables **autocompletion**, **validation**, and **hover documentation** in supported editors.
+
+New configs created by `skillshare init` include this automatically:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/runkids/skillshare/main/schemas/config.schema.json
+source: ~/.config/skillshare/skills
+targets:
+  claude:
+    path: ~/.claude/skills
+```
+
+### Adding to an existing config
+
+If your config was created before this feature, add the comment as the **first line**:
+
+**Global config** (`~/.config/skillshare/config.yaml`):
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/runkids/skillshare/main/schemas/config.schema.json
+```
+
+**Project config** (`.skillshare/config.yaml`):
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/runkids/skillshare/main/schemas/project-config.schema.json
+```
+
+Or simply re-run `skillshare init --force` (global) or `skillshare init -p --force` (project) to regenerate the config with the schema comment.
+
+### Supported editors
+
+| Editor | Extension required |
+|--------|-------------------|
+| VS Code | [YAML](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) by Red Hat |
+| JetBrains IDEs | Built-in YAML support |
+| Neovim | [yaml-language-server](https://github.com/redhat-developer/yaml-language-server) via LSP |
+
+---
+
 ## Config File
 
 **Location:** `~/.config/skillshare/config.yaml`
@@ -33,6 +73,7 @@ Configuration file reference for skillshare.
 ### Full Example
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/runkids/skillshare/main/schemas/config.schema.json
 # Source directory (where you edit skills)
 source: ~/.config/skillshare/skills
 
@@ -344,6 +385,7 @@ audit:
 Project config uses a different format from global config.
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/runkids/skillshare/main/schemas/project-config.schema.json
 # Targets — string or object form
 targets:
   - claude                    # String: known target with defaults

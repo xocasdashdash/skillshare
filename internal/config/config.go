@@ -50,6 +50,12 @@ type Config struct {
 
 const defaultAuditBlockThreshold = "CRITICAL"
 
+// GlobalSchemaURL is the JSON Schema URL for the global config file.
+const GlobalSchemaURL = "https://raw.githubusercontent.com/runkids/skillshare/main/schemas/config.schema.json"
+
+// schemaComment is the YAML Language Server directive prepended to saved config files.
+var schemaComment = []byte("# yaml-language-server: $schema=" + GlobalSchemaURL + "\n")
+
 // BaseDir returns the skillshare data root directory.
 // Priority:
 //  1. $XDG_CONFIG_HOME/skillshare  (any platform, if set)
@@ -186,6 +192,8 @@ func (c *Config) Save() error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
+
+	data = append(schemaComment, data...)
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
