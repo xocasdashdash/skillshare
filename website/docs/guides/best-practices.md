@@ -292,6 +292,8 @@ Before installing third-party skills:
 - Read the SKILL.md
 - Use `--dry-run` first
 
+For a comprehensive security workflow, see the [Securing Your Skills](./security.md) guide.
+
 ---
 
 ## Checklist

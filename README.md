@@ -322,7 +322,7 @@ Skills are also scanned automatically during `skillshare install`.
 - If both are set, `--skip-audit` takes precedence in practice (audit is not executed).
 
 > [!TIP]
-> See the [audit command reference](https://skillshare.runkids.cc/docs/commands/audit) for the full list of detection patterns.
+> See the [Securing Your Skills](https://skillshare.runkids.cc/docs/guides/security) guide for a complete security workflow, or the [audit command reference](https://skillshare.runkids.cc/docs/commands/audit) for the full list of detection patterns.
 
 ## Docker
 

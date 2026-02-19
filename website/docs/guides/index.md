@@ -16,6 +16,7 @@ In-depth guides for specific use cases.
 | Set up skills for a specific project | [Project Setup](./project-setup.md) |
 | Sync skills across multiple machines | [Cross-Machine Sync](./cross-machine-sync.md) |
 | Browse and discover community skills | [Hub Index](./hub-index.md) |
+| Secure my skill supply chain | [Securing Your Skills](./security.md) |
 | Move from another tool or approach | [Migration](./migration.md) |
 | Test skillshare in an isolated Docker sandbox | [Docker Sandbox](./docker-sandbox.md) |
 
@@ -45,3 +46,4 @@ In-depth guides for specific use cases.
 | [Migration](./migration.md) | Migrate from other tools or between modes |
 | [Comparison](./comparison.md) | Compare skill management approaches |
 | [Docker Sandbox](./docker-sandbox.md) | Isolated test sandbox and interactive playground |
+| [Securing Your Skills](./security.md) | Security scanning, custom rules, and organizational policy |
