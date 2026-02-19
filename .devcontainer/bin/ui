@@ -1,0 +1,17 @@
+#!/bin/sh
+# Devcontainer: switch to global-mode API and open dashboard.
+URL="http://localhost:19420"
+
+# Already running in global mode via dev-servers? Just print URL.
+if [ -f /tmp/dev-servers/api.pid ] && kill -0 "$(cat /tmp/dev-servers/api.pid)" 2>/dev/null; then
+  echo "✓ Dashboard (global): $URL"
+  exit 0
+fi
+
+# Kill project-mode server if running.
+pkill -f 'skillshare ui -p --host' 2>/dev/null || true
+sleep 0.5
+
+# Start global mode via dev-servers (background).
+dev-servers start api
+echo "✓ Dashboard (global): $URL"

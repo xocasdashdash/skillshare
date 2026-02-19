@@ -1,0 +1,14 @@
+#!/bin/sh
+# Devcontainer: switch to project-mode API and open dashboard.
+URL="http://localhost:19420"
+
+# Stop global-mode API.
+dev-servers stop api 2>/dev/null || true
+# Stop any existing project-mode server.
+pkill -f 'skillshare ui -p --host' 2>/dev/null || true
+sleep 0.5
+
+echo "▸ Starting project-mode API (Ctrl-C to stop)"
+echo "  Dashboard: $URL"
+
+cd ~/demo-project && exec go run /workspace/cmd/skillshare ui -p --host 0.0.0.0 "$@"

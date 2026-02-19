@@ -1,4 +1,4 @@
-.PHONY: help build build-meta run test test-unit test-int test-cover test-install test-docker test-docker-online sandbox-up sandbox-bare sandbox-shell sandbox-down sandbox-reset sandbox-status dev-docker-up dev-docker-down dev-docker-watch docker-build docker-build-multiarch lint fmt fmt-check check install clean ui-install ui-build ui-dev build-all
+.PHONY: help build build-meta run test test-unit test-int test-cover test-install test-docker test-docker-online sandbox-up sandbox-bare sandbox-shell sandbox-down sandbox-reset sandbox-status sandbox-logs dev-docker-up dev-docker-down dev-docker-watch docker-build docker-build-multiarch lint fmt fmt-check check install clean ui-install ui-build ui-dev build-all
 
 help:
 	@echo "Common tasks:"
@@ -17,6 +17,7 @@ help:
 	@echo "  make sandbox-down            # stop and remove docker playground"
 	@echo "  make sandbox-reset           # stop + remove playground volume (full reset)"
 	@echo "  make sandbox-status          # show playground container status"
+	@echo "  make sandbox-logs            # tail playground container logs"
 	@echo "  make dev-docker-up           # Go API server in Docker (pair with: cd ui && pnpm run dev)"
 	@echo "  make dev-docker-down         # stop dev profile container"
 	@echo "  make dev-docker-watch        # Go API server with auto-rebuild on Go file changes"
@@ -79,6 +80,9 @@ sandbox-reset:
 
 sandbox-status:
 	docker compose -f docker-compose.sandbox.yml --profile playground ps
+
+sandbox-logs:
+	docker compose -f docker-compose.sandbox.yml --profile playground logs -f skillshare-playground
 
 dev-docker-up:
 	docker compose -f docker-compose.sandbox.yml --profile dev up -d sandbox-dev

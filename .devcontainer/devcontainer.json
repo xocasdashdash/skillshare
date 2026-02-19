@@ -16,7 +16,7 @@
     "3000": { "label": "Docusaurus" }
   },
   "remoteEnv": {
-    "PATH": "/workspace/bin:${containerEnv:PATH}",
+    "PATH": "/workspace/.devcontainer/bin:/workspace/bin:${containerEnv:PATH}",
     "SKILLSHARE_UI_HOST": "0.0.0.0"
   },
   "postCreateCommand": ".devcontainer/setup.sh",

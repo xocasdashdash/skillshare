@@ -1,0 +1,9 @@
+#!/bin/sh
+# Devcontainer: ensure Docusaurus dev server is running, then print URL.
+URL="http://localhost:3000"
+
+if ! curl -sf "$URL" >/dev/null 2>&1; then
+  dev-servers start docusaurus
+  sleep 2
+fi
+echo "✓ Docs: $URL"

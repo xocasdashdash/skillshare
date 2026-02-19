@@ -341,20 +341,21 @@ make test-docker-online        # optional network-dependent tests
 make sandbox-up                # start persistent playground
 make sandbox-shell             # enter playground shell
 make sandbox-status            # check container status
+make sandbox-logs              # tail playground container logs
 make sandbox-down              # stop and remove
 ```
 
 Inside the playground:
 
 ```bash
-skillshare --help
-skillshare init --dry-run
-skillshare ui --host 0.0.0.0 --no-open
+skillshare status             # global mode (pre-initialized)
+skillshare list               # see flat + nested skills
+skillshare-ui                 # start global-mode dashboard (:19420)
 
 # Project mode (pre-configured demo project)
 cd ~/demo-project
-skillshare status
-skillshare-ui-p          # project mode dashboard on port 19420
+skillshare status             # auto-detects project mode
+skillshare-ui-p               # project mode dashboard (:19420)
 ```
 
 ### Dev profile
@@ -380,30 +381,16 @@ Pre-built images are published to [GitHub Packages](https://github.com/runkids/s
 
 ## Development
 
-```bash
-go build -o bin/skillshare ./cmd/skillshare
-go test ./...
-go vet ./...
-gofmt -w ./cmd ./internal ./tests
-```
-
-Using `make`:
+**Recommended:** Open in [Dev Containers](https://containers.dev/) — Go toolchain, Node.js, pnpm, and demo content are pre-configured. All dev servers (API, Vite, Docusaurus) start automatically.
 
 ```bash
-make build
-make test
-make lint
-make fmt
-make check
-```
-
-UI development helpers:
-
-```bash
-make ui-install
-make ui-build
-make ui-dev
-make build-all
+make build          # build binary
+make test           # unit + integration tests
+make lint           # go vet
+make fmt            # format Go files
+make check          # fmt + lint + test
+make ui-dev         # Go API server + Vite HMR together
+make build-all      # frontend + Go binary
 ```
 
 ## Documentation
@@ -418,11 +405,10 @@ make build-all
 ```bash
 git clone https://github.com/runkids/skillshare.git
 cd skillshare
-go build -o bin/skillshare ./cmd/skillshare
-go test ./...
+make check          # format + lint + test
 ```
 
-Issues and PRs are welcome: https://github.com/runkids/skillshare/issues
+Or open in Dev Containers for a zero-setup environment. Issues and PRs welcome: https://github.com/runkids/skillshare/issues
 
 ---
 

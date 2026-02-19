@@ -2,7 +2,8 @@
 # Build: docker build -f docker/production/Dockerfile -t skillshare .
 
 # Stage 1: Build Go binary
-FROM golang:1.25.5-bookworm AS go-builder
+ARG GO_VERSION=1.25.5
+FROM golang:${GO_VERSION}-bookworm AS go-builder
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download

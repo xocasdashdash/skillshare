@@ -21,6 +21,7 @@ echo "  mise run sandbox:shell  # enter docker playground shell"
 echo "  mise run sandbox:down   # stop and remove docker playground"
 echo "  mise run sandbox:reset  # stop + remove playground volume (full reset)"
 echo "  mise run sandbox:status # show playground container status"
+echo "  mise run sandbox:logs   # tail playground container logs"
 echo "  mise run dev:docker:up  # Go API server in Docker (pair with: cd ui && pnpm run dev)"
 echo "  mise run dev:docker:down  # stop dev profile container"
 echo "  mise run dev:docker:watch  # Go API server with auto-rebuild on Go file changes"
@@ -101,6 +102,10 @@ run = "./scripts/sandbox_playground_down.sh --volumes"
 [tasks."sandbox:status"]
 description = "Show playground container status"
 run = "docker compose -f docker-compose.sandbox.yml --profile playground ps"
+
+[tasks."sandbox:logs"]
+description = "Tail playground container logs"
+run = "docker compose -f docker-compose.sandbox.yml --profile playground logs -f skillshare-playground"
 
 [tasks."dev:docker:up"]
 description = "Start Go API server in Docker (dev profile)"

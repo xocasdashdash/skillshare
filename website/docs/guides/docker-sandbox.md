@@ -48,6 +48,7 @@ Command mapping:
 | `sandbox-shell` | `mise run sandbox:shell` | `make sandbox-shell` |
 | `sandbox-down` | `mise run sandbox:down` | `make sandbox-down` |
 | `sandbox-status` | `mise run sandbox:status` | `make sandbox-status` |
+| `sandbox-logs` | `mise run sandbox:logs` | `make sandbox-logs` |
 | `dev-docker-up` | `mise run dev:docker:up` | `make dev-docker-up` |
 | `dev-docker-down` | `mise run dev:docker:down` | `make dev-docker-down` |
 | `dev-docker-watch` | `mise run dev:docker:watch` | `make dev-docker-watch` |
@@ -322,7 +323,7 @@ The devcontainer reuses the same `docker/sandbox/Dockerfile` as the sandbox, so 
 - Ports forwarded: `19420` (Web UI), `5173` (Vite HMR), `3000` (Docusaurus)
 - Source code mounted at `/workspace`
 - **Pre-configured demo environment** — same as the interactive playground:
-  - Shortcut commands in PATH (`ss`, `skillshare-ui`, `skillshare-ui-p`, `website-dev`, `dev-servers`)
+  - Shortcut commands in PATH (`ss`, `ui`, `ui-p`, `docs`, `dev-servers`)
   - Frontend dependencies pre-installed (`ui/` and `website/`)
   - Global demo skills (audit examples, deploy checklist)
   - Custom audit rules (global + project)
@@ -338,7 +339,7 @@ ss audit                  # run audit with custom rules
 cd ~/demo-project
 ss status                 # auto-detects project mode
 ss audit                  # project-level audit
-skillshare-ui-p           # project mode web dashboard (port 19420)
+ui-p                      # switch to project mode dashboard (:19420)
 ```
 
 ### Frontend development
@@ -369,8 +370,9 @@ Servers shut down automatically when the container stops and restart on the next
 ### Running the Web UI inside the container
 
 ```bash
-skillshare-ui             # global mode dashboard
-skillshare-ui-p           # project mode dashboard
+ui                        # global mode dashboard (auto-started by dev-servers)
+ui-p                      # switch to project mode (stops global, Ctrl-C to return)
+docs                      # open documentation site (:3000)
 
 # VS Code auto-forwards port 19420 → open http://localhost:19420
 ```

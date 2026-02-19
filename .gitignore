@@ -23,7 +23,7 @@ docs/plans/
 .skillshare/
 /specs/
 .pnpm-store/
-.feature-radar
+.feature-radar/
 
 # Worktrees
 .worktrees/
