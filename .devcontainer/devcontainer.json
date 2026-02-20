@@ -9,11 +9,11 @@
       "pnpmVersion": "10.28.0"
     }
   },
-  "forwardPorts": [19420, 5173, 3000],
+  "forwardPorts": [5173, 19420, 3000],
   "portsAttributes": {
-    "19420": { "label": "API Server" },
-    "5173": { "label": "Vite (UI)" },
-    "3000": { "label": "Docusaurus" }
+    "5173": { "label": "Dashboard (ui)" },
+    "19420": { "label": "API Backend" },
+    "3000": { "label": "Docs (docs)" }
   },
   "remoteEnv": {
     "PATH": "/workspace/.devcontainer/bin:/workspace/bin:${containerEnv:PATH}",

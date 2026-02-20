@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
-# Auto-start dev servers when devcontainer starts.
-# Delegates to dev-servers manager for process tracking.
-exec /workspace/.devcontainer/dev-servers.sh start
+# Print available commands on container start.
+set -euo pipefail
+
+echo "Dev servers ready:"
+echo "  ui          # global-mode dashboard → :5173"
+echo "  ui -p       # project-mode dashboard → :5173"
+echo "  ui stop     # stop dashboard"
+echo "  docs        # documentation site → :3000"
+echo "  docs stop   # stop docs"

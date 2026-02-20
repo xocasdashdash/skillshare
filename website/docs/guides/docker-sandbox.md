@@ -44,6 +44,7 @@ Command mapping:
 |---|---|---|
 | `test-docker` | `mise run test:docker` | `make test-docker` |
 | `test-docker-online` | `mise run test:docker:online` | `make test-docker-online` |
+| **`playground`** | **`mise run playground`** | **`make playground`** |
 | `sandbox-up` | `mise run sandbox:up` | `make sandbox-up` |
 | `sandbox-shell` | `mise run sandbox:shell` | `make sandbox-shell` |
 | `sandbox-down` | `mise run sandbox:down` | `make sandbox-down` |
@@ -91,13 +92,19 @@ mise run test:docker:online
 make test-docker-online
 ```
 
-### 3. Open a dedicated playground and explore all commands
+### 3. Open a dedicated playground and explore all commands {#playground}
+
+One command to start and enter the playground:
 
 ```bash
-mise run sandbox:up
-mise run sandbox:shell
-make sandbox-up
-make sandbox-shell
+make playground
+mise run playground
+```
+
+Or start and enter separately:
+
+```bash
+make sandbox-up && make sandbox-shell
 ```
 
 Inside the playground, `skillshare` and `ss` are ready. Both global mode and project mode are pre-initialized:
@@ -119,31 +126,14 @@ skillshare list
 skillshare sync --dry-run
 ```
 
-To launch the project mode web dashboard, use the built-in alias:
+To launch the web dashboard, use the built-in aliases:
 
 ```bash
-skillshare-ui-p          # starts project mode dashboard on port 19420
+skillshare-ui            # global mode dashboard → http://localhost:19420
+skillshare-ui-p          # project mode dashboard (~/demo-project) → http://localhost:19420
 ```
 
-Or run the command manually from the demo project directory:
-
-```bash
-cd ~/demo-project
-skillshare ui -p --host 0.0.0.0 --no-open
-```
-
-Then open `http://localhost:19420` on your host machine.
-
-### Web UI in the Playground
-
-The playground container includes pre-built frontend assets and maps port 19420 to the host. Both global and project mode are pre-initialized, so you can launch the dashboard immediately:
-
-```bash
-skillshare-ui            # global mode dashboard
-skillshare-ui-p          # project mode dashboard (~/demo-project)
-```
-
-Then open `http://localhost:19420` in your host browser. Use `--host 0.0.0.0` because the container's `127.0.0.1` is not reachable from the host.
+Then open `http://localhost:19420` on your host machine (port is mapped via Docker Compose).
 
 ### GitHub Token (for Search)
 
@@ -323,7 +313,7 @@ The devcontainer reuses the same `docker/sandbox/Dockerfile` as the sandbox, so 
 - Ports forwarded: `19420` (Web UI), `5173` (Vite HMR), `3000` (Docusaurus)
 - Source code mounted at `/workspace`
 - **Pre-configured demo environment** — same as the interactive playground:
-  - Shortcut commands in PATH (`ss`, `ui`, `ui-p`, `docs`, `dev-servers`)
+  - Shortcut commands in PATH (`ss`, `ui`, `docs`)
   - Frontend dependencies pre-installed (`ui/` and `website/`)
   - Global demo skills (audit examples, deploy checklist)
   - Custom audit rules (global + project)
@@ -339,43 +329,26 @@ ss audit                  # run audit with custom rules
 cd ~/demo-project
 ss status                 # auto-detects project mode
 ss audit                  # project-level audit
-ui-p                      # switch to project mode dashboard (:19420)
+ui -p                     # switch API to project mode → http://localhost:5173
 ```
 
 ### Frontend development
 
-All three dev servers start automatically when the container opens:
-
-| Port | Service | What it serves |
-|------|---------|----------------|
-| `19420` | Go API server | REST API backend |
-| `5173` | Vite | React UI with hot reload |
-| `3000` | Docusaurus | Documentation site with hot reload |
-
-Open `http://localhost:5173` (UI) or `http://localhost:3000` (docs) in your host browser — they're ready immediately.
-These URLs are available via Dev Containers port forwarding (no fixed host port bind in `.devcontainer/docker-compose.yml`).
-
-**Managing dev servers:**
+| Port | Service | Command |
+|------|---------|---------|
+| `5173` | Vite (React UI + HMR) | `ui` or `ui -p` |
+| `19420` | Go API backend | started by `ui` / `ui -p` |
+| `3000` | Docusaurus | `docs` |
 
 ```bash
-dev-servers status              # check which servers are running
-dev-servers restart             # restart all
-dev-servers restart vite        # restart just Vite
-dev-servers stop docusaurus     # stop just Docusaurus
-dev-servers logs api            # tail Go API server log
+ui                        # global mode: API + Vite → http://localhost:5173
+ui -p                     # project mode: API + Vite → http://localhost:5173
+ui stop                   # stop API + Vite
+docs                      # documentation site → http://localhost:3000
+docs stop                 # stop Docusaurus
 ```
 
-Servers shut down automatically when the container stops and restart on the next container start.
-
-### Running the Web UI inside the container
-
-```bash
-ui                        # global mode dashboard (auto-started by dev-servers)
-ui-p                      # switch to project mode (stops global, Ctrl-C to return)
-docs                      # open documentation site (:3000)
-
-# VS Code auto-forwards port 19420 → open http://localhost:19420
-```
+`ui` starts both the Go API backend (port 19420, background) and Vite dev server (port 5173, HMR). Switching between `ui` and `ui -p` automatically restarts the API in the new mode. VS Code auto-forwards ports to your host browser.
 
 ### Running tests
 

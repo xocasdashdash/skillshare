@@ -27,12 +27,18 @@ echo "▸ Installing website dependencies …"
 # survives make clean). Only ephemeral symlinks are created here.
 echo "▸ Installing shortcut commands …"
 ln -sf /workspace/bin/skillshare /workspace/bin/ss
-ln -sf /workspace/.devcontainer/dev-servers.sh /workspace/.devcontainer/bin/dev-servers
 
 # ── 3. Global mode init ────────────────────────────────────────────
 echo "▸ Initializing global mode …"
 mkdir -p "$HOME/.claude/skills"
-skillshare init -g --no-copy --all-targets --no-git --skill
+GLOBAL_CFG="$HOME/.config/skillshare/config.yaml"
+if [ -f "$GLOBAL_CFG" ]; then
+  echo "  ✓ Already initialized ($GLOBAL_CFG), skipping init"
+elif skillshare status >/dev/null 2>&1; then
+  echo "  ✓ Already initialized (detected via 'skillshare status'), skipping init"
+else
+  skillshare init -g --no-copy --all-targets --no-git --skill
+fi
 
 # ── 4. Create demo content (shared with sandbox playground) ───────
 echo "▸ Creating demo content …"
@@ -50,14 +56,11 @@ echo ""
 echo "Quick start:"
 echo "  ss status               # check current state"
 echo "  ss list                 # see all skills"
-echo "  ui                      # global-mode dashboard (auto-started)"
-echo "  ui-p                    # switch to project-mode dashboard"
-echo "  docs                    # open documentation site"
-echo ""
-echo "Dev servers (auto-started on container open):"
-echo "  dev-servers status      # check which servers are running"
-echo "  dev-servers restart     # restart all dev servers"
-echo "  dev-servers logs vite   # tail Vite log (api|vite|docusaurus)"
+echo "  ui                      # global-mode dashboard → :5173"
+echo "  ui -p                   # project-mode dashboard → :5173"
+echo "  ui stop                 # stop dashboard"
+echo "  docs                    # documentation site → :3000"
+echo "  docs stop               # stop docs"
 echo ""
 echo "Audit playground:"
 echo "  ss audit                # scan all skills, see findings"

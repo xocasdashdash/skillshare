@@ -1,17 +1,114 @@
-#!/bin/sh
-# Devcontainer: switch to global-mode API and open dashboard.
-URL="http://localhost:19420"
+#!/usr/bin/env bash
+# Devcontainer: launch dashboard (API backend + Vite frontend).
+# Usage: ui          # global mode → http://localhost:5173
+#        ui -p       # project mode (~/demo-project) → http://localhost:5173
+#        ui stop     # stop API + Vite
+set -euo pipefail
 
-# Already running in global mode via dev-servers? Just print URL.
-if [ -f /tmp/dev-servers/api.pid ] && kill -0 "$(cat /tmp/dev-servers/api.pid)" 2>/dev/null; then
-  echo "✓ Dashboard (global): $URL"
+PORT=19420
+VITE_PORT=5173
+PIDDIR=/tmp/dev-servers
+LOGDIR=/tmp
+mkdir -p "$PIDDIR"
+
+# Resolve pnpm
+PNPM_BIN=""
+if command -v pnpm >/dev/null 2>&1; then
+  PNPM_BIN="$(command -v pnpm)"
+elif [ -x /usr/local/share/pnpm/pnpm ]; then
+  PNPM_BIN="/usr/local/share/pnpm/pnpm"
+elif [ -x /usr/local/bin/pnpm ]; then
+  PNPM_BIN="/usr/local/bin/pnpm"
+elif [ -x /usr/local/share/nvm/current/bin/pnpm ]; then
+  PNPM_BIN="/usr/local/share/nvm/current/bin/pnpm"
+fi
+
+is_port_open() {
+  timeout 1 bash -c "echo > /dev/tcp/127.0.0.1/$1" 2>/dev/null
+}
+
+kill_pid_file() {
+  local pf="$1"
+  [ -f "$pf" ] || return 0
+  local pid; pid=$(cat "$pf")
+  pkill -P "$pid" 2>/dev/null || true
+  kill "$pid" 2>/dev/null || true
+  sleep 0.3
+  kill -9 "$pid" 2>/dev/null || true
+  rm -f "$pf"
+}
+
+# Parse args
+MODE="global"
+ACTION="start"
+for arg in "$@"; do
+  case "$arg" in
+    -p|--project) MODE="project" ;;
+    -g|--global)  MODE="global" ;;
+    stop)         ACTION="stop" ;;
+  esac
+done
+
+# ── stop ──
+if [ "$ACTION" = "stop" ]; then
+  kill_pid_file "$PIDDIR/api.pid"
+  pkill -f 'skillshare.* ui' 2>/dev/null || true
+  fuser -k $PORT/tcp 2>/dev/null || true
+  kill_pid_file "$PIDDIR/vite.pid"
+  fuser -k $VITE_PORT/tcp 2>/dev/null || true
+  echo "  api + vite stopped"
   exit 0
 fi
 
-# Kill project-mode server if running.
-pkill -f 'skillshare ui -p --host' 2>/dev/null || true
-sleep 0.5
+# ── start ──
 
-# Start global mode via dev-servers (background).
-dev-servers start api
-echo "✓ Dashboard (global): $URL"
+# Stop old API.
+kill_pid_file "$PIDDIR/api.pid"
+pkill -f 'skillshare.* ui' 2>/dev/null || true
+fuser -k $PORT/tcp 2>/dev/null || true
+for _ in 1 2 3 4 5 6; do
+  is_port_open $PORT || break
+  sleep 0.5
+done
+
+# Build binary.
+printf "  %-12s building..." "api"
+if ! (cd /workspace && /usr/local/go/bin/go build -o /tmp/skillshare-dev ./cmd/skillshare) 2>"$LOGDIR/ui-build.log"; then
+  echo " failed (see $LOGDIR/ui-build.log)"
+  exit 1
+fi
+echo " ok"
+
+# Start API.
+if [ "$MODE" = "project" ]; then
+  cd ~/demo-project
+fi
+nohup /tmp/skillshare-dev ui "-${MODE:0:1}" --no-open --host 0.0.0.0 --port $PORT > "$LOGDIR/api-dev.log" 2>&1 &
+echo $! > "$PIDDIR/api.pid"
+printf "  %-12s started (%s mode)\n" "api" "$MODE"
+
+# Ensure Vite is running.
+if is_port_open $VITE_PORT; then
+  printf "  %-12s already running (port %s)\n" "vite" "$VITE_PORT"
+else
+  if [ -z "$PNPM_BIN" ]; then
+    echo "  vite         skipped: pnpm not found" >&2
+  else
+    if [ ! -x /workspace/ui/node_modules/.bin/vite ]; then
+      (cd /workspace/ui && "$PNPM_BIN" install --frozen-lockfile > "$LOGDIR/vite-deps.log" 2>&1) || true
+    fi
+    (cd /workspace/ui && nohup "$PNPM_BIN" exec vite --host 0.0.0.0 --port $VITE_PORT --strictPort > "$LOGDIR/vite-dev.log" 2>&1 &
+     echo $! > "$PIDDIR/vite.pid")
+    for _ in $(seq 1 20); do
+      is_port_open $VITE_PORT && break
+      sleep 0.5
+    done
+    if is_port_open $VITE_PORT; then
+      printf "  %-12s started (port %s)\n" "vite" "$VITE_PORT"
+    else
+      printf "  %-12s failed to start (see %s/vite-dev.log)\n" "vite" "$LOGDIR" >&2
+    fi
+  fi
+fi
+
+echo "✓ Dashboard ($MODE): http://localhost:$VITE_PORT"
