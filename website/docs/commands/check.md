@@ -7,8 +7,12 @@ sidebar_position: 3
 Check for available updates to tracked repositories and installed skills without applying changes.
 
 ```bash
-skillshare check             # Check all repos and skills
-skillshare check --json      # Machine-readable output
+skillshare check                      # Check all repos and skills
+skillshare check my-skill             # Check a single skill
+skillshare check a b c                # Check multiple skills
+skillshare check --group frontend     # Check all skills in frontend/
+skillshare check x -G backend         # Mix names and groups
+skillshare check --json               # Machine-readable output
 ```
 
 ## When to Use
@@ -64,10 +68,36 @@ skillshare check
   Run 'skillshare update <name>' or 'skillshare update --all'
 ```
 
+## Check Specific Skills
+
+You can check one or more skills by name instead of scanning everything:
+
+```bash
+skillshare check my-skill                # Single skill
+skillshare check skill-a skill-b         # Multiple skills
+```
+
+Use `--group` / `-G` to check all updatable skills in a group directory:
+
+```bash
+skillshare check --group frontend        # All skills under frontend/
+skillshare check -G frontend -G backend  # Multiple groups
+skillshare check my-skill -G frontend    # Mix names and groups
+```
+
+If a positional name matches a group directory (not a repo or skill itself), it is automatically expanded:
+
+```bash
+skillshare check frontend               # Auto-detected as group
+```
+
+Skills without metadata (local-only) are skipped when expanding groups.
+
 ## Options
 
 | Flag | Description |
 |------|-------------|
+| `--group`, `-G` `<name>` | Check all updatable skills in a group (repeatable) |
 | `--project`, `-p` | Check project-level skills (`.skillshare/`) |
 | `--global`, `-g` | Check global skills (`~/.config/skillshare`) |
 | `--json` | Output as JSON (for scripting/CI) |
@@ -121,8 +151,10 @@ Skills without metadata or with a local source are shown as "local source" — n
 ## Project Mode
 
 ```bash
-skillshare check -p         # Check project skills
-skillshare check -p --json  # JSON output for project
+skillshare check -p                    # Check all project skills
+skillshare check -p my-skill           # Check specific project skill
+skillshare check -p --group frontend   # Check project group
+skillshare check -p --json             # JSON output for project
 ```
 
 ## See Also

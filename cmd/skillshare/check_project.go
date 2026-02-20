@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-func cmdCheckProject(root string, jsonOutput bool) error {
+func cmdCheckProject(root string, opts *checkOptions) error {
 	if !projectConfigExists(root) {
 		return fmt.Errorf("no project config found in %s", root)
 	}
@@ -16,5 +16,11 @@ func cmdCheckProject(root string, jsonOutput bool) error {
 		return fmt.Errorf("no project skills directory found")
 	}
 
-	return runCheck(sourcePath, jsonOutput)
+	// No names and no groups → check all (existing behavior)
+	if len(opts.names) == 0 && len(opts.groups) == 0 {
+		return runCheck(sourcePath, opts.json)
+	}
+
+	// Filtered check
+	return runCheckFiltered(sourcePath, opts)
 }

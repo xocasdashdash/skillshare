@@ -189,6 +189,174 @@ targets: {}
 	}
 }
 
+// ── Filtered check tests (multi-name + --group) ──────────
+
+func TestCheck_SingleName(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	d1 := sb.CreateSkill("alpha", map[string]string{"SKILL.md": "# Alpha"})
+	writeMeta(t, d1)
+	d2 := sb.CreateSkill("beta", map[string]string{"SKILL.md": "# Beta"})
+	writeMeta(t, d2)
+
+	result := sb.RunCLI("check", "alpha")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "alpha")
+	result.AssertOutputNotContains(t, "beta")
+}
+
+func TestCheck_MultipleNames(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	d1 := sb.CreateSkill("alpha", map[string]string{"SKILL.md": "# Alpha"})
+	writeMeta(t, d1)
+	d2 := sb.CreateSkill("beta", map[string]string{"SKILL.md": "# Beta"})
+	writeMeta(t, d2)
+	d3 := sb.CreateSkill("gamma", map[string]string{"SKILL.md": "# Gamma"})
+	writeMeta(t, d3)
+
+	result := sb.RunCLI("check", "alpha", "gamma")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "alpha")
+	result.AssertAnyOutputContains(t, "gamma")
+	result.AssertOutputNotContains(t, "beta")
+}
+
+func TestCheck_Group(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	d1 := sb.CreateNestedSkill("frontend/react", map[string]string{"SKILL.md": "# React"})
+	writeMeta(t, d1)
+	d2 := sb.CreateNestedSkill("frontend/vue", map[string]string{"SKILL.md": "# Vue"})
+	writeMeta(t, d2)
+
+	result := sb.RunCLI("check", "--group", "frontend")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "react")
+	result.AssertAnyOutputContains(t, "vue")
+}
+
+func TestCheck_Group_SkipsLocal(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	d1 := sb.CreateNestedSkill("backend/api", map[string]string{"SKILL.md": "# API"})
+	writeMeta(t, d1)
+	// local-only has no metadata, so it's skipped by resolveGroupUpdatable
+	sb.CreateNestedSkill("backend/local-only", map[string]string{"SKILL.md": "# Local"})
+
+	result := sb.RunCLI("check", "--group", "backend")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "api")
+	result.AssertOutputNotContains(t, "local-only")
+}
+
+func TestCheck_GroupNotFound(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	result := sb.RunCLI("check", "--group", "nonexistent")
+	result.AssertFailure(t)
+	result.AssertAnyOutputContains(t, "nonexistent")
+}
+
+func TestCheck_PositionalGroupAutoDetect(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	d1 := sb.CreateNestedSkill("mygroup/s1", map[string]string{"SKILL.md": "# S1"})
+	writeMeta(t, d1)
+
+	result := sb.RunCLI("check", "mygroup")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "is a group")
+	result.AssertAnyOutputContains(t, "s1")
+}
+
+func TestCheck_Mixed_NamesAndGroup(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	d1 := sb.CreateSkill("standalone", map[string]string{"SKILL.md": "# Standalone"})
+	writeMeta(t, d1)
+
+	d2 := sb.CreateNestedSkill("frontend/react", map[string]string{"SKILL.md": "# React"})
+	writeMeta(t, d2)
+
+	result := sb.RunCLI("check", "standalone", "--group", "frontend")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "standalone")
+	result.AssertAnyOutputContains(t, "react")
+}
+
+func TestCheck_SingleName_JSON(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	d1 := sb.CreateSkill("alpha", map[string]string{"SKILL.md": "# Alpha"})
+	writeMeta(t, d1)
+	d2 := sb.CreateSkill("beta", map[string]string{"SKILL.md": "# Beta"})
+	writeMeta(t, d2)
+
+	result := sb.RunCLI("check", "alpha", "--json")
+	result.AssertSuccess(t)
+
+	var output checkOutput
+	if err := json.Unmarshal([]byte(result.Stdout), &output); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, result.Stdout)
+	}
+
+	if len(output.Skills) != 1 {
+		t.Errorf("expected 1 skill in JSON, got %d", len(output.Skills))
+	}
+	if len(output.Skills) > 0 && output.Skills[0].Name != "alpha" {
+		t.Errorf("expected skill name 'alpha', got %q", output.Skills[0].Name)
+	}
+}
+
+func TestCheckProject_MultiNames(t *testing.T) {
+	sb := testutil.NewSandbox(t)
+	defer sb.Cleanup()
+	setupGlobalConfig(sb)
+
+	projectRoot := sb.SetupProjectDir("claude")
+	d1 := sb.CreateProjectSkill(projectRoot, "alpha", map[string]string{"SKILL.md": "# Alpha"})
+	writeMeta(t, d1)
+	d2 := sb.CreateProjectSkill(projectRoot, "beta", map[string]string{"SKILL.md": "# Beta"})
+	writeMeta(t, d2)
+	d3 := sb.CreateProjectSkill(projectRoot, "gamma", map[string]string{"SKILL.md": "# Gamma"})
+	writeMeta(t, d3)
+
+	result := sb.RunCLIInDir(projectRoot, "check", "alpha", "gamma")
+	result.AssertSuccess(t)
+	result.AssertAnyOutputContains(t, "alpha")
+	result.AssertAnyOutputContains(t, "gamma")
+	result.AssertOutputNotContains(t, "beta")
+}
+
+// checkOutput mirrors the JSON structure for test parsing
+type checkOutput struct {
+	TrackedRepos []struct {
+		Name   string `json:"name"`
+		Status string `json:"status"`
+	} `json:"tracked_repos"`
+	Skills []struct {
+		Name   string `json:"name"`
+		Status string `json:"status"`
+	} `json:"skills"`
+}
+
 // ── Git helpers ───────────────────────────────────────────
 
 func gitInit(t *testing.T, dir string, bare bool) {

@@ -37,6 +37,41 @@ type checkOutput struct {
 	Skills       []checkSkillResult `json:"skills"`
 }
 
+// checkOptions holds parsed arguments for check command
+type checkOptions struct {
+	names  []string // positional (0+ = all)
+	groups []string // --group/-G
+	json   bool
+}
+
+// parseCheckArgs parses command line arguments for the check command.
+// Returns (opts, showHelp, error).
+func parseCheckArgs(args []string) (*checkOptions, bool, error) {
+	opts := &checkOptions{}
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case arg == "--json":
+			opts.json = true
+		case arg == "--group" || arg == "-G":
+			i++
+			if i >= len(args) {
+				return nil, false, fmt.Errorf("--group requires a value")
+			}
+			opts.groups = append(opts.groups, args[i])
+		case arg == "--help" || arg == "-h":
+			return nil, true, nil
+		case strings.HasPrefix(arg, "-"):
+			return nil, false, fmt.Errorf("unknown option: %s", arg)
+		default:
+			opts.names = append(opts.names, arg)
+		}
+	}
+
+	return opts, false, nil
+}
+
 func cmdCheck(args []string) error {
 	mode, rest, err := parseModeArgs(args)
 	if err != nil {
@@ -58,23 +93,17 @@ func cmdCheck(args []string) error {
 
 	applyModeLabel(mode)
 
-	var jsonOutput bool
-	for _, arg := range rest {
-		switch {
-		case arg == "--json":
-			jsonOutput = true
-		case arg == "--help" || arg == "-h":
-			printCheckHelp()
-			return nil
-		case strings.HasPrefix(arg, "-"):
-			return fmt.Errorf("unknown option: %s", arg)
-		default:
-			return fmt.Errorf("unexpected argument: %s", arg)
-		}
+	opts, showHelp, parseErr := parseCheckArgs(rest)
+	if showHelp {
+		printCheckHelp()
+		return nil
+	}
+	if parseErr != nil {
+		return parseErr
 	}
 
 	if mode == modeProject {
-		return cmdCheckProject(cwd, jsonOutput)
+		return cmdCheckProject(cwd, opts)
 	}
 
 	cfg, err := config.Load()
@@ -82,7 +111,13 @@ func cmdCheck(args []string) error {
 		return err
 	}
 
-	return runCheck(cfg.Source, jsonOutput)
+	// No names and no groups → check all (existing behavior)
+	if len(opts.names) == 0 && len(opts.groups) == 0 {
+		return runCheck(cfg.Source, opts.json)
+	}
+
+	// Filtered check: resolve targets then check only those
+	return runCheckFiltered(cfg.Source, opts)
 }
 
 func runCheck(sourceDir string, jsonOutput bool) error {
@@ -251,6 +286,199 @@ func runCheck(sourceDir string, jsonOutput bool) error {
 	return nil
 }
 
+// runCheckFiltered checks only the specified targets (resolved from names/groups).
+func runCheckFiltered(sourceDir string, opts *checkOptions) error {
+	// --- Resolve targets ---
+	var targets []resolvedMatch
+	seen := map[string]bool{}
+	var resolveWarnings []string
+
+	for _, name := range opts.names {
+		// Check group directory first (same logic as update)
+		if isGroupDir(name, sourceDir) {
+			groupMatches, groupErr := resolveGroupUpdatable(name, sourceDir)
+			if groupErr != nil {
+				resolveWarnings = append(resolveWarnings, fmt.Sprintf("%s: %v", name, groupErr))
+				continue
+			}
+			if len(groupMatches) == 0 {
+				resolveWarnings = append(resolveWarnings, fmt.Sprintf("%s: no updatable skills in group", name))
+				continue
+			}
+			ui.Info("'%s' is a group — expanding to %d updatable skill(s)", name, len(groupMatches))
+			for _, m := range groupMatches {
+				if !seen[m.relPath] {
+					seen[m.relPath] = true
+					targets = append(targets, m)
+				}
+			}
+			continue
+		}
+
+		match, err := resolveByBasename(sourceDir, name)
+		if err != nil {
+			resolveWarnings = append(resolveWarnings, fmt.Sprintf("%s: %v", name, err))
+			continue
+		}
+		if !seen[match.relPath] {
+			seen[match.relPath] = true
+			targets = append(targets, match)
+		}
+	}
+
+	for _, group := range opts.groups {
+		groupMatches, err := resolveGroupUpdatable(group, sourceDir)
+		if err != nil {
+			resolveWarnings = append(resolveWarnings, fmt.Sprintf("--group %s: %v", group, err))
+			continue
+		}
+		if len(groupMatches) == 0 {
+			resolveWarnings = append(resolveWarnings, fmt.Sprintf("--group %s: no updatable skills in group", group))
+			continue
+		}
+		for _, m := range groupMatches {
+			if !seen[m.relPath] {
+				seen[m.relPath] = true
+				targets = append(targets, m)
+			}
+		}
+	}
+
+	for _, w := range resolveWarnings {
+		ui.Warning("%s", w)
+	}
+
+	if len(targets) == 0 {
+		if opts.json {
+			out, _ := json.MarshalIndent(checkOutput{
+				TrackedRepos: []checkRepoResult{},
+				Skills:       []checkSkillResult{},
+			}, "", "  ")
+			fmt.Println(string(out))
+			return nil
+		}
+		if len(resolveWarnings) > 0 {
+			return fmt.Errorf("no valid skills to check")
+		}
+		return fmt.Errorf("no skills found")
+	}
+
+	// --- Check resolved targets ---
+	var repoResults []checkRepoResult
+	var skillResults []checkSkillResult
+
+	if !opts.json {
+		fmt.Println()
+	}
+
+	var spinner *ui.Spinner
+	if !opts.json {
+		spinner = ui.StartSpinner(fmt.Sprintf("Checking %d target(s)...", len(targets)))
+	}
+
+	for _, t := range targets {
+		itemPath := filepath.Join(sourceDir, t.relPath)
+		if t.isRepo {
+			repoResults = append(repoResults, checkTrackedRepo(t.relPath, itemPath))
+		} else {
+			skillResults = append(skillResults, checkRegularSkill(t.relPath, itemPath))
+		}
+	}
+
+	if spinner != nil {
+		spinner.Success(fmt.Sprintf("Checked %d target(s)", len(targets)))
+	}
+
+	if opts.json {
+		output := checkOutput{
+			TrackedRepos: repoResults,
+			Skills:       skillResults,
+		}
+		if output.TrackedRepos == nil {
+			output.TrackedRepos = []checkRepoResult{}
+		}
+		if output.Skills == nil {
+			output.Skills = []checkSkillResult{}
+		}
+		out, _ := json.MarshalIndent(output, "", "  ")
+		fmt.Println(string(out))
+		return nil
+	}
+
+	// --- Display results ---
+
+	if len(repoResults) > 0 {
+		fmt.Println()
+		for _, r := range repoResults {
+			switch r.Status {
+			case "up_to_date":
+				ui.ListItem("success", r.Name, "up to date")
+			case "behind":
+				ui.ListItem("info", r.Name, fmt.Sprintf("%d commit(s) behind", r.Behind))
+			case "dirty":
+				ui.ListItem("warning", r.Name, "has uncommitted changes")
+			case "error":
+				ui.ListItem("error", r.Name, fmt.Sprintf("error: %s", r.Message))
+			}
+		}
+	}
+
+	if len(skillResults) > 0 {
+		fmt.Println()
+		for _, s := range skillResults {
+			switch s.Status {
+			case "up_to_date":
+				detail := "up to date"
+				if s.Source != "" {
+					detail += fmt.Sprintf("  %s", formatSourceShort(s.Source))
+				}
+				ui.ListItem("success", s.Name, detail)
+			case "update_available":
+				detail := "update available"
+				if s.Source != "" {
+					detail += fmt.Sprintf("  %s", formatSourceShort(s.Source))
+				}
+				ui.ListItem("info", s.Name, detail)
+			case "local":
+				ui.ListItem("info", s.Name, "local source")
+			case "error":
+				ui.ListItem("warning", s.Name, "cannot reach remote")
+			}
+		}
+	}
+
+	// Summary
+	updatableRepos := 0
+	for _, r := range repoResults {
+		if r.Status == "behind" {
+			updatableRepos++
+		}
+	}
+	updatableSkills := 0
+	for _, s := range skillResults {
+		if s.Status == "update_available" {
+			updatableSkills++
+		}
+	}
+
+	fmt.Println()
+	if updatableRepos+updatableSkills == 0 {
+		ui.SuccessMsg("Everything is up to date")
+	} else {
+		parts := []string{}
+		if updatableRepos > 0 {
+			parts = append(parts, fmt.Sprintf("%d repo(s)", updatableRepos))
+		}
+		if updatableSkills > 0 {
+			parts = append(parts, fmt.Sprintf("%d skill(s)", updatableSkills))
+		}
+		ui.Info("%s have updates available", strings.Join(parts, " + "))
+		ui.Info("Run 'skillshare update <name>' or 'skillshare update --all'")
+	}
+
+	return nil
+}
+
 func warnUnknownSkillTargets(sourceDir string) {
 	discovered, err := ssync.DiscoverSourceSkills(sourceDir)
 	if err != nil {
@@ -341,21 +569,33 @@ func formatSourceShort(source string) string {
 }
 
 func printCheckHelp() {
-	fmt.Println(`Usage: skillshare check [options]
+	fmt.Println(`Usage: skillshare check [name...] [options]
+       skillshare check --group <group> [options]
 
 Check for available updates to tracked repositories and installed skills.
 
 For tracked repos: fetches from origin and checks if behind
 For regular skills: compares installed version with remote HEAD
 
+If no names or groups are specified, all items are checked.
+If a positional name matches a group directory, it is automatically expanded.
+
+Arguments:
+  name...                Skill name(s) or tracked repo name(s) (optional)
+
 Options:
-  --project, -p  Check project-level skills (.skillshare/)
-  --global, -g   Check global skills (~/.config/skillshare)
-  --json         Output results as JSON
-  --help, -h     Show this help
+  --group, -G <name>  Check all updatable skills in a group (repeatable)
+  --project, -p       Check project-level skills (.skillshare/)
+  --global, -g        Check global skills (~/.config/skillshare)
+  --json              Output results as JSON
+  --help, -h          Show this help
 
 Examples:
-  skillshare check               Check for updates
-  skillshare check --json        Output as JSON (for CI)
-  skillshare check -p            Check project skills`)
+  skillshare check                      Check all items
+  skillshare check my-skill             Check a single skill
+  skillshare check a b c                Check multiple skills
+  skillshare check --group frontend     Check all skills in frontend/
+  skillshare check x -G backend         Mix names and groups
+  skillshare check --json               Output as JSON (for CI)
+  skillshare check -p                   Check project skills`)
 }
