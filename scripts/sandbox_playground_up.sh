@@ -74,7 +74,7 @@ echo "  Playground is running! (bare mode — no auto-init)"
 else
 echo "  Playground is running!"
 fi
-echo "  Enter with:  make sandbox-shell"
+echo "  Enter with:  ./scripts/sandbox.sh shell   (or 'make playground' for one step)"
 echo "══════════════════════════════════════════════════════════"
 echo ""
 echo "Available commands: skillshare (alias: ss)"

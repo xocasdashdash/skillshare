@@ -332,17 +332,16 @@ Use Docker for reproducible testing, interactive playgrounds, and production dep
 
 ```bash
 make test-docker               # offline sandbox (build + unit + integration)
-make test-docker-online        # optional network-dependent tests
 ```
 
 ### Interactive playground
 
 ```bash
-make sandbox-up                # start persistent playground
-make sandbox-shell             # enter playground shell
-make sandbox-status            # check container status
-make sandbox-logs              # tail playground container logs
-make sandbox-down              # stop and remove
+make playground                # start + enter shell (one step)
+make playground-down           # stop and remove
+
+# Advanced sandbox management:
+./scripts/sandbox.sh <up|down|shell|reset|status|logs|bare>
 ```
 
 Inside the playground:
@@ -365,7 +364,7 @@ skillshare-ui-p               # project mode dashboard (:19420)
 make ui-dev                    # Go API server + Vite HMR together
 
 # Without Go (API in Docker):
-make dev-docker-up             # Go API server in Docker (:19420)
+make dev-docker               # Go API server in Docker (:19420)
 cd ui && pnpm run dev          # Vite dev server on host (:5173)
 make dev-docker-down           # stop when done
 ```

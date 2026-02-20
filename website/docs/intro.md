@@ -41,6 +41,15 @@ skillshare sync
 
 Done. Your skills are now synced across all AI CLI tools.
 
+:::tip[Try without installing]
+Want to explore first? Use the [Docker Playground](/docs/guides/docker-sandbox#playground) — one command, no local install needed:
+
+```bash
+git clone https://github.com/runkids/skillshare.git && cd skillshare
+make playground
+```
+:::
+
 ## How It Works
 
 ```mermaid

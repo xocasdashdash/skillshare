@@ -11,31 +11,24 @@ echo "  mise run run            # run local binary help"
 echo "  mise run test           # unit + integration tests"
 echo "  mise run test:unit      # unit tests only"
 echo "  mise run test:int       # integration tests only"
-echo "  mise run test:cover     # tests with coverage"
-echo "  mise run test:install   # install.sh sandbox tests"
 echo "  mise run test:docker    # docker offline sandbox (build + unit + integration)"
-echo "  mise run test:docker:online  # optional docker online install/update tests"
-echo "  mise run sandbox:up     # start persistent docker playground"
-echo "  mise run sandbox:bare   # start playground without auto-init"
-echo "  mise run sandbox:shell  # enter docker playground shell"
-echo "  mise run sandbox:down   # stop and remove docker playground"
-echo "  mise run sandbox:reset  # stop + remove playground volume (full reset)"
-echo "  mise run sandbox:status # show playground container status"
-echo "  mise run sandbox:logs   # tail playground container logs"
-echo "  mise run dev:docker:up  # Go API server in Docker (pair with: cd ui && pnpm run dev)"
-echo "  mise run dev:docker:down  # stop dev profile container"
-echo "  mise run dev:docker:watch  # Go API server with auto-rebuild on Go file changes"
-echo "  mise run docker:build   # build production Docker image"
-echo "  mise run docker:build:multiarch  # build multi-arch production image"
+echo "  mise run test:docker:online  # docker online install/update tests"
+echo "  mise run playground     # start playground + enter shell (one step)"
+echo "  mise run playground:down  # stop and remove playground"
 echo "  mise run lint           # go vet"
 echo "  mise run fmt            # format Go files"
-echo "  mise run fmt:check      # verify formatting only"
 echo "  mise run check          # fmt:check + lint + test"
-echo "  mise run ui:install     # install frontend dependencies"
-echo "  mise run ui:build       # build frontend"
 echo "  mise run ui:dev         # Go API server + Vite dev server (requires local Go)"
-echo "  mise run build:all     # ui:build + build"
+echo "  mise run dev:docker    # Go API in Docker + auto-rebuild (pair with: cd ui && pnpm run dev)"
+echo "  mise run dev:docker:down  # stop dev Docker container"
+echo "  mise run build:all      # ui:build + build"
 echo "  mise run clean          # remove build artifacts"
+echo ""
+echo "Advanced (run scripts directly):"
+echo "  ./scripts/sandbox.sh <up|down|shell|reset|status|logs|bare>"
+echo "  ./scripts/test.sh --cover"
+echo "  ./scripts/test_install.sh"
+echo "  docker compose -f docker-compose.sandbox.yml --profile dev up -d  # start without watch"
 """
 
 [tasks.build]
@@ -63,14 +56,6 @@ run = "./scripts/test.sh --unit"
 description = "Run integration tests only"
 run = "./scripts/test.sh --int"
 
-[tasks."test:cover"]
-description = "Run tests with coverage"
-run = "./scripts/test.sh --cover"
-
-[tasks."test:install"]
-description = "Run install.sh sandbox tests"
-run = "./scripts/test_install.sh"
-
 [tasks."test:docker"]
 description = "Run tests in offline docker sandbox"
 run = "./scripts/test_docker.sh"
@@ -79,45 +64,24 @@ run = "./scripts/test_docker.sh"
 description = "Run optional network-dependent tests in docker sandbox"
 run = "./scripts/test_docker_online.sh"
 
-[tasks."sandbox:up"]
-description = "Start persistent docker playground container"
-run = "./scripts/sandbox_playground_up.sh"
+[tasks.playground]
+description = "Start playground and enter shell (one step)"
+run = """
+./scripts/sandbox_playground_up.sh
+./scripts/sandbox_playground_shell.sh
+"""
 
-[tasks."sandbox:bare"]
-description = "Start playground without auto-init (clean slate)"
-run = "./scripts/sandbox_playground_up.sh --bare"
-
-[tasks."sandbox:shell"]
-description = "Enter persistent docker playground shell"
-run = "./scripts/sandbox_playground_shell.sh"
-
-[tasks."sandbox:down"]
-description = "Stop and remove persistent docker playground container"
+[tasks."playground:down"]
+description = "Stop and remove playground container"
 run = "./scripts/sandbox_playground_down.sh"
 
-[tasks."sandbox:reset"]
-description = "Stop playground and remove home volume (full reset)"
-run = "./scripts/sandbox_playground_down.sh --volumes"
-
-[tasks."sandbox:status"]
-description = "Show playground container status"
-run = "docker compose -f docker-compose.sandbox.yml --profile playground ps"
-
-[tasks."sandbox:logs"]
-description = "Tail playground container logs"
-run = "docker compose -f docker-compose.sandbox.yml --profile playground logs -f skillshare-playground"
-
-[tasks."dev:docker:up"]
-description = "Start Go API server in Docker (dev profile)"
-run = "docker compose -f docker-compose.sandbox.yml --profile dev up -d sandbox-dev"
+[tasks."dev:docker"]
+description = "Go API in Docker + auto-rebuild (pair with: cd ui && pnpm run dev)"
+run = "docker compose -f docker-compose.sandbox.yml --profile dev watch"
 
 [tasks."dev:docker:down"]
-description = "Stop dev profile container"
+description = "Stop dev Docker container"
 run = "docker compose -f docker-compose.sandbox.yml --profile dev down"
-
-[tasks."dev:docker:watch"]
-description = "Go API server in Docker with auto-rebuild on Go file changes"
-run = "docker compose -f docker-compose.sandbox.yml --profile dev watch"
 
 [tasks."docker:build"]
 description = "Build production Docker image"

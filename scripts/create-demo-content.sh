@@ -176,7 +176,9 @@ echo "  Setting up demo project …"
 mkdir -p "$DEMO"
 cd "$DEMO"
 
-skillshare init -p --targets claude-code,agents
+if [ ! -f .skillshare/config.yaml ]; then
+  skillshare init -p --targets claude-code,agents
+fi
 
 # Root-level skill
 mkdir -p .skillshare/skills/hello-world

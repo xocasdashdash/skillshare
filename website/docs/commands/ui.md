@@ -125,8 +125,7 @@ The web dashboard exposes a REST API at `/api/`. All endpoints return JSON.
 To use the web UI inside Docker (requires network access for first-time UI download):
 
 ```bash
-make sandbox-up
-make sandbox-shell
+make playground
 
 # Inside container:
 skillshare ui --host 0.0.0.0 --no-open

@@ -25,10 +25,10 @@ D --> D1["Online test sandbox"]
 D1 --> D2["make test-docker-online"]
 
 E --> E1["Persistent playground"]
-E1 --> E2["sandbox-up -> sandbox-shell"]
+E1 --> E2["make playground"]
 
 F --> F1["Dev profile"]
-F1 --> F2["dev-docker-up + ui-dev"]
+F1 --> F2["dev-docker + ui-dev"]
 
 G --> G1{"Production or CI?"}
 G1 --> G2["docker-build"]
@@ -40,21 +40,17 @@ H1 --> H2["Reopen in Container"]
 
 Command mapping:
 
-| Shortcut | `mise` | `make` |
+| Command | `mise` | `make` |
 |---|---|---|
-| `test-docker` | `mise run test:docker` | `make test-docker` |
-| `test-docker-online` | `mise run test:docker:online` | `make test-docker-online` |
-| **`playground`** | **`mise run playground`** | **`make playground`** |
-| `sandbox-up` | `mise run sandbox:up` | `make sandbox-up` |
-| `sandbox-shell` | `mise run sandbox:shell` | `make sandbox-shell` |
-| `sandbox-down` | `mise run sandbox:down` | `make sandbox-down` |
-| `sandbox-status` | `mise run sandbox:status` | `make sandbox-status` |
-| `sandbox-logs` | `mise run sandbox:logs` | `make sandbox-logs` |
-| `dev-docker-up` | `mise run dev:docker:up` | `make dev-docker-up` |
-| `dev-docker-down` | `mise run dev:docker:down` | `make dev-docker-down` |
-| `dev-docker-watch` | `mise run dev:docker:watch` | `make dev-docker-watch` |
-| `docker-build` | `mise run docker:build` | `make docker-build` |
-| `docker-build-multiarch` | `mise run docker:build:multiarch` | `make docker-build-multiarch` |
+| Test (offline) | `mise run test:docker` | `make test-docker` |
+| Test (online) | `mise run test:docker:online` | `make test-docker-online` |
+| **Playground** (start + shell) | **`mise run playground`** | **`make playground`** |
+| Playground (stop) | `mise run playground:down` | `make playground-down` |
+| Sandbox (advanced) | — | `./scripts/sandbox.sh <up\|down\|shell\|reset\|status\|logs\|bare>` |
+| Dev API server | `mise run dev:docker` | `make dev-docker` |
+| Dev stop | `mise run dev:docker:down` | `make dev-docker-down` |
+| Docker build | `mise run docker:build` | `make docker-build` |
+| Docker multiarch | `mise run docker:build:multiarch` | `make docker-build-multiarch` |
 
 ## What You Can Use It For
 
@@ -88,7 +84,6 @@ This validates local-path and `file://` workflows in isolation.
 Use this for GitHub/remote-source validation that depends on network access.
 
 ```bash
-mise run test:docker:online
 make test-docker-online
 ```
 
@@ -99,12 +94,6 @@ One command to start and enter the playground:
 ```bash
 make playground
 mise run playground
-```
-
-Or start and enter separately:
-
-```bash
-make sandbox-up && make sandbox-shell
 ```
 
 Inside the playground, `skillshare` and `ss` are ready. Both global mode and project mode are pre-initialized:
@@ -142,14 +131,13 @@ The playground automatically picks up your GitHub token from the host for `skill
 ```bash
 # If not detected, set it before starting the playground:
 export GITHUB_TOKEN=ghp_your_token_here
-make sandbox-up
+make playground
 ```
 
 When finished:
 
 ```bash
-mise run sandbox:down
-make sandbox-down
+make playground-down
 ```
 
 ---
@@ -162,15 +150,15 @@ make sandbox-down
 |----------|-------------|-----------------|
 | Try skillshare without installing Go/Node | `docker run ghcr.io/runkids/skillshare` | Install Go + Node + pnpm, then build from source |
 | Run full test suite before opening a PR | `make test-docker` | Depend on local toolchain (Go version mismatch = flaky results) |
-| Frontend work without Go installed | `make dev-docker-up` + `make ui-dev` | Must install Go 1.25+ locally to run the API server |
-| Demo skillshare to a colleague | `make sandbox-up` → Web UI on `:19420` | Walk them through a full local install |
+| Frontend work without Go installed | `make dev-docker` + `cd ui && pnpm run dev` | Must install Go 1.25+ locally to run the API server |
+| Demo skillshare to a colleague | `make playground` → Web UI on `:19420` | Walk them through a full local install |
 | Verify Linux behavior on Apple Silicon | `make docker-build` | Push to CI and wait |
 
 ### Teams and open-source contributors
 
 | Scenario | What to use | What it solves |
 |----------|-------------|---------------|
-| New contributor onboarding | `make sandbox-up` — one command, ready to go | No more "install Go, set PATH, clone, build" setup guide |
+| New contributor onboarding | `make playground` — one command, ready to go | No more "install Go, set PATH, clone, build" setup guide |
 | Automated skill quality gate in CI | `docker run ghcr.io/.../skillshare-ci audit /skills` | Previously required installing Go + building from source in every workflow |
 | "Works on my machine" across contributors | Docker pins Go 1.25.5 + all dependencies | Different local Go versions causing test flakes |
 | PR reviewer reproducing an issue | `make test-docker --cmd "go test -run TestXxx ..."` | Must clone + full local setup to reproduce |
@@ -248,11 +236,11 @@ make ui-dev              # starts Go API server + Vite dev server together
 # Open http://localhost:5173
 ```
 
-**Without Go** (Go API runs in Docker):
+**Without Go** (Go API runs in Docker, auto-rebuilds on Go changes):
 
 ```bash
 # Terminal 1
-make dev-docker-up       # Go API server in Docker (localhost:19420)
+make dev-docker          # Go API in Docker + Compose Watch (localhost:19420)
 
 # Terminal 2
 cd ui && pnpm run dev    # Vite dev server (localhost:5173, proxies /api → :19420)
@@ -261,21 +249,9 @@ cd ui && pnpm run dev    # Vite dev server (localhost:5173, proxies /api → :19
 make dev-docker-down
 ```
 
-Both approaches give you instant HMR for `ui/` changes. The Docker variant pins the Go toolchain so backend behavior is consistent across contributors.
+Both approaches give you instant HMR for `ui/` changes. The Docker variant pins the Go toolchain so backend behavior is consistent across contributors. When you edit Go files, Compose Watch detects the change, rebuilds the container, and restarts the API server automatically. Requires Docker Compose v2.22+.
 
-**With Docker Compose Watch** (auto-rebuild on Go changes):
-
-```bash
-# Terminal 1
-make dev-docker-watch    # watches cmd/, internal/, go.mod — auto-rebuilds on change
-
-# Terminal 2
-cd ui && pnpm run dev    # Vite dev server (localhost:5173, proxies /api → :19420)
-```
-
-When you edit Go files, Compose Watch detects the change, rebuilds the container, and restarts the API server automatically. No manual restart needed. Requires Docker Compose v2.22+.
-
-**Note:** Without Compose Watch, Go code changes require restarting the server — `Ctrl+C` and re-run for `make ui-dev`, or `make dev-docker-down && make dev-docker-up` for Docker.
+**Note:** Go code changes require restarting the server when using `make ui-dev` (`Ctrl+C` and re-run). `make dev-docker` handles this automatically via Compose Watch.
 
 ---
 
@@ -284,7 +260,7 @@ When you edit Go files, Compose Watch detects the change, rebuilds the container
 Open the project in a ready-to-code container — no local Go, Node, or pnpm needed.
 
 :::info Devcontainer vs Playground
-Both use the same base image and demo content. The **playground** (`make sandbox-up`) is a terminal-only environment for exploring commands. The **devcontainer** adds VS Code integration (IntelliSense, debugger, extensions) for developing the skillshare codebase itself.
+Both use the same base image and demo content. The **playground** (`make playground`) is a terminal-only environment for exploring commands. The **devcontainer** adds VS Code integration (IntelliSense, debugger, extensions) for developing the skillshare codebase itself.
 :::
 
 ### Prerequisites
@@ -404,7 +380,7 @@ On tag push (`v*`), the `docker-publish` GitHub Actions workflow builds and push
 
 ## Limits and Expectations
 
-- **Playground and dev profile share port 19420** — run only one at a time. Stop the other first (`make sandbox-down` or `make dev-docker-down`).
+- **Playground and dev profile share port 19420** — run only one at a time. Stop the other first (`make playground-down` or `make dev-docker-down`).
 - Offline sandbox cannot validate network-dependent features (for example remote `install` from GitHub).
 - Playground uses container-local `HOME`, so it does not directly modify your real host home config.
 - Go code changes are picked up automatically (`go build` runs inside the container from mounted source). **Frontend (`ui/`) changes** are picked up instantly when running `make ui-dev` (Vite HMR) inside the devcontainer. For the playground, run `make ui-build` on the host first since the playground container does not include Node.js.

@@ -10,7 +10,8 @@ cd "$PROJECT_ROOT"
 
 if [[ -z "$(docker compose -f "$COMPOSE_FILE" --profile playground ps -q "$SERVICE")" ]]; then
   echo "Playground is not running. Start it first:"
-  echo "  ./scripts/sandbox_playground_up.sh"
+  echo "  make playground                # start + enter shell (one step)"
+  echo "  ./scripts/sandbox.sh up        # start only"
   exit 1
 fi
 
