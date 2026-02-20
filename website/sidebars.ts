@@ -68,6 +68,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'guides/migration',
             'guides/comparison',
+            'guides/local-first',
             'guides/docker-sandbox',
             'guides/security',
           ],
