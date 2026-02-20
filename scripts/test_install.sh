@@ -116,9 +116,9 @@ test_download_url_format() {
 
   # Use a known version for URL format test
   TEST_VERSION="0.1.0"
-  URL="https://github.com/runkids/skillshare/releases/download/v${TEST_VERSION}/skillshare_${TEST_VERSION}_${OS}_${ARCH}.tar.gz"
+  URL="https://github.com/xocasdashdash/skillshare/releases/download/v${TEST_VERSION}/skillshare_${TEST_VERSION}_${OS}_${ARCH}.tar.gz"
 
-  if echo "$URL" | grep -qE "^https://github.com/runkids/skillshare/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/skillshare_[0-9]+\.[0-9]+\.[0-9]+_(darwin|linux)_(amd64|arm64)\.tar\.gz$"; then
+  if echo "$URL" | grep -qE "^https://github.com/xocasdashdash/skillshare/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/skillshare_[0-9]+\.[0-9]+\.[0-9]+_(darwin|linux)_(amd64|arm64)\.tar\.gz$"; then
     pass "Download URL format is correct: $URL"
   else
     fail "Download URL format is incorrect: $URL"

@@ -48,7 +48,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/runkids/skillshare/tree/main/website/',
+          editUrl: 'https://github.com/xocasdashdash/skillshare/tree/main/website/',
         },
         blog: false,
         theme: {
@@ -98,12 +98,12 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/runkids/skillshare/releases',
+          href: 'https://github.com/xocasdashdash/skillshare/releases',
           label: 'Changelog',
           position: 'right',
         },
         {
-          href: 'https://github.com/runkids/skillshare',
+          href: 'https://github.com/xocasdashdash/skillshare',
           label: 'GitHub',
           position: 'right',
         },
@@ -135,15 +135,15 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/runkids/skillshare',
+              href: 'https://github.com/xocasdashdash/skillshare',
             },
             {
               label: 'Issues',
-              href: 'https://github.com/runkids/skillshare/issues',
+              href: 'https://github.com/xocasdashdash/skillshare/issues',
             },
             {
               label: 'Discussions',
-              href: 'https://github.com/runkids/skillshare/discussions',
+              href: 'https://github.com/xocasdashdash/skillshare/discussions',
             },
           ],
         },
@@ -152,11 +152,11 @@ const config: Config = {
           items: [
             {
               label: 'Releases',
-              href: 'https://github.com/runkids/skillshare/releases',
+              href: 'https://github.com/xocasdashdash/skillshare/releases',
             },
             {
               label: 'Contributing',
-              href: 'https://github.com/runkids/skillshare/blob/main/CONTRIBUTING.md',
+              href: 'https://github.com/xocasdashdash/skillshare/blob/main/CONTRIBUTING.md',
             },
           ],
         },

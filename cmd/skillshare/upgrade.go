@@ -83,7 +83,7 @@ func cmdUpgrade(args []string) error {
 
 	if !dryRun && (upgradeCLI || upgradeSkill) {
 		fmt.Println()
-		ui.Info("If skillshare saved you time, please give us a star on GitHub: https://github.com/runkids/skillshare")
+		ui.Info("If skillshare saved you time, please give us a star on GitHub: https://github.com/xocasdashdash/skillshare")
 	}
 
 	return nil

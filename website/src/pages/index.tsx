@@ -171,7 +171,7 @@ function HeroSection() {
           </Link>
           <Link
             className="button button--secondary button--lg"
-            href="https://github.com/runkids/skillshare"
+            href="https://github.com/xocasdashdash/skillshare"
           >
             View on GitHub
           </Link>

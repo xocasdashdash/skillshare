@@ -153,7 +153,7 @@ func LogoAnimated(version string, animate bool) {
 		Primary + `     _    _ _ _     _` + Reset,
 		Primary + ` ___| | _(_) | |___| |__   __ _ _ __ ___` + Reset,
 		Primary + `/ __| |/ / | | / __| '_ \ / _` + "`" + ` | '__/ _ \` + Reset,
-		Primary + `\__ \   <| | | \__ \ | | | (_| | | |  __/` + Reset + `  ` + Muted + `https://github.com/runkids/skillshare` + Reset,
+		Primary + `\__ \   <| | | \__ \ | | | (_| | | |  __/` + Reset + `  ` + Muted + `https://github.com/xocasdashdash/skillshare` + Reset,
 	}
 
 	// Last line varies based on version

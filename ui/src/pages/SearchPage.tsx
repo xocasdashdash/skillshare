@@ -380,7 +380,7 @@ export default function SearchPage() {
             Found an awesome skill? Submit a PR to
             {' '}
             <a
-              href="https://github.com/runkids/skillshare-hub"
+              href="https://github.com/xocasdashdash/skillshare-hub"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue hover:underline"

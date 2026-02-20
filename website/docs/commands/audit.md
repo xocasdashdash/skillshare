@@ -630,7 +630,7 @@ Summary interpretation:
 Use `id` values to override or disable specific built-in rules:
 
 Source of truth (full built-in definitions):
-[`internal/audit/rules.yaml`](https://github.com/runkids/skillshare/blob/main/internal/audit/rules.yaml)
+[`internal/audit/rules.yaml`](https://github.com/xocasdashdash/skillshare/blob/main/internal/audit/rules.yaml)
 
 | ID | Pattern | Severity |
 |----|---------|----------|

@@ -10,7 +10,7 @@ Show the current skillshare version.
 
 - Check which version you're running before reporting a bug
 - Verify an upgrade was successful
-- Compare your version against [the latest release](https://github.com/runkids/skillshare/releases)
+- Compare your version against [the latest release](https://github.com/xocasdashdash/skillshare/releases)
 
 ## Synopsis
 

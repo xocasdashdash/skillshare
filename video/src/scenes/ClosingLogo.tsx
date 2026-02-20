@@ -155,7 +155,7 @@ export const ClosingLogo = () => {
           textShadow: `0 0 ${10 + 5 * Math.sin(frame * 0.1)}px ${colors.primary}40`,
         }}
       >
-        github.com/runkids/skillshare
+        github.com/xocasdashdash/skillshare
       </p>
     </AbsoluteFill>
   );

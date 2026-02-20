@@ -16,7 +16,7 @@ irm https://raw.githubusercontent.com/runkids/skillshare/main/install.ps1 | iex
 ```
 
 **Or download manually:**
-1. Go to [releases](https://github.com/runkids/skillshare/releases)
+1. Go to [releases](https://github.com/xocasdashdash/skillshare/releases)
 2. Download the `.zip` for Windows
 3. Extract and add to PATH
 

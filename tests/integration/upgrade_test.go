@@ -119,7 +119,7 @@ targets: {}
 
 	result.AssertSuccess(t)
 	// Source URL appears in the logo banner
-	result.AssertOutputContains(t, "github.com/runkids/skillshare")
+	result.AssertOutputContains(t, "github.com/xocasdashdash/skillshare")
 }
 
 func TestUpgrade_NoSkill_PromptDeclined(t *testing.T) {

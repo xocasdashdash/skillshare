@@ -15,7 +15,7 @@ import (
 	"skillshare/internal/utils"
 )
 
-const skillshareSkillSource = "github.com/runkids/skillshare/skills/skillshare"
+const skillshareSkillSource = "github.com/xocasdashdash/skillshare/skills/skillshare"
 const skillshareSkillURL = "https://raw.githubusercontent.com/runkids/skillshare/main/skills/skillshare/SKILL.md"
 
 // initOptions holds all parsed arguments for the init command

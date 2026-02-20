@@ -171,7 +171,7 @@ If you can't resolve the issue:
 
 2. **Check the FAQ:** [Common Errors](/docs/troubleshooting/common-errors)
 
-3. **Report the issue:** [GitHub Issues](https://github.com/runkids/skillshare/issues)
+3. **Report the issue:** [GitHub Issues](https://github.com/xocasdashdash/skillshare/issues)
    - Include doctor output
    - Include error messages
    - Describe what you were trying to do

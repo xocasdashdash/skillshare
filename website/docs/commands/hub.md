@@ -200,4 +200,4 @@ hub:
       url: ./local-hub.json
 ```
 
-The [public hub](https://github.com/runkids/skillshare-hub) is the built-in default and doesn't need to be saved. When no custom default is set, `search --hub` falls back to it automatically. Fork this repo to bootstrap your own organization's hub.
+The [public hub](https://github.com/xocasdashdash/skillshare-hub) is the built-in default and doesn't need to be saved. When no custom default is set, `search --hub` falls back to it automatically. Fork this repo to bootstrap your own organization's hub.

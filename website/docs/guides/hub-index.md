@@ -278,7 +278,7 @@ To keep the index fresh, add `skillshare hub index` to a CI pipeline that runs a
 
 ## Public Hub
 
-The [skillshare-hub](https://github.com/runkids/skillshare-hub) is a curated catalog of quality skills. It is the **default hub** — when you run `search --hub` without specifying a source, it searches here:
+The [skillshare-hub](https://github.com/xocasdashdash/skillshare-hub) is a curated catalog of quality skills. It is the **default hub** — when you run `search --hub` without specifying a source, it searches here:
 
 ```bash
 skillshare search --hub              # Browse all skills in the public hub

@@ -73,7 +73,7 @@ If you can't resolve the issue:
    skillshare status
    ```
 
-2. **Search existing issues:** [GitHub Issues](https://github.com/runkids/skillshare/issues)
+2. **Search existing issues:** [GitHub Issues](https://github.com/xocasdashdash/skillshare/issues)
 
 3. **Open a new issue** with:
    - Doctor output

@@ -214,12 +214,12 @@ export default function DashboardPage() {
                   If skillshare saved you time, please give us a star on GitHub:
                   {' '}
                   <a
-                    href="https://github.com/runkids/skillshare"
+                    href="https://github.com/xocasdashdash/skillshare"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue hover:underline"
                   >
-                    github.com/runkids/skillshare ⭐
+                    github.com/xocasdashdash/skillshare ⭐
                   </a>
                 </p>
               </div>

@@ -8,14 +8,14 @@
   <a href="https://skillshare.runkids.cc"><img src="https://img.shields.io/badge/Website-skillshare.runkids.cc-blue?logo=docusaurus" alt="Website"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/runkids/skillshare" alt="Go Version"></a>
-  <a href="https://github.com/runkids/skillshare/releases"><img src="https://img.shields.io/github/v/release/runkids/skillshare" alt="Release"></a>
+  <a href="https://github.com/xocasdashdash/skillshare/releases"><img src="https://img.shields.io/github/v/release/runkids/skillshare" alt="Release"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue" alt="Platform">
-  <a href="https://goreportcard.com/report/github.com/runkids/skillshare"><img src="https://goreportcard.com/badge/github.com/runkids/skillshare" alt="Go Report Card"></a>
+  <a href="https://goreportcard.com/report/github.com/xocasdashdash/skillshare"><img src="https://goreportcard.com/badge/github.com/xocasdashdash/skillshare" alt="Go Report Card"></a>
   <a href="https://deepwiki.com/runkids/skillshare"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/runkids/skillshare/stargazers"><img src="https://img.shields.io/github/stars/runkids/skillshare?style=social" alt="Star on GitHub"></a>
+  <a href="https://github.com/xocasdashdash/skillshare/stargazers"><img src="https://img.shields.io/github/stars/runkids/skillshare?style=social" alt="Star on GitHub"></a>
 </p>
 
 <p align="center">
@@ -44,10 +44,10 @@
 > **Recent Updates**
 > | Version | Highlights |
 > |---------|------------|
-> | [0.14.0](https://github.com/runkids/skillshare/releases/tag/v0.14.0) | Global skill manifest, `.skillignore`, multi-skill/group uninstall, license display, 6 new audit rules |
-> | [0.13.0](https://github.com/runkids/skillshare/releases/tag/v0.13.0) | Skill-level targets, XDG compliance, unified target names, runtime UI download |
-> | [0.12.0](https://github.com/runkids/skillshare/releases/tag/v0.12.0) | Skill Hub — generate indexes, search private catalogs with `--hub` |
-> | [0.11.0](https://github.com/runkids/skillshare/releases/tag/v0.11.0) | Security Audit, Operation Log, Trash, Update Preview — full audit trail + safety net |
+> | [0.14.0](https://github.com/xocasdashdash/skillshare/releases/tag/v0.14.0) | Global skill manifest, `.skillignore`, multi-skill/group uninstall, license display, 6 new audit rules |
+> | [0.13.0](https://github.com/xocasdashdash/skillshare/releases/tag/v0.13.0) | Skill-level targets, XDG compliance, unified target names, runtime UI download |
+> | [0.12.0](https://github.com/xocasdashdash/skillshare/releases/tag/v0.12.0) | Skill Hub — generate indexes, search private catalogs with `--hub` |
+> | [0.11.0](https://github.com/xocasdashdash/skillshare/releases/tag/v0.11.0) | Security Audit, Operation Log, Trash, Update Preview — full audit trail + safety net |
 
 ## Why skillshare
 
@@ -207,7 +207,7 @@ skillshare sync            # Sync skills to all targets
 | `skillshare search --hub [url]` | Search a hub index (default: skillshare-hub) |
 | `skillshare hub index` | Generate a hub index from installed skills |
 
-`skillshare search` requires GitHub auth (`gh auth login`) or `GITHUB_TOKEN`. The `--hub` flag searches a JSON index instead — without a URL it defaults to the public [skillshare-hub](https://github.com/runkids/skillshare-hub).
+`skillshare search` requires GitHub auth (`gh auth login`) or `GITHUB_TOKEN`. The `--hub` flag searches a JSON index instead — without a URL it defaults to the public [skillshare-hub](https://github.com/xocasdashdash/skillshare-hub).
 
 ### Target Management
 
@@ -277,7 +277,7 @@ skillshare search --hub https://example.com/hub.json   # Search custom remote in
 
 The generated `skillshare-hub.json` follows a versioned schema (`schemaVersion: 1`) with support for tags and multi-skill repos. Host it on any static server, internal CDN, or commit it alongside your skills repo.
 
-The public hub at [runkids/skillshare-hub](https://github.com/runkids/skillshare-hub) is the built-in default. Fork it to bootstrap your organization's internal hub — CI validation and `skillshare audit` security scans are included out of the box.
+The public hub at [runkids/skillshare-hub](https://github.com/xocasdashdash/skillshare-hub) is the built-in default. Fork it to bootstrap your organization's internal hub — CI validation and `skillshare audit` security scans are included out of the box.
 
 > [!TIP]
 > See the [Hub Index Guide](https://skillshare.runkids.cc/docs/guides/hub-index) for schema details and hosting options.
@@ -377,7 +377,7 @@ make docker-build              # build production image
 make docker-build-multiarch    # build for amd64 + arm64
 ```
 
-Pre-built images are published to [GitHub Packages](https://github.com/runkids/skillshare/pkgs/container/skillshare) on each release.
+Pre-built images are published to [GitHub Packages](https://github.com/xocasdashdash/skillshare/pkgs/container/skillshare) on each release.
 
 ## Development
 
@@ -403,12 +403,12 @@ make build-all      # frontend + Go binary
 ## Contributing
 
 ```bash
-git clone https://github.com/runkids/skillshare.git
+git clone https://github.com/xocasdashdash/skillshare.git
 cd skillshare
 make check          # format + lint + test
 ```
 
-Or open in Dev Containers for a zero-setup environment. Issues and PRs welcome: https://github.com/runkids/skillshare/issues
+Or open in Dev Containers for a zero-setup environment. Issues and PRs welcome: https://github.com/xocasdashdash/skillshare/issues
 
 ---
 

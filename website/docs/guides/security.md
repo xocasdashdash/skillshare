@@ -119,7 +119,7 @@ skillshare audit --threshold high
 
 ### Real-World Example: Skill Hub PR Validation
 
-The [skillshare-hub](https://github.com/runkids/skillshare-hub) community repository uses `skillshare audit` to gate pull requests. Every PR that modifies skills is automatically scanned, and audit results are posted as a PR comment:
+The [skillshare-hub](https://github.com/xocasdashdash/skillshare-hub) community repository uses `skillshare audit` to gate pull requests. Every PR that modifies skills is automatically scanned, and audit results are posted as a PR comment:
 
 ```yaml
 # .github/workflows/validate-pr.yml (simplified)
@@ -146,7 +146,7 @@ jobs:
         run: exit 1
 ```
 
-For the full workflow (including PR comment reporting and artifact upload), see the [validate-pr.yml source](https://github.com/runkids/skillshare-hub/blob/main/.github/workflows/validate-pr.yml).
+For the full workflow (including PR comment reporting and artifact upload), see the [validate-pr.yml source](https://github.com/xocasdashdash/skillshare-hub/blob/main/.github/workflows/validate-pr.yml).
 
 For more CI/CD patterns (JSON output with `jq`, GitHub Actions with artifact upload), see [`audit` — CI/CD Integration](/docs/commands/audit#cicd-integration).
 

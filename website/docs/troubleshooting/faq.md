@@ -300,11 +300,11 @@ No scanner is perfect. `skillshare audit` catches common patterns like prompt in
 
 ### Where do I report bugs?
 
-[GitHub Issues](https://github.com/runkids/skillshare/issues)
+[GitHub Issues](https://github.com/xocasdashdash/skillshare/issues)
 
 ### Where do I ask questions?
 
-[GitHub Discussions](https://github.com/runkids/skillshare/discussions)
+[GitHub Discussions](https://github.com/xocasdashdash/skillshare/discussions)
 
 ---
 
