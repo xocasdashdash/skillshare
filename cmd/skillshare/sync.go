@@ -169,6 +169,9 @@ func syncTarget(name string, target config.TargetConfig, cfg *config.Config, dry
 	if mode == "merge" {
 		return syncMergeMode(name, target, cfg.Source, dryRun, force)
 	}
+	if mode == "copy" {
+		return syncCopyMode(name, target, cfg.Source, dryRun, force)
+	}
 
 	return syncSymlinkMode(name, target, cfg.Source, dryRun, force)
 }
@@ -216,6 +219,36 @@ func syncMergeMode(name string, target config.TargetConfig, source string, dryRu
 		for _, warn := range pruneResult.Warnings {
 			ui.Warning("  %s", warn)
 		}
+	}
+
+	return nil
+}
+
+func syncCopyMode(name string, target config.TargetConfig, source string, dryRun, force bool) error {
+	result, err := sync.SyncTargetCopy(name, target, source, dryRun, force)
+	if err != nil {
+		return err
+	}
+
+	copiedCount := len(result.Copied)
+	updatedCount := len(result.Updated)
+	skippedCount := len(result.Skipped)
+	removedCount := len(result.Removed)
+
+	if copiedCount > 0 || updatedCount > 0 || removedCount > 0 {
+		ui.Success("%s: copied (%d new, %d updated, %d local preserved, %d pruned)",
+			name, copiedCount, updatedCount, skippedCount, removedCount)
+	} else if skippedCount > 0 {
+		ui.Success("%s: copied (%d local skills preserved)", name, skippedCount)
+	} else {
+		ui.Success("%s: copied (no skills)", name)
+	}
+
+	if len(target.Include) > 0 {
+		ui.Info("  include: %s", strings.Join(target.Include, ", "))
+	}
+	if len(target.Exclude) > 0 {
+		ui.Info("  exclude: %s", strings.Join(target.Exclude, ", "))
 	}
 
 	return nil

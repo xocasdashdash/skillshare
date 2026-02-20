@@ -89,7 +89,7 @@ Options:
   --global, -g           Use global config (~/.config/skillshare)
 
 Target Settings:
-  <name> --mode <mode>              Set sync mode (merge or symlink)
+  <name> --mode <mode>              Set sync mode (merge, symlink, or copy)
   <name> --add-include <pattern>    Add an include filter pattern
   <name> --add-exclude <pattern>    Add an exclude filter pattern
   <name> --remove-include <pattern> Remove an include filter pattern
@@ -469,8 +469,8 @@ func targetInfo(name string, args []string) error {
 }
 
 func updateTargetMode(cfg *config.Config, name string, target config.TargetConfig, newMode string) error {
-	if newMode != "merge" && newMode != "symlink" {
-		return fmt.Errorf("invalid mode '%s'. Use 'merge' or 'symlink'", newMode)
+	if newMode != "merge" && newMode != "symlink" && newMode != "copy" {
+		return fmt.Errorf("invalid mode '%s'. Use 'merge', 'symlink', or 'copy'", newMode)
 	}
 
 	oldMode := target.Mode

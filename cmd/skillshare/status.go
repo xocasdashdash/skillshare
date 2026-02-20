@@ -130,7 +130,7 @@ func printTargetsStatus(cfg *config.Config, discovered []sync.DiscoveredSkill) e
 	driftTotal := 0
 	for name, target := range cfg.Targets {
 		mode := getTargetMode(target.Mode, cfg.Mode)
-		statusStr, detail := getTargetStatusDetail(target, cfg.Source, mode)
+		statusStr, detail := getTargetStatusDetail(name, target, cfg.Source, mode)
 		ui.Status(name, statusStr, detail)
 
 		if mode == "merge" {
@@ -143,6 +143,14 @@ func printTargetsStatus(cfg *config.Config, discovered []sync.DiscoveredSkill) e
 			_, linkedCount, _ := sync.CheckStatusMerge(target.Path, cfg.Source)
 			if linkedCount < expectedCount {
 				drift := expectedCount - linkedCount
+				if drift > driftTotal {
+					driftTotal = drift
+				}
+			}
+		} else if mode == "copy" {
+			expectedCount, copiedCount, err := sync.CheckStatusCopy(target.Path, cfg.Source, target.Include, target.Exclude, name)
+			if err == nil && copiedCount < expectedCount {
+				drift := expectedCount - copiedCount
 				if drift > driftTotal {
 					driftTotal = drift
 				}
@@ -175,9 +183,12 @@ func getTargetMode(targetMode, globalMode string) string {
 	return "merge"
 }
 
-func getTargetStatusDetail(target config.TargetConfig, source, mode string) (string, string) {
+func getTargetStatusDetail(targetName string, target config.TargetConfig, source, mode string) (string, string) {
 	if mode == "merge" {
 		return getMergeStatusDetail(target, source, mode)
+	}
+	if mode == "copy" {
+		return getCopyStatusDetail(targetName, target, source, mode)
 	}
 	return getSymlinkStatusDetail(target, source, mode)
 }
@@ -194,6 +205,19 @@ func getMergeStatusDetail(target config.TargetConfig, source, mode string) (stri
 	default:
 		return status.String(), fmt.Sprintf("[%s] %s (%d local)", mode, target.Path, localCount)
 	}
+}
+
+func getCopyStatusDetail(targetName string, target config.TargetConfig, source, mode string) (string, string) {
+	expected, copied, err := sync.CheckStatusCopy(target.Path, source, target.Include, target.Exclude, targetName)
+	if err != nil {
+		return "error", fmt.Sprintf("[%s] %s: %v", mode, target.Path, err)
+	}
+	statusStr := "copied"
+	detail := fmt.Sprintf("[%s] %s (%d/%d)", mode, target.Path, copied, expected)
+	if copied < expected {
+		detail = fmt.Sprintf("[%s] %s (%d/%d, run sync)", mode, target.Path, copied, expected)
+	}
+	return statusStr, detail
 }
 
 func getSymlinkStatusDetail(target config.TargetConfig, source, mode string) (string, string) {

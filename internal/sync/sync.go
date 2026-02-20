@@ -425,6 +425,196 @@ func SyncTargetMerge(name string, target config.TargetConfig, sourcePath string,
 	return result, nil
 }
 
+// CopyResult holds the result of a copy sync operation
+type CopyResult struct {
+	Copied  []string // Skills that were copied
+	Skipped []string // Skills that already existed (kept, not overwritten)
+	Updated []string // Skills that were overwritten (force)
+	Removed []string // Orphan directories pruned
+}
+
+// SyncTargetCopy performs copy mode sync - copies each skill directory into the target
+// instead of creating symlinks. Supports include/exclude and target filtering.
+// If force is true, existing copies are overwritten.
+func SyncTargetCopy(name string, target config.TargetConfig, sourcePath string, dryRun, force bool) (*CopyResult, error) {
+	result := &CopyResult{}
+
+	// If target is currently a symlink (symlink mode), convert to directory for copy mode
+	info, err := os.Lstat(target.Path)
+	if err == nil && info != nil && utils.IsSymlinkOrJunction(target.Path) {
+		if dryRun {
+			fmt.Printf("[dry-run] Would convert from symlink mode to copy mode: %s\n", target.Path)
+		} else {
+			if err := os.Remove(target.Path); err != nil {
+				return nil, fmt.Errorf("failed to remove symlink for copy conversion: %w", err)
+			}
+		}
+	}
+
+	if !dryRun {
+		if err := os.MkdirAll(target.Path, 0755); err != nil {
+			return nil, fmt.Errorf("failed to create target directory: %w", err)
+		}
+	}
+
+	discoveredSkills, err := DiscoverSourceSkills(sourcePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover skills: %w", err)
+	}
+	discoveredSkills, err = FilterSkills(discoveredSkills, target.Include, target.Exclude)
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply filters for target %s: %w", name, err)
+	}
+	discoveredSkills = FilterSkillsByTarget(discoveredSkills, name)
+
+	for _, skill := range discoveredSkills {
+		targetSkillPath := filepath.Join(target.Path, skill.FlatName)
+
+		_, err := os.Lstat(targetSkillPath)
+		if err == nil {
+			// Exists - overwrite only if force
+			if force {
+				if dryRun {
+					fmt.Printf("[dry-run] Would overwrite copy: %s\n", skill.FlatName)
+				} else {
+					if err := os.RemoveAll(targetSkillPath); err != nil {
+						return nil, fmt.Errorf("failed to remove existing copy %s: %w", skill.FlatName, err)
+					}
+					if err := copyDirectory(skill.SourcePath, targetSkillPath); err != nil {
+						return nil, fmt.Errorf("failed to copy %s: %w", skill.FlatName, err)
+					}
+				}
+				result.Updated = append(result.Updated, skill.FlatName)
+			} else {
+				result.Skipped = append(result.Skipped, skill.FlatName)
+			}
+		} else if os.IsNotExist(err) {
+			if dryRun {
+				fmt.Printf("[dry-run] Would copy: %s -> %s\n", skill.SourcePath, targetSkillPath)
+			} else {
+				if err := copyDirectory(skill.SourcePath, targetSkillPath); err != nil {
+					return nil, fmt.Errorf("failed to copy %s: %w", skill.FlatName, err)
+				}
+			}
+			result.Copied = append(result.Copied, skill.FlatName)
+		} else {
+			return nil, fmt.Errorf("failed to check target skill %s: %w", skill.FlatName, err)
+		}
+	}
+
+	// Prune orphan directories (previously copied skills no longer in source)
+	pruneResult, err := PruneOrphanCopyDirs(target.Path, sourcePath, target.Include, target.Exclude, name, dryRun)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prune copy target: %w", err)
+	}
+	result.Removed = pruneResult.Removed
+
+	return result, nil
+}
+
+// PruneOrphanCopyDirs removes directories in target that are no longer in the managed skill set.
+// Only removes entries that look like skillshare-managed flat names (nested separator or tracked repo).
+func PruneOrphanCopyDirs(targetPath, sourcePath string, include, exclude []string, targetName string, dryRun bool) (*PruneResult, error) {
+	result := &PruneResult{}
+
+	allSourceSkills, err := DiscoverSourceSkills(sourcePath)
+	if err != nil {
+		return nil, err
+	}
+	managedSkills, err := FilterSkills(allSourceSkills, include, exclude)
+	if err != nil {
+		return nil, err
+	}
+	managedSkills = FilterSkillsByTarget(managedSkills, targetName)
+
+	validFlatNames := make(map[string]bool)
+	for _, skill := range managedSkills {
+		validFlatNames[skill.FlatName] = true
+	}
+
+	entries, err := os.ReadDir(targetPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return result, nil
+		}
+		return nil, fmt.Errorf("failed to read target directory: %w", err)
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+		if utils.IsHidden(name) {
+			continue
+		}
+		entryPath := filepath.Join(targetPath, name)
+		info, err := os.Lstat(entryPath)
+		if err != nil {
+			continue
+		}
+		if validFlatNames[name] {
+			continue
+		}
+		// Only remove dirs that look like our flat-name pattern (orphan copies)
+		if !info.IsDir() {
+			continue
+		}
+		if !utils.HasNestedSeparator(name) && !utils.IsTrackedRepoDir(name) {
+			continue
+		}
+		if dryRun {
+			fmt.Printf("[dry-run] Would remove orphan copy: %s\n", entryPath)
+		} else {
+			if err := os.RemoveAll(entryPath); err != nil {
+				result.Warnings = append(result.Warnings, fmt.Sprintf("%s: failed to remove: %v", name, err))
+				continue
+			}
+		}
+		result.Removed = append(result.Removed, name)
+	}
+
+	return result, nil
+}
+
+// CheckStatusCopy returns expected (managed) skill count and how many exist as dirs in target.
+func CheckStatusCopy(targetPath, sourcePath string, include, exclude []string, targetName string) (expected, copied int, err error) {
+	discovered, err := DiscoverSourceSkills(sourcePath)
+	if err != nil {
+		return 0, 0, err
+	}
+	filtered, err := FilterSkills(discovered, include, exclude)
+	if err != nil {
+		return 0, 0, err
+	}
+	filtered = FilterSkillsByTarget(filtered, targetName)
+	expected = len(filtered)
+
+	entries, err := os.ReadDir(targetPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return expected, 0, nil
+		}
+		return expected, 0, err
+	}
+
+	validFlatNames := make(map[string]bool)
+	for _, skill := range filtered {
+		validFlatNames[skill.FlatName] = true
+	}
+	for _, entry := range entries {
+		if utils.IsHidden(entry.Name()) {
+			continue
+		}
+		entryPath := filepath.Join(targetPath, entry.Name())
+		info, err := os.Lstat(entryPath)
+		if err != nil || !info.IsDir() {
+			continue
+		}
+		if validFlatNames[entry.Name()] {
+			copied++
+		}
+	}
+	return expected, copied, nil
+}
+
 // PruneResult holds the result of a prune operation
 type PruneResult struct {
 	Removed  []string // Items that were removed

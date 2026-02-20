@@ -14,7 +14,7 @@ import (
 // TargetConfig holds configuration for a single target
 type TargetConfig struct {
 	Path    string   `yaml:"path"`
-	Mode    string   `yaml:"mode,omitempty"` // symlink (default), copy
+	Mode    string   `yaml:"mode,omitempty"` // merge, symlink, or copy
 	Include []string `yaml:"include,omitempty"`
 	Exclude []string `yaml:"exclude,omitempty"`
 }
@@ -40,7 +40,7 @@ type HubConfig struct {
 // Config holds the application configuration
 type Config struct {
 	Source  string                  `yaml:"source"`
-	Mode    string                  `yaml:"mode,omitempty"` // default mode: symlink
+	Mode    string                  `yaml:"mode,omitempty"` // default mode: merge, symlink, or copy
 	Targets map[string]TargetConfig `yaml:"targets"`
 	Skills  []SkillEntry            `yaml:"skills,omitempty"`
 	Ignore  []string                `yaml:"ignore,omitempty"`

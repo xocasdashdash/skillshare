@@ -63,6 +63,11 @@ func cmdSyncProject(root string, dryRun, force bool) (syncLogStats, error) {
 				ui.Error("%s: %v", name, err)
 				failedTargets++
 			}
+		} else if mode == "copy" {
+			if err := syncCopyMode(name, target, runtime.sourcePath, dryRun, force); err != nil {
+				ui.Error("%s: %v", name, err)
+				failedTargets++
+			}
 		} else {
 			if err := syncMergeMode(name, target, runtime.sourcePath, dryRun, force); err != nil {
 				ui.Error("%s: %v", name, err)

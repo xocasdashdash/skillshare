@@ -76,6 +76,24 @@ func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				res.Pruned = pruneResult.Removed
 			}
+		} else if mode == "copy" {
+			copyResult, err := ssync.SyncTargetCopy(name, target, s.cfg.Source, body.DryRun, body.Force)
+			if err != nil {
+				s.writeOpsLog("sync", "error", start, map[string]any{
+					"targets_total":  len(s.cfg.Targets),
+					"targets_failed": 1,
+					"target":         name,
+					"dry_run":        body.DryRun,
+					"force":          body.Force,
+					"scope":          "ui",
+				}, err.Error())
+				writeError(w, http.StatusInternalServerError, "sync failed for "+name+": "+err.Error())
+				return
+			}
+			res.Linked = copyResult.Copied
+			res.Updated = copyResult.Updated
+			res.Skipped = copyResult.Skipped
+			res.Pruned = copyResult.Removed
 		} else {
 			err := ssync.SyncTarget(name, target, s.cfg.Source, body.DryRun)
 			if err != nil {
@@ -148,10 +166,47 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 		dt := diffTarget{Target: name, Items: make([]diffItem, 0)}
 		filtered := discovered
 
-		if mode != "merge" {
+		if mode == "symlink" {
 			status := ssync.CheckStatus(target.Path, s.cfg.Source)
 			if status != ssync.StatusLinked {
 				dt.Items = append(dt.Items, diffItem{Skill: "(entire directory)", Action: "link", Reason: "missing"})
+			}
+			diffs = append(diffs, dt)
+			continue
+		}
+		if mode == "copy" {
+			filtered, err = ssync.FilterSkills(discovered, target.Include, target.Exclude)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid include/exclude for target "+name+": "+err.Error())
+				return
+			}
+			filtered = ssync.FilterSkillsByTarget(filtered, name)
+			for _, skill := range filtered {
+				targetSkillPath := filepath.Join(target.Path, skill.FlatName)
+				_, err := os.Lstat(targetSkillPath)
+				if err != nil && os.IsNotExist(err) {
+					dt.Items = append(dt.Items, diffItem{Skill: skill.FlatName, Action: "copy", Reason: "missing"})
+				} else if err == nil {
+					// Exists - could add "update" if we wanted to indicate --force would overwrite
+					dt.Items = append(dt.Items, diffItem{Skill: skill.FlatName, Action: "skip", Reason: "already copied"})
+				}
+			}
+			// Orphan copies (would be pruned)
+			entries, _ := os.ReadDir(target.Path)
+			validNames := make(map[string]bool)
+			for _, skill := range filtered {
+				validNames[skill.FlatName] = true
+			}
+			for _, entry := range entries {
+				eName := entry.Name()
+				if utils.IsHidden(eName) || validNames[eName] {
+					continue
+				}
+				entryPath := filepath.Join(target.Path, eName)
+				info, _ := os.Lstat(entryPath)
+				if info != nil && info.IsDir() && (utils.HasNestedSeparator(eName) || utils.IsTrackedRepoDir(eName)) {
+					dt.Items = append(dt.Items, diffItem{Skill: eName, Action: "prune", Reason: "orphan copy"})
+				}
 			}
 			diffs = append(diffs, dt)
 			continue

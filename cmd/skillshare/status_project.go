@@ -100,7 +100,7 @@ func printProjectTargetsStatus(runtime *projectRuntime, discovered []sync.Discov
 			mode = "merge"
 		}
 
-		statusStr, detail := getTargetStatusDetail(target, runtime.sourcePath, mode)
+		statusStr, detail := getTargetStatusDetail(entry.Name, target, runtime.sourcePath, mode)
 		ui.Status(entry.Name, statusStr, detail)
 
 		if mode == "merge" {
@@ -113,6 +113,14 @@ func printProjectTargetsStatus(runtime *projectRuntime, discovered []sync.Discov
 			_, linkedCount, _ := sync.CheckStatusMerge(target.Path, runtime.sourcePath)
 			if linkedCount < expectedCount {
 				drift := expectedCount - linkedCount
+				if drift > driftTotal {
+					driftTotal = drift
+				}
+			}
+		} else if mode == "copy" {
+			expectedCount, copiedCount, err := sync.CheckStatusCopy(target.Path, runtime.sourcePath, target.Include, target.Exclude, entry.Name)
+			if err == nil && copiedCount < expectedCount {
+				drift := expectedCount - copiedCount
 				if drift > driftTotal {
 					driftTotal = drift
 				}

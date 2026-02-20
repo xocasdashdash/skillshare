@@ -16,6 +16,7 @@ Choose merge mode (default) when you want per-skill symlinks and to preserve loc
 |------|----------|----------|
 | `merge` | Each skill symlinked individually | **Default.** Preserves local skills. |
 | `symlink` | Entire directory is one symlink | Exact copies everywhere. |
+| `copy` | Each skill copied (no symlinks) | When symlinks are not desired or supported. |
 
 ---
 
@@ -93,6 +94,26 @@ skillshare target remove claude   # ✅ Safe way to unlink
 
 ---
 
+## Copy Mode
+
+Each skill is **copied** into the target directory (no symlinks). Same filtering as merge mode (include/exclude, per-skill targets).
+
+**When to use:**
+- Symlinks are not supported or not desired (e.g. some network or shared filesystems)
+- You want a true snapshot of skills in the target; changes in source require `skillshare sync` to update the target
+
+**Behavior:**
+- `sync` copies each managed skill directory into the target (flat names, e.g. `my__nested__skill`)
+- Existing copies are left unchanged unless you run `sync --force` (then they are overwritten)
+- Orphan copies (skills removed from source) are pruned on sync
+
+```bash
+skillshare target claude --mode copy
+skillshare sync
+```
+
+---
+
 ## Changing Mode
 
 ### Per-target
@@ -105,6 +126,10 @@ skillshare sync
 # Switch back to merge mode
 skillshare target claude --mode merge
 skillshare sync
+
+# Use copy mode (no symlinks)
+skillshare target claude --mode copy
+skillshare sync
 ```
 
 ### Default mode
@@ -113,7 +138,7 @@ Set in config for new targets:
 
 ```yaml
 # ~/.config/skillshare/config.yaml
-mode: merge  # or symlink
+mode: merge  # or symlink, or copy
 
 targets:
   claude:
@@ -122,7 +147,7 @@ targets:
 
   codex:
     path: ~/.codex/skills
-    mode: symlink  # override default
+    mode: symlink  # override default (merge, symlink, or copy)
 ```
 
 ---
