@@ -4,46 +4,46 @@ import (
 	"testing"
 )
 
-func TestGroupedProjectTargets_AgentsGrouped(t *testing.T) {
+func TestGroupedProjectTargets_UniversalGrouped(t *testing.T) {
 	grouped := GroupedProjectTargets()
 
-	// Find the agents group entry
-	var agentsGroup *GroupedProjectTarget
+	// Find the universal group entry
+	var universalGroup *GroupedProjectTarget
 	for i, g := range grouped {
-		if g.Name == "agents" {
-			agentsGroup = &grouped[i]
+		if g.Name == "universal" {
+			universalGroup = &grouped[i]
 			break
 		}
 	}
 
-	if agentsGroup == nil {
-		t.Fatal("expected 'agents' group in GroupedProjectTargets result")
+	if universalGroup == nil {
+		t.Fatal("expected 'universal' group in GroupedProjectTargets result")
 	}
 
-	if agentsGroup.Path != ".agents/skills" {
-		t.Errorf("agents group path = %q, want %q", agentsGroup.Path, ".agents/skills")
+	if universalGroup.Path != ".agents/skills" {
+		t.Errorf("universal group path = %q, want %q", universalGroup.Path, ".agents/skills")
 	}
 
-	if len(agentsGroup.Members) == 0 {
-		t.Fatal("agents group should have members")
+	if len(universalGroup.Members) == 0 {
+		t.Fatal("universal group should have members")
 	}
 
 	// Verify known members are present
 	memberSet := make(map[string]bool)
-	for _, m := range agentsGroup.Members {
+	for _, m := range universalGroup.Members {
 		memberSet[m] = true
 	}
 
-	expectedMembers := []string{"amp", "codex", "replit"}
+	expectedMembers := []string{"amp", "codex", "kimi", "replit"}
 	for _, name := range expectedMembers {
 		if !memberSet[name] {
-			t.Errorf("expected %q in agents group members, got %v", name, agentsGroup.Members)
+			t.Errorf("expected %q in universal group members, got %v", name, universalGroup.Members)
 		}
 	}
 
 	// Canonical name should NOT be in members
-	if memberSet["agents"] {
-		t.Error("canonical name 'agents' should not appear in members list")
+	if memberSet["universal"] {
+		t.Error("canonical name 'universal' should not appear in members list")
 	}
 }
 

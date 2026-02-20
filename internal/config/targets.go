@@ -164,7 +164,14 @@ func GroupedProjectTargets() []GroupedProjectTarget {
 			continue
 		}
 
+		// Prefer "universal" as canonical name for shared-path groups.
 		canonical := pg.names[0]
+		for _, name := range pg.names {
+			if name == "universal" {
+				canonical = name
+				break
+			}
+		}
 		members := make([]string, 0, len(pg.names)-1)
 		for _, name := range pg.names {
 			if name != canonical {

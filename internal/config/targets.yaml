@@ -3,10 +3,11 @@ targets:
     project_name: adal
     global_path: "~/.adal/skills"
     project_path: ".adal/skills"
-  - global_name: agents
-    project_name: agents
+  - global_name: universal
+    project_name: universal
     global_path: "~/.config/agents/skills"
     project_path: ".agents/skills"
+    aliases: [agents]
   - global_name: amp
     project_name: amp
     global_path: "~/.config/agents/skills"
@@ -108,7 +109,7 @@ targets:
     aliases: [kilo]
   - global_name: kimi
     project_name: kimi
-    global_path: "~/.kimi/skills"
+    global_path: "~/.config/agents/skills"
     project_path: ".agents/skills"
     aliases: [kimi-cli]
   - global_name: kiro
@@ -200,5 +201,7 @@ targets:
     project_name: zencoder
     global_path: "~/.zencoder/skills"
     project_path: ".zencoder/skills"
-  - project_name: replit
+  - global_name: replit
+    project_name: replit
+    global_path: "~/.config/agents/skills"
     project_path: ".agents/skills"
