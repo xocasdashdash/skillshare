@@ -134,6 +134,50 @@ Run `skillshare doctor` to see current trash status (item count, size, age).
 
 They are complementary — backup protects targets from sync changes, trash protects source skills from accidental deletion.
 
+### Can I sync specific skills to specific CLIs?
+
+Yes. For example, skill A only to Claude, skill B to Gemini and Codex, skill C to all:
+
+**Option 1: `targets` field in SKILL.md** (set by skill author)
+
+```yaml
+# skills/skill-a/SKILL.md
+---
+name: skill-a
+targets: [claude]
+---
+```
+
+```yaml
+# skills/skill-b/SKILL.md
+---
+name: skill-b
+targets: [gemini, codex]
+---
+```
+
+```yaml
+# skills/skill-c/SKILL.md — no targets field = syncs to all
+---
+name: skill-c
+---
+```
+
+**Option 2: `include`/`exclude` filters in config** (set by consumer)
+
+```yaml
+# ~/.config/skillshare/config.yaml
+targets:
+  claude:
+    path: ~/.claude/skills
+    include: [skill-a, skill-c]
+  codex:
+    path: ~/.codex/skills
+    include: [skill-b, skill-c]
+```
+
+Both approaches can be combined — config filters are applied first, then the skill-level `targets` field. See [Skill Format — `targets`](/docs/concepts/skill-format#targets) and [Configuration — filters](/docs/targets/configuration#skill-level-targets).
+
 ---
 
 ## Targets
